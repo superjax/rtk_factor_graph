@@ -1,0 +1,21 @@
+default:
+  image: rikorose/gcc-cmake:gcc-8
+
+stages:
+  - build
+  - test
+
+job 1:
+  stage: build
+  before_script:
+    - cd scratch/gitlab_ci
+  script: 
+    - mkdir -p build
+    - cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - make
+    - ./gitlab_ci_example
+  after_script:
+    - cd $CI_BUILDS_DIR
+    
+
