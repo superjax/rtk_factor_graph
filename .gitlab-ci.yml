@@ -8,13 +8,12 @@ stages:
 job 1:
   stage: build
   before_script:
-    - cd scratch/gitlab_ci
-  script: 
     - mkdir -p build
     - cd build
+  script: 
     - cmake .. -DCMAKE_BUILD_TYPE=Release
     - make
-    - ./gitlab_ci_example
+    - ./scratch/gitlab_ci/gitlab_ci_example
   after_script:
     - cd $CI_BUILDS_DIR
     
