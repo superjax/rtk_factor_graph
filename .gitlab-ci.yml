@@ -8,6 +8,7 @@ stages:
 job 1:
   stage: build
   before_script:
+    - git submodule update --init --recursive
     - mkdir -p build
     - cd build
   script: 

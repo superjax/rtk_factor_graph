@@ -1,6 +1,21 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(gitlab_ci)
+cmake_minimum_required(VERSION 3.14)
+project(globalai)
 
+
+# Project-Wide Settings
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
+
+# Third-Party Libraries
+include(ExternalProject)
+include(cmake/External_Eigen3.cmake)
+include(cmake/External_GTest.cmake)
+include(cmake/External_GFlags.cmake)
+include(cmake/External_GLog.cmake)
+include(cmake/External_Ceres.cmake)
+include(cmake/GTestRule.cmake)
+
+
+# Project Code
 add_subdirectory(scratch)
