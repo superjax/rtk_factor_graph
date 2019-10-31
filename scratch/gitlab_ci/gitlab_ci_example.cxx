@@ -1,6 +1,7 @@
+#include "gtest/gtest.h"
+
 #include <cstdlib>
 
-int main()
+TEST (Gitlab, Example)
 {
-    return EXIT_SUCCESS;
 }

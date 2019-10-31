@@ -1,1 +1,2 @@
 add_subdirectory(gitlab_ci)
+add_subdirectory(third_party_install)
