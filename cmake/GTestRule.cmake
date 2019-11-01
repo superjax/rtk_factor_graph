@@ -1,5 +1,8 @@
 include(CMakeParseArguments)
 
+file(REMOVE "${PROJECT_BINARY_DIR}/test_list.sh")
+file(TOUCH  "${PROJECT_BINARY_DIR}/test_list.sh")
+
 function(add_gtest name)
     cmake_parse_arguments(
         PARSED_ARGS # prefix of output variables
@@ -17,4 +20,8 @@ function(add_gtest name)
     add_executable(${name} ${PARSED_ARGS_SRCS})
     target_link_libraries(${name} ${GTEST_LIBRARY} gtest_main)
     target_include_directories(${name} PUBLIC ${GTEST_INCLUDE_DIRS})
+    # get_property(test_location TARGET ${name} PROPERTY LOCATION)
+    # file(GENERATE OUTPUT ${PROJECT_BINARY_DIR}/test_list.sh CONTENT $<TARGET_FILE:${name}> )
+    add_custom_command(TARGET ${name} POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E echo $<TARGET_FILE:${name}> >> ${PROJECT_BINARY_DIR}/test_list.sh)
 endfunction()

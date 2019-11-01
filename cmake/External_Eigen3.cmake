@@ -10,8 +10,6 @@ ExternalProject_Add(
 
 ExternalProject_Get_Property(eigen_ext source_dir)
 ExternalProject_Get_Property(eigen_ext binary_dir)
-message(EIGEN SOURCE DIR = ${source_dir})
-message(EIGEN BINARY DIR = ${binary_dir})
 set(EIGEN3_INCLUDE_DIRS ${source_dir})
 set(EIGEN_INCLUDE_DIR ${source_dir})
 set(EIGEN_INCLUDE_DIRS ${source_dir})
