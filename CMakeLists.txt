@@ -11,9 +11,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 include(ExternalProject)
 include(cmake/External_Eigen3.cmake)
 include(cmake/External_GTest.cmake)
-include(cmake/External_GFlags.cmake)
-include(cmake/External_GLog.cmake)
-include(cmake/External_Ceres.cmake)
+# include(cmake/External_GFlags.cmake)
+# include(cmake/External_GLog.cmake)
+# include(cmake/External_Ceres.cmake)
 include(cmake/GTestRule.cmake)
 
 
