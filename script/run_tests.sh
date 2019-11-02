@@ -32,7 +32,7 @@ while read p; do
       #FAILED_TESTS+=($p)
       #echo FAILED
   #fi 
-done < build/test_list.sh
+done < build/test_list
 
 if [ $EXIT_CODE -eq 0 ]; then
   echo_green "All tests passed!"
