@@ -8,13 +8,13 @@ stages:
 job 1:
   stage: build
   before_script:
-    - git submodule update --init --recursive
     - mkdir -p build
     - cd build
   script: 
     - cmake .. -DCMAKE_BUILD_TYPE=Release
     - make
-    - ./scratch/gitlab_ci/gitlab_ci_example
+    - cd ..
+    - ./script/run_tests.sh
   after_script:
     - cd $CI_BUILDS_DIR
     
