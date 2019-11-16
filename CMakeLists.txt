@@ -19,3 +19,5 @@ include(cmake/GTestRule.cmake)
 
 # Project Code
 add_subdirectory(scratch)
+
+add_subdirectory(utils)
