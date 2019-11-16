@@ -27,7 +27,7 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
 #elif defined(LOGGING_LEVEL_FATAL)
 #define LOGGING_LEVEL LoggingLevel::FATAL;
 #else
-#define LOGGING_LEVEL LoggingLevel::DEBUG
+#define LOGGING_LEVEL LoggingLevel::INFO
 #endif
 
 std::fstream nullstream("/dev/null", std::ofstream::out | std::ofstream::app);
@@ -94,10 +94,9 @@ class RedStream : public std::ostream
         std::cout << s;
         return *this;
     }
-}
+};
 
-std::ostream&
-LOG(const LoggingLevel& level)
+std::ostream& LOG(const LoggingLevel& level)
 {
     if (level >= LOGGING_LEVEL)
     {

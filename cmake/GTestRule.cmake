@@ -15,6 +15,7 @@ function(add_gtest name)
     )
     add_executable(${name} ${PARSED_ARGS_SRCS})
     target_link_libraries(${name} ${GTEST_LIBRARY} gtest_main)
+    target_link_libraries(${name} ${PARSED_ARGS_DEPS})
     target_include_directories(${name} PUBLIC ${GTEST_INCLUDE_DIRS})
     add_custom_command(TARGET ${name} POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E echo $<TARGET_FILE:${name}> >> ${PROJECT_BINARY_DIR}/run_tests && chmod +x ${PROJECT_BINARY_DIR}/run_tests)
