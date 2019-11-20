@@ -1,3 +1,5 @@
+#pragma once
+
 #include "client/parsers/eph.h"
 
 class GPSEphemeris : public KeplerianEphemeris
