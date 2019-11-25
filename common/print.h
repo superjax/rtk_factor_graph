@@ -27,10 +27,8 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
 #elif defined(LOGGING_LEVEL_FATAL)
 #define LOGGING_LEVEL LoggingLevel::FATAL;
 #else
-#define LOGGING_LEVEL LoggingLevel::INFO
+#define LOGGING_LEVEL LoggingLevel::DEBUG
 #endif
-
-std::fstream nullstream("/dev/null", std::ofstream::out | std::ofstream::app);
 
 #define print(level, fmt, ...)                                        \
     if ((level) >= LOGGING_LEVEL)                                     \
@@ -82,28 +80,3 @@ std::fstream nullstream("/dev/null", std::ofstream::out | std::ofstream::app);
     {                                                                       \
         printMagenta("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
     }
-
-class RedStream : public std::ostream
-{
-    RedStream() { std::cout << ANSI_COLOR_RED; }
-    ~RedStream() { std::cout << ANSI_COLOR_RESET; }
-
-    template <typename T>
-    RedStream& operator<<(const T& s)
-    {
-        std::cout << s;
-        return *this;
-    }
-};
-
-std::ostream& LOG(const LoggingLevel& level)
-{
-    if (level >= LOGGING_LEVEL)
-    {
-        return std::cout;
-    }
-    else
-    {
-        return nullstream;
-    }
-}

@@ -242,11 +242,41 @@ void UTCTime::wrapNsec()
     }
 }
 
+// static time_t epoch_tm(tm* _Tm)
+// {
+//     auto t = mktime(_Tm);
+//     return t + (mktime(localtime(&t)) - mktime(gmtime(&t)));
+// }
+
+UTCTime UTCTime::fromCalendar(int year, int month, int day, int hour, int minute, double sec)
+{
+    tm gtime;
+    gtime.tm_year = year - 1900;
+    gtime.tm_mon = month - 1;
+    gtime.tm_mday = day;
+    gtime.tm_hour = hour;
+    gtime.tm_min = minute;
+    gtime.tm_sec = std::floor(sec);
+
+    time_t epoch_time = timegm(&gtime);
+    int64_t nsec = std::round(1e9 * (sec - std::floor(sec)));
+    return UTCTime((int64_t)epoch_time, nsec);
+}
+#include <iostream>
+std::string UTCTime::str() const
+{
+    time_t time(sec);
+    tm* date = gmtime(&time);
+
+    std::stringstream ss;
+    ss << 1900 + date->tm_year << "/" << 1 + date->tm_mon << "/" << date->tm_mday << " "
+       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec;
+
+    return ss.str();
+}
+
 std::ostream& operator<<(std::ostream& os, const UTCTime& t)
 {
-    double sec = (t.sec % UTCTime::SEC_IN_WEEK) + t.nsec * 1e-9;
-    int week = std::floor(t.sec / UTCTime::SEC_IN_WEEK);
-
     time_t time(t.sec);
     tm* date = gmtime(&time);
 
