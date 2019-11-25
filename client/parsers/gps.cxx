@@ -2,6 +2,7 @@
 #include "client/parsers/bit_tools.h"
 #include "common/print.h"
 
+
 GPSEphemeris::GPSEphemeris(int sat_id)
 {
     gnssID = GnssID::GPS;
@@ -63,6 +64,7 @@ bool GPSEphemeris::parse(const uint8_t* buf, size_t size)
 
     dbg("Got all subframes");
 
+
     // Set toe and toc
     toe = UTCTime::fromGPS(week, toes * 1000);
     toc = UTCTime::fromGPS(week, tocs * 1000);
@@ -115,6 +117,7 @@ bool GPSEphemeris::frame2(const uint8_t* buf)
         return false;
     }
     dbg("GOT FRAME 2");
+
     iode = getBit<8>(buf, 48);
     crs = getBit<16, Signed>(buf, 56) * P2_5;
     delta_n = getBit<16, Signed>(buf, 72) * P2_43 * PI;

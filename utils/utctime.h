@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <ctime>
 #include <ostream>
+#include <sstream>
 
 class UTCTime
 {
@@ -15,8 +16,11 @@ class UTCTime
     static constexpr uint64_t E9 = 1000000000;
     static constexpr uint64_t E6 = 1000000;
 
-    static constexpr int SEC_IN_WEEK = 7 * 24 * 60 * 60;  // 604800
-    static constexpr int SEC_IN_DAY = 24 * 60 * 60;       // 86400
+    static constexpr int SEC_IN_HOUR = 60 * 60;                // 3600
+    static constexpr int SEC_IN_DAY = 24 * SEC_IN_HOUR;        // 86400
+    static constexpr int SEC_IN_WEEK = 7 * SEC_IN_DAY;         // 604800
+    static constexpr int SEC_IN_YEAR = 365 * SEC_IN_DAY;       // 31536000
+    static constexpr int SEC_IN_LEAP_YEAR = 366 * SEC_IN_DAY;  // 31622400
 
     static constexpr int64_t LEAP_SECONDS = 18;   // GPS time does not have leap seconds, UNIX does
                                                   // (as of 1/1/2017 - next one is probably in 2020
@@ -70,6 +74,7 @@ class UTCTime
 
     static UTCTime fromGPS(int week, int tow_ms);
     static UTCTime fromGlonass(int week, int tow_ms);
+    static UTCTime fromCalendar(int year, int month, int day, int hour, int minute, double sec);
 
     // This function takes a reference time (in UTC) and computes
     // the closest UTC Time using the supplied tod_ms in Glonass time
@@ -79,6 +84,8 @@ class UTCTime
 
     static UTCTime fromGalileo(int week, int tow_ms);
     //    static UTCTime fromBeidou(int week, int tow_ms);
+
+    std::string str() const;
 
     int week() const;
     int GpsWeek() const;
