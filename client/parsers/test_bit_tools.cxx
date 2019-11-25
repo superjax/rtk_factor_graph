@@ -160,3 +160,27 @@ TEST(GetBitsSigned, RealData)
 
     EXPECT_EQ(out, -975996415);
 }
+
+#include <cmath>
+TEST(GetBitsSigned, RealData2)
+{
+    uint8_t buf[] = {
+        0x8,  0x4a, 0x59, 0xa6, 0xb8, 0x2f, 0x27, 0x11,
+        0x77, 0x67, 0x4e, 0xea, 0xf7, 0xcd, 0xfd, 0x0,
+    };
+
+    int16_t bits = getBit<14, Signed>(buf, 112);
+    EXPECT_EQ(bits, -192);
+}
+
+TEST(GetBitsSigned, RealData3)
+{
+    uint8_t buf[] = {
+        0x10, 0x4a, 0x4c, 0x0, 0x20, 0x0, 0x6d, 0x1e, 0x4f, 0xff, 0xe6, 0x74, 0x20, 0x0, 0xfd, 0x0,
+    };
+    double output = 1.98952e-13 * pow(2, 46) / M_PI;
+    printf("output = %d\n", output);
+
+    int32_t bits = getBit<21, Signed>(buf, 99);
+    EXPECT_EQ(bits, 253);
+}

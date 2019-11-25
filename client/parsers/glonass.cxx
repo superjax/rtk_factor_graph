@@ -1,6 +1,7 @@
 #include "client/parsers/glonass.h"
 #include "client/parsers/bit_tools.h"
 #include "common/print.h"
+#include "utils/crc.h"
 
 constexpr double GlonassEphemeris::FREQ1_GLO;
 constexpr double GlonassEphemeris::DFRQ1_GLO;
@@ -34,6 +35,14 @@ bool GlonassEphemeris::parse(const uint8_t* msg, const size_t size)
         }
         p += 4;
     }
+
+    // Check the Hamming Code
+    if (!gloTest(buf))
+    {
+        dbg("GLONASS failed Hamming code check");
+        return false;
+    }
+
     int frame_num = getBit<4>(buf, 1);
 
     // We only care about strings [1-4]
