@@ -32,7 +32,6 @@ bool GPSEphemeris::parse(const uint8_t* buf, size_t size)
         return false;
     }
 
-    bool success = true;
     switch (id)
     {
     case 1:
@@ -90,7 +89,7 @@ bool GPSEphemeris::frame1(const uint8_t* buf)
     health = getBit<6>(buf, 64);
     uint8_t iodc0 = getBit<2>(buf, 70);
     L2_P_data_flag = getBit<1>(buf, 72);
-    int tgd = getBit<8, Signed>(buf, 160);
+    int _tgd = getBit<8, Signed>(buf, 160);
     iode = getBit<8>(buf, 168);
     tocs = getBit<16>(buf, 176) * 16.0;
     af2 = getBit<8, Signed>(buf, 192) * P2_55;
@@ -99,7 +98,7 @@ bool GPSEphemeris::frame1(const uint8_t* buf)
 
     alert_flag = 0;  // TODO: populate
 
-    tgd = tgd == -128 ? 0.0 : tgd * P2_31;
+    tgd = _tgd == -128 ? 0.0 : _tgd * P2_31;
     iodc = (iodc0 << 8) + iode;
     week = week_mod + UTCTime::GPS_WEEK_ROLLOVER;
 

@@ -13,8 +13,8 @@ class UTCTime
     int64_t sec;  // time since Jan 1 1970 (with leap-seconds)
     int64_t nsec;
 
-    static constexpr uint64_t E9 = 1000000000;
-    static constexpr uint64_t E6 = 1000000;
+    static constexpr int64_t E9 = 1000000000;
+    static constexpr int64_t E6 = 1000000;
 
     static constexpr int SEC_IN_HOUR = 60 * 60;                // 3600
     static constexpr int SEC_IN_DAY = 24 * SEC_IN_HOUR;        // 86400

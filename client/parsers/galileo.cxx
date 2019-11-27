@@ -11,6 +11,7 @@ GalileoEphemeris::GalileoEphemeris(int sat_id)
 
 bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
 {
+    (void)size;
     // swap buffer endianness
     uint8_t buf[64];
     const uint8_t* p = msg;
@@ -111,6 +112,8 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
     case 5:
         frame5(buf);
         break;
+    default:
+        return false;
     }
 
     if (collected_subframes != (FRAME0 | FRAME1 | FRAME2 | FRAME3 | FRAME4 | FRAME5))
@@ -143,6 +146,11 @@ bool GalileoEphemeris::frame0(const uint8_t* buf)
     time_f = getBit<2>(buf, 6);
     week = getBit<12>(buf, 96);
     tow = getBit<20>(buf, 108);
+    if (type != 0)
+    {
+        dbg("Galileo word type 0 error : expected=0, got %d", type);
+        return false;
+    }
     collected_subframes |= FRAME0;
     return true;
 }

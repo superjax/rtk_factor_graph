@@ -77,5 +77,9 @@ bool gloTest(const uint8_t *buf)
         if (crc)
             ++n;
     }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
     return n == 0 || (n == 2 && crc);
+#pragma GCC diagnostic pop
 }

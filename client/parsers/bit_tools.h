@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 
 enum
 {
@@ -64,8 +65,7 @@ typename TypeHelper<Sign, len>::type getBit(const unsigned char *buf, const int 
         static constexpr tempType one = 1;
         if (ret & (one << (len - 1)))
         {
-            static constexpr tempType zero = 0;
-            return (retType)(ret | (~zero << len));
+            return (retType)(ret | (std::numeric_limits<tempType>::max() << len));
         }
     }
     return ret;
@@ -109,26 +109,29 @@ typename TypeHelper<Sign, 32>::type getBit(const unsigned char *buf, const int p
         static constexpr tempType one = 1;
         if (ret & (one << (len - 1)))
         {
-            static constexpr tempType zero = 0;
-            return (retType)(ret | (~zero << len));
+            return (retType)(ret | (std::numeric_limits<tempType>::max() << len));
         }
     }
     return ret;
 }
 
 template <int len, int Sign = Unsigned, int byteOrder = SwitchByteOrder>
-void setBit(unsigned char *buff, const int pos, const unsigned data)
+void setBit(uint8_t *buf, const int pos, const unsigned data)
 {
-    typedef typename TypeHelper<Unsigned, len + 8>::type tempType;
-    static constexpr tempType mask = len == 64 ? 0xFFFFFFFF : (1ul << len) - 1ul;
-    size_t last_bit = pos + len - 1;
     static_assert(len <= 64 && len > 0);
     static_assert(byteOrder == SwitchByteOrder, "KeepByteOrder Not implemented");
+    typedef typename TypeHelper<Unsigned, len + 8>::type tempType;
+    static constexpr tempType mask = len == 64 ? 0xFFFFFFFF : (1ul << len) - 1ul;
+    const size_t last_bit = pos + len - 1;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#pragma GCC diagnostic ignored "-Winit-self"
+#ifndef __clang_analyzer__
     tempType m = data & mask;
     tempType wmask = ~(mask << (7 - (last_bit & 7)));
     m <<= (7 - (last_bit & 7));
-    uint8_t *p = buff + last_bit / 8;
+    uint8_t *p = buf + last_bit / 8;
     int i = (last_bit & 7) + 1;
     (*p &= wmask) |= m;
     while (i < len)
@@ -138,16 +141,18 @@ void setBit(unsigned char *buff, const int pos, const unsigned data)
         (*(--p) &= wmask) |= m;
         i += 8;
     }
+#endif
+#pragma GCC diagnostic pop
 }
 
 template <int Sign = Unsigned, int byteOrder = SwitchByteOrder>
 void setBit(unsigned char *buff, const int pos, const unsigned data, const int len)
 {
+    static_assert(byteOrder == SwitchByteOrder, "KeepByteOrder Not implemented");
+    // static_assert(len <= 64 && len > 0);
     typedef typename TypeHelper<Unsigned, 64>::type tempType;
     tempType mask = len == 64 ? 0xFFFFFFFF : (1ul << len) - 1ul;
     size_t last_bit = pos + len - 1;
-    // static_assert(len <= 64 && len > 0);
-    static_assert(byteOrder == SwitchByteOrder, "KeepByteOrder Not implemented");
 
     tempType m = data & mask;
     tempType wmask = ~(mask << (7 - (last_bit & 7)));

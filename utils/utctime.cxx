@@ -1,7 +1,7 @@
 #include "utils/utctime.h"
 
-constexpr uint64_t UTCTime::E9;
-constexpr uint64_t UTCTime::E6;
+constexpr int64_t UTCTime::E9;
+constexpr int64_t UTCTime::E6;
 constexpr int UTCTime::SEC_IN_WEEK;
 constexpr int UTCTime::SEC_IN_DAY;
 constexpr int64_t UTCTime::LEAP_SECONDS;

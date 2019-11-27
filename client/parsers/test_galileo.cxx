@@ -49,12 +49,12 @@ TEST(Galileo, ParseKnown)
             EXPECT_EQ(eph.toe.nsec, 0);
             EXPECT_EQ(eph.toc.nsec, 0);
 
-            EXPECT_EQ(eph.tow, 326912);
-            EXPECT_EQ(eph.iodc, 74);
-            EXPECT_EQ(eph.iode, 74);
-            EXPECT_EQ(eph.week, 2078);
-            EXPECT_EQ(eph.toes, 274800);
-            EXPECT_EQ(eph.tocs, 274800);
+            EXPECT_EQ(eph.tow, 326912u);
+            EXPECT_EQ(eph.iodc, 74u);
+            EXPECT_EQ(eph.iode, 74u);
+            EXPECT_EQ(eph.week, 2078u);
+            EXPECT_EQ(eph.toes, 274800u);
+            EXPECT_EQ(eph.tocs, 274800u);
 
             EXPECT_NEAR(eph.af2, 0, 1e-9);
             EXPECT_NEAR(eph.af1, 3.59534e-12, 1e-17);
@@ -147,4 +147,5 @@ TEST(Galileo, CompareRTKLIB)
         }
     }
     EXPECT_TRUE(finished);
+    EXPECT_EQ(rtklib_result, 1);
 }
