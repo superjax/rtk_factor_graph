@@ -25,7 +25,6 @@ TEST(SO3, exp)
 
 TEST(SO3, exp_log_inverses)
 {
-    // Check that qexp is right by comparing with matrix exp and axis-angle
     for (int i = 0; i < NUM_ITERS; i++)
     {
         Vec3 omega;

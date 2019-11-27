@@ -36,5 +36,5 @@
 #define MATRIX_CLOSE_AMG_SIGN(m1, m2, tol)                                           \
     {                                                                                \
         double sign = (std::signbit(m1(0, 0)) == std::signbit(m2(0, 0))) ? 1. : -1.; \
-        MATRIX_CLOSE(m1, sign * (m2), tol);                                                \
+        MATRIX_CLOSE(m1, sign*(m2), tol);                                            \
     }
