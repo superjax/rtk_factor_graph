@@ -157,7 +157,7 @@ bool GlonassEphemeris::frame5(const uint8_t* buf)
 {
     // dbg("Gal Frame 5");
     NA_ = getBit<11>(buf, 5);
-    int tau_c = getBit<32>(buf, 16);
+    // int tau_c = getBit<32>(buf, 16);
     N4_ = getBit<5>(buf, 49);
     // int tau_ops = getBit<22>(buf, 54);
     // int l_n = getBit<1>(buf, 76);

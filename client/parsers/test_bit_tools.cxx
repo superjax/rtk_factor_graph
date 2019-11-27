@@ -73,7 +73,7 @@ TEST(SetBits, Aligned)
 
     setBit<16>(buf, 0, data);
 
-    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x25F1);
+    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x25F1u);
 }
 
 TEST(SetBits, HalfAlignedStart)
@@ -84,7 +84,7 @@ TEST(SetBits, HalfAlignedStart)
 
     setBit<16>(buf, 4, data);
 
-    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x50120F);
+    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x50120fu);
 }
 
 TEST(SetBits, HalfAlignedEnd)
@@ -95,7 +95,7 @@ TEST(SetBits, HalfAlignedEnd)
     uint32_t data = 0xF125B7;
     setBit<20>(buf, 0, data);
 
-    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x705b12);
+    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x705b12u);
 }
 
 TEST(SetBits, HalfAlignedBoth)
@@ -106,7 +106,7 @@ TEST(SetBits, HalfAlignedBoth)
 
     setBit<32>(buf, 4, data);
 
-    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x7c5b120f);
+    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0x7c5b120fu);
 }
 
 TEST(SetBits, UnalignedBoth)
@@ -117,7 +117,7 @@ TEST(SetBits, UnalignedBoth)
 
     setBit<32>(buf, 3, data);
 
-    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0xf9b6241e);
+    EXPECT_EQ(*(reinterpret_cast<uint32_t *>(buf)), 0xf9b6241eu);
 }
 
 TEST(GetBitsSigned, Aligned)
@@ -161,7 +161,6 @@ TEST(GetBitsSigned, RealData)
     EXPECT_EQ(out, -975996415);
 }
 
-#include <cmath>
 TEST(GetBitsSigned, RealData2)
 {
     uint8_t buf[] = {
@@ -178,9 +177,6 @@ TEST(GetBitsSigned, RealData3)
     uint8_t buf[] = {
         0x10, 0x4a, 0x4c, 0x0, 0x20, 0x0, 0x6d, 0x1e, 0x4f, 0xff, 0xe6, 0x74, 0x20, 0x0, 0xfd, 0x0,
     };
-    double output = 1.98952e-13 * pow(2, 46) / M_PI;
-    printf("output = %d\n", output);
-
     int32_t bits = getBit<21, Signed>(buf, 99);
     EXPECT_EQ(bits, 253);
 }

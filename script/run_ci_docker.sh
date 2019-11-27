@@ -6,15 +6,17 @@ if [ -z "$1" ]
     exit 1
 fi
 
-docker pull rikorose/gcc-cmake:gcc-8
-docker run -i -t 170b4e52c2fa /bin/bash -c "cd /home;\
+#docker pull ci:latest
+docker run -i -t ci:latest /bin/bash -c "cd /home;\
+sudo apt update;\
+sudo apt install -y clang-tools;\
 git clone https://gitlab.com/globalai/repo.git;\
-git checkout ${1};\
 cd repo;\
+git checkout ${1};\
 mkdir build;\
 cd build;\
-cmake .. -DCMAKE_BUILD_TYPE=Release;\
-make -j12 -l12;\
+scan-build cmake .. -DCMAKE_BUILD_TYPE=Release;\
+scan-build make -j4 -l4;\
 cd ..;\
 script/run_tests.sh"
 

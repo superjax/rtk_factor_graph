@@ -161,7 +161,7 @@ extern double timediff(gtime_t t1, gtime_t t2)
 extern gtime_t epoch2time(const double *ep)
 {
     const int doy[]={1,32,60,91,121,152,182,213,244,274,305,335};
-    gtime_t time={0};
+    gtime_t time={};
     int days,sec,year=(int)ep[0],mon=(int)ep[1],day=(int)ep[2];
 
     if (year<1970||2099<year||mon<1||12<mon) return time;
@@ -215,6 +215,8 @@ extern int satno(int sys, int prn)
             if (prn<MINPRNSBS||MAXPRNSBS<prn) return 0;
             return NSATGPS+NSATGLO+NSATGAL+NSATQZS+NSATCMP+NSATIRN+NSATLEO+
                    prn-MINPRNSBS+1;
+        default:
+            return 0;
     }
     return 0;
 }
@@ -223,7 +225,7 @@ extern int satno(int sys, int prn)
 extern int decode_gal_inav(const unsigned char *buff, eph_t *eph)
 {
     double tow,toc,tt,sqrtA;
-    int i,time_f,week,svid,e5b_hs,e1b_hs,e5b_dvs,e1b_dvs,type[6],iod_nav[4];
+    int i,time_f,week,e5b_hs,e1b_hs,e5b_dvs,e1b_dvs,type[6],iod_nav[4];
 
     i=0; /* word type 0 */
     type[0]    =getbitu(buff,i, 6);              i+= 6;
@@ -261,7 +263,7 @@ extern int decode_gal_inav(const unsigned char *buff, eph_t *eph)
     i=128*4; /* word type 4 */
     type[4]    =getbitu(buff,i, 6);              i+= 6;
     iod_nav[3] =getbitu(buff,i,10);              i+=10;
-    svid       =getbitu(buff,i, 6);              i+= 6;
+    /*svid       =getbitu(buff,i, 6);*/          i+= 6;
     eph->cic   =getbits(buff,i,16)*P2_29;        i+=16;
     eph->cis   =getbits(buff,i,16)*P2_29;        i+=16;
     toc        =getbitu(buff,i,14)*60.0;         i+=14;

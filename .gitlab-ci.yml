@@ -1,5 +1,5 @@
 default:
-  image: rikorose/gcc-cmake:gcc-8
+    image: superjax/ci:latest
 
 stages:
   - build
@@ -11,8 +11,8 @@ job 1:
     - mkdir -p build
     - cd build
   script: 
-    - cmake .. -DCMAKE_BUILD_TYPE=Release
-    - make
+    - scan-build cmake .. -DCMAKE_BUILD_TYPE=Release
+    - scan-build make
     - cd ..
     - ./script/run_tests.sh
   after_script:
