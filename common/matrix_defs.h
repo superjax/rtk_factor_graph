@@ -35,6 +35,10 @@ inline Eigen::Matrix<typename Derived::Scalar, 3, 3> skew(const Eigen::MatrixBas
     static_assert(Derived::RowsAtCompileTime == 3 || Derived::RowsAtCompileTime == -1);
     Eigen::Matrix<typename Derived::Scalar, 3, 3> mat;
     typename Derived::Scalar zr(0.0);
-    mat << zr, -v(2), v(1), v(2), zr, -v(0), -v(1), v(0), zr;
+    // clang-format off
+    mat << zr, -v(2), v(1),
+           v(2), zr, -v(0),
+          -v(1), v(0), zr;
+    // clang-format on
     return mat;
 }

@@ -54,6 +54,7 @@ class SO3
     Vec3 log() const
     {
         // https://math.stackexchange.com/questions/83874/efficient-and-accurate-numerical-implementation-of-the-inverse-rodrigues-rotatio
+        // and the quat.h file for the third case, because ^ doesn't always work
         const double t = rot_.trace();
         static constexpr double eps = 1e-8;
 
