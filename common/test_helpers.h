@@ -29,6 +29,9 @@
 #define SO3_EQUALS(r1, r2) MATRIX_EQUALS((r1).matrix(), (r2).matrix())
 #define SO3_CLOSE(r1, r2, tol) MATRIX_CLOSE((r1).matrix(), (r2).matrix(), tol)
 
+#define SE3_EQUALS(T1, T2) MATRIX_EQUALS((T1).matrix(), (T2).matrix())
+#define SE3_CLOSE(T1, T2, tol) MATRIX_CLOSE((T1).matrix(), (T2).matrix(), tol)
+
 //  Check if m1 == m2 or m1 == -m2 (sign is ambiguous)
 #define MATRIX_CLOSE_AMG_SIGN(m1, m2, tol)                                           \
     {                                                                                \
