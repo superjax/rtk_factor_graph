@@ -13,8 +13,11 @@
         }                                                         \
     }
 
-#define QUATERNION_EQUALS(q1, q2) \
-    MATRIX_CLOSE((q1).arr_, (sign((q2).w()) * sign((q1).w())) * (q2).arr_, 1e-8)
+#define QUATERNION_EQUALS(q1, q2)                                                          \
+    {                                                                                      \
+        const double sign = (std::signbit((q1).w()) == std::signbit((q2).w())) ? 1. : -1.; \
+        MATRIX_CLOSE((q1).arr_, sign*((q2).arr_), 1e-8)                                    \
+    }
 
 #define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE(v1, v2, 1e-8)
 
@@ -22,9 +25,12 @@
     MATRIX_EQUALS((t1).t(), (t2).t()); \
     QUATERNION_EQUALS((t1).q(), (t2).q())
 
-#define TRANSFORM_CLOSE(t1, t2, tol)                                                 \
-    MATRIX_CLOSE(t1.q_.arr_, (sign(t2.q_.w()) * sign(t1.q_.w())) * t2.q_.arr_, tol); \
-    MATRIX_CLOSE(t1.t_, t2.t_, tol)
+#define TRANSFORM_CLOSE(t1, t2, tol)                                                           \
+    {                                                                                          \
+        const double sign = (std::signbit((t1).q().w()) == std::signbit((t2).q().w())) ? 1. : -1.; \
+        MATRIX_CLOSE((t1).q_.arr_, sign*((t2).q_.arr_), tol);                                  \
+        MATRIX_CLOSE((t1).t_, (t2).t_, tol)                                                    \
+    }
 
 #define SO3_EQUALS(r1, r2) MATRIX_EQUALS((r1).matrix(), (r2).matrix())
 #define SO3_CLOSE(r1, r2, tol) MATRIX_CLOSE((r1).matrix(), (r2).matrix(), tol)

@@ -8,3 +8,5 @@ add_dependencies(test_so3 eigen_ext)
 add_gtest(test_se3 SRCS test_se3.cxx)
 add_dependencies(test_se3 eigen_ext)
 
+add_gtest(test_quat SRCS test_quat.cxx)
+add_dependencies(test_quat eigen_ext)
