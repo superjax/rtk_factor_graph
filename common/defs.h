@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 
 struct GnssID
@@ -12,3 +14,9 @@ struct GnssID
         Glonass = 6
     };
 };
+
+template <typename T>
+T sign(T in)
+{
+    return static_cast<T>((in >= 0) - (in < 0));
+}

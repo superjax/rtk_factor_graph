@@ -22,6 +22,7 @@ include(cmake/StrictCompilation.cmake)
 
 # Project Code
 add_subdirectory(scratch)
+add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(client)
 
