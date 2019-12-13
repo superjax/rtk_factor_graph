@@ -17,13 +17,14 @@ class SE3
     using Mat3 = Eigen::Matrix<T, 3, 3>;
     using Vec6 = Eigen::Matrix<T, 6, 1>;
 
- private:
-    Mat4 mat_;
-
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    SE3() { mat_.setIdentity(); }
+    SE3()
+    {
+        r_.matrix().setIdentity();
+        t_.setZero();
+    }
 
     SE3(const Mat4& arr) : r_(arr.template block<3, 3>(0, 0)), t_(arr.template block<3, 1>(0, 3)) {}
     SE3(const SO3<T>& rot, const Vec3& t) : r_(rot), t_(t) {}
