@@ -25,11 +25,13 @@ template <typename Derived1, typename Derived2>
             if (fabs(a(row, col) - b(row, col)) > tol)
             {
                 return ::testing::AssertionFailure()
-                       << a_expr << " and " << b_expr << " are not within " << tol_expr << "\n"
+                       << "element (" << row << "," << col << ") of " << a_expr << " and " << b_expr
+                       << " is not within " << tol_expr << "\n"
                        << a_expr << ": \n"
                        << a << "\n"
                        << b_expr << ": \n"
                        << b << "\n"
+                       << "error: " << fabs(a(row, col) - b(row, col)) << "\n"
                        << "tol: " << tol;
             }
         }
