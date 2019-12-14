@@ -17,11 +17,9 @@ class Quat
 
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Quat() : arr_(buf_)
-    {
-        arr_.setZero();
-        arr_(0) = (T)1.0;
-    }
+    Quat() : buf_{1, 0, 0, 0}, arr_(buf_) {}
+
+    Quat(const T& w, const T& x, const T& y, const T& z) : buf_{w, x, y, z}, arr_(buf_) {}
 
     Quat(const Eigen::Ref<const Vec4> arr) : arr_(const_cast<T*>(arr.data())) {}
 
@@ -31,15 +29,19 @@ class Quat
 
     Quat(const T& roll, const T& pitch, const T& yaw) : arr_(buf_)
     {
-        T cp = cos(roll / 2.0);
-        T ct = cos(pitch / 2.0);
-        T cs = cos(yaw / 2.0);
-        T sp = sin(roll / 2.0);
-        T st = sin(pitch / 2.0);
-        T ss = sin(yaw / 2.0);
+        const T cp = cos(roll / 2.0);
+        const T ct = cos(pitch / 2.0);
+        const T cs = cos(yaw / 2.0);
+        const T sp = sin(roll / 2.0);
+        const T st = sin(pitch / 2.0);
+        const T ss = sin(yaw / 2.0);
 
-        arr_ << cp * ct * cs + sp * st * ss, sp * ct * cs - cp * st * ss,
-            cp * st * cs + sp * ct * ss, cp * ct * ss - sp * st * cs;
+        // clang-format off
+        arr_ << cp * ct * cs + sp * st * ss,
+                sp * ct * cs - cp * st * ss,
+                cp * st * cs + sp * ct * ss,
+                cp * ct * ss - sp * st * cs;
+        // clang-format on
     }
 
     inline T* data() { return arr_.data(); }
@@ -65,10 +67,12 @@ class Quat
     }
     Quat& operator*=(const Quat& q)
     {
+        // clang-format off
         arr_ << w() * q.w() - x() * q.x() - y() * q.y() - z() * q.z(),
-            w() * q.x() + x() * q.w() + y() * q.z() - z() * q.y(),
-            w() * q.y() - x() * q.z() + y() * q.w() + z() * q.x(),
-            w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
+                w() * q.x() + x() * q.w() + y() * q.z() - z() * q.y(),
+                w() * q.y() - x() * q.z() + y() * q.w() + z() * q.x(),
+                w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
+        // clang-format on
         return *this;
     }
 
@@ -85,19 +89,6 @@ class Quat
     }
 
     template <typename T2>
-    Eigen::Matrix<T, 3, 1> operator-(const Quat<T2>& q) const
-    {
-        return boxminus(q);
-    }
-
-    static Eigen::Matrix<T, 3, 3> skew(const Vec3& v)
-    {
-        static Eigen::Matrix<T, 3, 3> skew_mat;
-        skew_mat << (T)0.0, -v(2), v(1), v(2), (T)0.0, -v(0), -v(1), v(0), (T)0.0;
-        return skew_mat;
-    }
-
-    template <typename T2>
     Quat<T2> cast() const
     {
         Quat<T2> q;
@@ -107,38 +98,43 @@ class Quat
 
     static Quat exp(const Vec3& v)
     {
-        T norm_v = v.norm();
+        const T norm_v = v.norm();
 
-        Quat q;
-        if (norm_v > 1e-4)
+        if (norm_v > (T)4e-6)
         {
-            T v_scale = sin(norm_v / 2.0) / norm_v;
-            q.arr_ << cos(norm_v / 2.0), v_scale * v(0), v_scale * v(1), v_scale * v(2);
+            const T v_scale = sin(norm_v / 2.0) / norm_v;
+            return Quat(cos(norm_v / 2.0), v_scale * v(0), v_scale * v(1), v_scale * v(2));
         }
         else
         {
-            q.arr_ << (T)1.0, v(0) / 2.0, v(1) / 2.0, v(2) / 2.0;
-            q.arr_ /= q.arr_.norm();
+            // Use Taylor series
+            const T norm_v2 = norm_v * norm_v;
+            const T norm_v4 = norm_v2 * norm_v2;
+            const T v_scale = 0.5 - norm_v2 / 48.0 + norm_v4 / 3840.0;
+            Quat q(cos(norm_v / 2.0), v_scale * v(0), v_scale * v(1), v_scale * v(2));
+            q.normalize();
+            return q;
         }
-        return q;
     }
 
-    static Vec3 log(const Quat& q)
+    Vec3 log() const
     {
-        Vec3 v = q.arr_.template block<3, 1>(1, 0);
-        T w = q.w();
-        T norm_v = v.norm();
+        const auto v = arr_.template block<3, 1>(1, 0);
+        const T norm_v = v.norm();
 
-        Vec3 out;
-        if (norm_v < (T)1e-8)
+        if (norm_v > (T)4e-6)
         {
-            out.setZero();
+            return (T)2.0 * atan2(norm_v, w()) * v / norm_v;
         }
         else
         {
-            out = (T)2.0 * atan2(norm_v, w) * v / norm_v;
+            // Use Taylor series of arctan(x/w)/norm_v
+            const T norm_v2 = norm_v * norm_v;
+            const T norm_v4 = norm_v2 * norm_v2;
+            const T w3 = w() * w() * w();
+            const T w5 = w3 * w() * w();
+            return (T)2.0 * v * (1. / w() - norm_v2 / (3. * w3) + norm_v4 / (5. * w5));
         }
-        return out;
     }
 
     static Quat from_R(const Eigen::Matrix<T, 3, 3>& m)
@@ -203,27 +199,9 @@ class Quat
 
     static Quat from_two_unit_vectors(const Vec3& u, const Vec3& v)
     {
-        Quat q_out;
-
-        T d = u.dot(v);
-        if (d < 0.99999999 && d > -0.99999999)
-        {
-            T invs = 1.0 / sqrt((2.0 * (1.0 + d)));
-            Vec3 xyz = u.cross(v * invs);
-            q_out.arr_(0) = 0.5 / invs;
-            q_out.arr_.template block<3, 1>(1, 0) = xyz;
-            q_out.arr_ /= q_out.arr_.norm();
-        }
-        else if (d < -0.99999999)
-        {
-            q_out.arr_ << (T)0, (T)1, (T)0,
-                (T)0;  // There are an infinite number of solutions here, choose one
-        }
-        else
-        {
-            q_out.arr_ << (T)1, (T)0, (T)0, (T)0;
-        }
-        return q_out;
+        const T cos_theta = u.dot(v);
+        const Vec3 axis = u.cross(v).normalized();
+        return from_axis_angle(axis, -acos(cos_theta));
     }
 
     static Quat Identity()
