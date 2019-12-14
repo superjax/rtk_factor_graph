@@ -1,25 +1,50 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <cmath>
 
-#define MATRIX_CLOSE(m1, m2, tol)                                 \
-    {                                                             \
-        for (int row = 0; row < (m1).rows(); row++)               \
-        {                                                         \
-            for (int col = 0; col < (m1).cols(); col++)           \
-            {                                                     \
-                EXPECT_NEAR((m1)(row, col), (m2)(row, col), tol); \
-            }                                                     \
-        }                                                         \
+template <typename Derived1, typename Derived2>
+::testing::AssertionResult matrixClose(const char* a_expr,
+                                       const char* b_expr,
+                                       const char* tol_expr,
+                                       const Derived1& a,
+                                       const Derived2& b,
+                                       const double tol)
+{
+    if (a.rows() != b.rows() || a.cols() != b.cols())
+    {
+        return ::testing::AssertionFailure()
+               << a_expr << " and " << b_expr << " are not the same size \n"
+               << a_expr << ": " << a.rows() << "x" << a.cols() << "\n"
+               << b_expr << ": " << b.rows() << "x" << b.cols();
     }
+    for (typename Derived1::Index row = 0; row < a.rows(); ++row)
+    {
+        for (typename Derived1::Index col = 0; col < b.cols(); ++col)
+        {
+            if (fabs(a(row, col) - b(row, col)) > tol)
+            {
+                return ::testing::AssertionFailure()
+                       << a_expr << " and " << b_expr << " are not within " << tol_expr << "\n"
+                       << a_expr << ": \n"
+                       << a << "\n"
+                       << b_expr << ": \n"
+                       << b << "\n"
+                       << "tol: " << tol;
+            }
+        }
+    }
+    return ::testing::AssertionSuccess();
+}
+
+#define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, m1, m2, tol);
+#define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE(v1, v2, 1e-8)
 
 #define QUATERNION_EQUALS(q1, q2)                                                          \
     {                                                                                      \
         const double sign = (std::signbit((q1).w()) == std::signbit((q2).w())) ? 1. : -1.; \
         MATRIX_CLOSE((q1).arr_, sign*((q2).arr_), 1e-8)                                    \
     }
-
-#define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE(v1, v2, 1e-8)
 
 #define TRANSFORM_EQUALS(t1, t2)       \
     MATRIX_EQUALS((t1).t(), (t2).t()); \
