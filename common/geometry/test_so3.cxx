@@ -13,9 +13,8 @@ TEST(SO3, rotation_direction)
 {
     // Compare against a known active and passive rotation
 
-    Vec3 beta;
-    beta << 1, 0, 0;
-    SO3<double> R_x_45 = SO3<double>::from_axis_angle(beta, 45.0 * M_PI / 180.0);
+    const Vec3 beta(1, 0, 0);
+    const SO3<double> R_x_45 = SO3<double>::from_axis_angle(beta, 45.0 * M_PI / 180.0);
     Mat3 R_true;
     // clang-format off
     R_true << 1.0000000, 0.0000000,            0.0000000,
@@ -24,18 +23,17 @@ TEST(SO3, rotation_direction)
     // clang-format on
     MATRIX_EQUALS(R_x_45.matrix(), R_true);
 
-    Vec3 v, v_active_rotated, v_passive_rotated;
-    v << 0, 0, 1;
-    v_active_rotated << 0, -1.0 * std::pow(0.5, 0.5), std::pow(0.5, 0.5);
-    Vec3 v_x_45 = R_x_45.rota(v);
+    const Vec3 v(0, 0, 1);
+    const Vec3 v_active_rotated(0, -1.0 * std::pow(0.5, 0.5), std::pow(0.5, 0.5));
+    const Vec3 v_x_45 = R_x_45.rota(v);
 
     MATRIX_EQUALS(v_x_45, v_active_rotated);
     MATRIX_EQUALS(R_x_45.transpose() * v, v_active_rotated);
     MATRIX_EQUALS(R_true.transpose() * v, v_active_rotated);
     MATRIX_EQUALS(v_x_45, v_active_rotated);
 
-    v_passive_rotated << 0, std::pow(0.5, 0.5), std::pow(0.5, 0.5);
-    Vec3 v_x_45_T = R_x_45.rotp(v);
+    const Vec3 v_passive_rotated(0, std::pow(0.5, 0.5), std::pow(0.5, 0.5));
+    const Vec3 v_x_45_T = R_x_45.rotp(v);
 
     MATRIX_EQUALS(v_x_45_T, v_passive_rotated);
     MATRIX_EQUALS(R_x_45 * v, v_passive_rotated);
@@ -60,7 +58,7 @@ TEST(SO3, from_two_unit_vectors)
         }
         v1 /= v1.norm();
         v2 /= v2.norm();
-        SO3<double> R = SO3<double>::from_two_unit_vectors(v1, v2);
+        const SO3<double> R = SO3<double>::from_two_unit_vectors(v1, v2);
         MATRIX_EQUALS(R.rotp(v1), v2);
         MATRIX_EQUALS(R.rota(v2), v1);
     }
@@ -83,9 +81,9 @@ TEST(SO3, exp)
             // omega close to +/-pi
             omega *= pow(-1, i) * 1e-6 + M_PI / omega.norm();
         }
-        Mat3 R_omega_exp = skew(omega).exp();
-        SO3<double> R_exp(R_omega_exp);
-        SO3<double> R_ours = SO3<double>::exp(omega);
+        const Mat3 R_omega_exp = skew(omega).exp();
+        const SO3<double> R_exp(R_omega_exp);
+        const SO3<double> R_ours = SO3<double>::exp(omega);
         SO3_EQUALS(R_exp, R_ours);
     }
 }
@@ -112,9 +110,9 @@ TEST(SO3, exp_log_inverses)
             // Really close to Pi (just above)
             omega = (M_PI + 1e-8) * omega.normalized();
         }
-        Mat3 R_omega_exp = skew(omega).exp();
-        SO3<double> R_exp(R_omega_exp);
-        SO3<double> R_ours = SO3<double>::exp(omega);
+        const Mat3 R_omega_exp = skew(omega).exp();
+        const SO3<double> R_exp(R_omega_exp);
+        const SO3<double> R_ours = SO3<double>::exp(omega);
 
         MATRIX_CLOSE_AMG_SIGN((SO3<double>::exp(omega)).log(), omega, 1e-7);
         EXPECT_NEAR((SO3<double>::exp(omega)).log().norm(), omega.norm(), 1e-7);
@@ -126,7 +124,7 @@ TEST(SO3, random)
 {
     for (int i = 0; i < NUM_ITERS; ++i)
     {
-        SO3<double> random = SO3<double>::Random();
+        const SO3<double> random = SO3<double>::Random();
         EXPECT_NEAR(random.matrix().determinant(), 1.0, 1e-8);
     }
 }
@@ -136,8 +134,8 @@ TEST(SO3, orthonormalize)
     for (int i = 0; i < NUM_ITERS; ++i)
     {
         SO3<double> R = SO3<double>::Random();
-        int row = rand() % 4;
-        int col = rand() % 4;
+        const int row = rand() % 4;
+        const int col = rand() % 4;
         if (row != 3)
         {
             R.matrix().row(row) += 1e-3 * Vec3::Random();
@@ -163,14 +161,13 @@ static Vec3 operator-(const SO3<double>& R1, const SO3<double>& R2)
 
 TEST(SO3, boxplus_rules)
 {
-    Vec3 delta1, delta2, zeros;
-    zeros.setZero();
+    const Vec3 zeros = Vec3::Zero();
     for (int i = 0; i < NUM_ITERS; i++)
     {
-        SO3<double> R1 = SO3<double>::Random();
-        SO3<double> R2 = SO3<double>::Random();
-        delta1.setRandom();
-        delta2.setRandom();
+        const SO3<double> R1 = SO3<double>::Random();
+        const SO3<double> R2 = SO3<double>::Random();
+        const Vec3 delta1 = Vec3::Random();
+        const Vec3 delta2 = Vec3::Random();
 
         SO3_EQUALS(R1 + zeros, R1);
         SO3_EQUALS(R1 + (R2 - R1), R2);

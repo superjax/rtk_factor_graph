@@ -25,11 +25,11 @@
     MATRIX_EQUALS((t1).t(), (t2).t()); \
     QUATERNION_EQUALS((t1).q(), (t2).q())
 
-#define TRANSFORM_CLOSE(t1, t2, tol)                                                           \
-    {                                                                                          \
+#define TRANSFORM_CLOSE(t1, t2, tol)                                                               \
+    {                                                                                              \
         const double sign = (std::signbit((t1).q().w()) == std::signbit((t2).q().w())) ? 1. : -1.; \
-        MATRIX_CLOSE((t1).q_.arr_, sign*((t2).q_.arr_), tol);                                  \
-        MATRIX_CLOSE((t1).t_, (t2).t_, tol)                                                    \
+        MATRIX_CLOSE((t1).q_.arr_, sign*((t2).q_.arr_), tol);                                      \
+        MATRIX_CLOSE((t1).t_, (t2).t_, tol)                                                        \
     }
 
 #define SO3_EQUALS(r1, r2) MATRIX_EQUALS((r1).matrix(), (r2).matrix())

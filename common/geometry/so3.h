@@ -39,18 +39,18 @@ class SO3
 
     static SO3 exp(const Vec3& w)
     {
-        const double th2 = w.squaredNorm();
+        const T th2 = w.squaredNorm();
 
-        double a, b;
+        T a, b;
         if (th2 < 4e-6)
         {
-            const double th4 = th2 * th2;
+            const T th4 = th2 * th2;
             a = 1 - 1. / 6. * th2 + 1. / 120. * th4;
             b = 0.5 - 1. / 24. * th2 + 1. / 720. * th4;
         }
         else
         {
-            const double th = sqrt(th2);
+            const T th = sqrt(th2);
             a = sin(th) / th;
             b = (1 - cos(th)) / th2;
         }
@@ -65,8 +65,8 @@ class SO3
     {
         // https://math.stackexchange.com/questions/83874/efficient-and-accurate-numerical-implementation-of-the-inverse-rodrigues-rotatio
         // and the quat.h file for the third case, because ^ doesn't always work
-        const double t = rot_.trace();
-        static constexpr double eps = 1e-8;
+        const T t = rot_.trace();
+        static constexpr T eps = 1e-8;
 
         // clang-format off
         const Vec3 r(rot_(2,1) - rot_(1,2),
@@ -80,7 +80,7 @@ class SO3
         }
         else if (3. - eps > t && t > -1. + eps)
         {
-            const double theta = std::acos((t - 1.) / 2.);
+            const T theta = std::acos((t - 1.) / 2.);
             return (theta / (2. * std::sin(theta))) * r;
         }
         else  // theta close to Pi
@@ -90,25 +90,25 @@ class SO3
             const Mat3& m(rot_);
             if ((m(0, 0) > m(1, 1)) && (m(0, 0) > m(2, 2)))
             {
-                double S = sqrt(1.0 + m(0, 0) - m(1, 1) - m(2, 2)) * 2.;
+                T S = sqrt(1.0 + m(0, 0) - m(1, 1) - m(2, 2)) * 2.;
                 qarr << (m(1, 2) - m(2, 1)) / S, 0.25 * S, (m(1, 0) + m(0, 1)) / S,
                     (m(2, 0) + m(0, 2)) / S;
             }
             else if (m(1, 1) > m(2, 2))
             {
-                double S = sqrt(1.0 + m(1, 1) - m(0, 0) - m(2, 2)) * 2.;
+                T S = sqrt(1.0 + m(1, 1) - m(0, 0) - m(2, 2)) * 2.;
                 qarr << (m(2, 0) - m(0, 2)) / S, (m(1, 0) + m(0, 1)) / S, 0.25 * S,
                     (m(2, 1) + m(1, 2)) / S;
             }
             else
             {
-                double S = sqrt(1.0 + m(2, 2) - m(0, 0) - m(1, 1)) * 2.;
+                T S = sqrt(1.0 + m(2, 2) - m(0, 0) - m(1, 1)) * 2.;
                 qarr << (m(0, 1) - m(1, 0)) / S, (m(2, 0) + m(0, 2)) / S, (m(2, 1) + m(1, 2)) / S,
                     0.25 * S;
             }
             auto v = qarr.tail<3>();
-            double& w = qarr[0];
-            double norm_v = v.norm();
+            T& w = qarr[0];
+            T norm_v = v.norm();
             return 2.0 * std::atan2(norm_v, w) * v / norm_v;
         }
     }
@@ -122,8 +122,8 @@ class SO3
         return SO3::exp(w);
     }
 
-    Vec3 rotp(const Vec3& v) { return rot_ * v; }
-    Vec3 rota(const Vec3& v) { return rot_.transpose() * v; }
+    Vec3 rotp(const Vec3& v) const { return rot_ * v; }
+    Vec3 rota(const Vec3& v) const { return rot_.transpose() * v; }
 
     static SO3 from_axis_angle(const Vec3& axis, const T angle)
     {
@@ -136,7 +136,7 @@ class SO3
         const Vec3 u2 = _u2.normalized();
 
         const Vec3 axis = u1.cross(u2);
-        const double c = u1.dot(u2);  // cosine of angle
+        const T c = u1.dot(u2);  // cosine of angle
 
         return exp(axis.normalized() * acos(c));
     }
