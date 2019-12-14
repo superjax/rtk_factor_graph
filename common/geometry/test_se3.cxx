@@ -21,6 +21,17 @@ Mat4 up(Vec6 u)
     return mat;
 };
 
+// TEST(SE3, known_passive_transform)
+// {
+//     Vec3 p1;
+//     p1 << 1, 0, 0;
+//     SE3<double> T_known(SO3<double>::from_axis_angle((Vec3() << 0, 0, 1).finished(), M_PI / 4.0),
+//                         (Vec3() << 1, 1, 0).finished());
+//     Vec3 p2;
+//     p2 << -sqrt(0.5), -sqrt(0.5), 0;
+//     MATRIX_EQUALS(p2, T_known * p1);
+// }
+
 TEST(SE3, exp)
 {
     // Check that qexp is right by comparing with matrix exp and axis-angle

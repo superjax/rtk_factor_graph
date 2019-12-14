@@ -65,6 +65,10 @@ class SE3
         return mat;
     }
 
+    Vec3 operator*(const Vec3& v) { return transformp(v); }
+    Vec3 transformp(const Vec3& v) { return r_ * v + t_; }
+    Vec3 transforma(const Vec3& v) { return r_.inverse() * (v - t_); }
+
     static SE3 exp(const Vec6& wu)
     {
         auto w = wu.template head<3>();

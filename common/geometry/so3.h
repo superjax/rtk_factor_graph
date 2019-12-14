@@ -8,8 +8,8 @@ template <typename T>
 class SO3
 {
  public:
-    using Vec3 = Eigen::Vector3d;
-    using Mat3 = Eigen::Matrix3d;
+    using Vec3 = Eigen::Matrix<T, 3, 1>;
+    using Mat3 = Eigen::Matrix<T, 3, 3>;
 
     SO3() = default;
     SO3(const Mat3& rot) : rot_(rot) {}
@@ -18,9 +18,8 @@ class SO3
 
     SO3 operator*(const SO3& other) const { return SO3(rot_ * other.rot_); }
     Vec3 operator*(const Vec3& v) const { return rot_ * v; }
-    SO3 operator+(const Vec3& v) const { return boxplus(v); }
-    Vec3 operator-(const SO3& other) const { return boxminus(other); }
 
+    SO3 transpose() const { return SO3(rot_.transpose()); }
     SO3 inverse() const { return SO3(rot_.transpose()); }
     SO3& rectify()
     {
@@ -41,13 +40,24 @@ class SO3
     static SO3 exp(const Vec3& w)
     {
         const double th2 = w.squaredNorm();
-        const double th = std::sqrt(th2);
-        Mat3 w_skew = skew(w);
-        Mat3 R = Mat3::Identity();
-        if (th > 1e-8)
+
+        double a, b;
+        if (th2 < 4e-6)
         {
-            R += (std::sin(th) / th) * w_skew + ((1. - std::cos(th)) / th2) * w_skew * w_skew;
+            const double th4 = th2 * th2;
+            a = 1 - 1. / 6. * th2 + 1. / 120. * th4;
+            b = 0.5 - 1. / 24. * th2 + 1. / 720. * th4;
         }
+        else
+        {
+            const double th = sqrt(th2);
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+        }
+
+        // There is redundant effort here that could be worked out.
+        const Mat3 w_skew = skew(w);
+        const Mat3 R = Mat3::Identity() + a * w_skew + b * w_skew * w_skew;
         return SO3(R);
     }
 
@@ -105,14 +115,30 @@ class SO3
 
     SO3 times(const SO3& other) const { return SO3(rot_ * other.rot_); }
 
-    SO3 boxplus(const Vec3& v) const { return this->times(exp(v)); }
-    Vec3 boxminus(const SO3& R2) const { return (R2.inverse().times(*this)).log(); }
-
     static SO3 Random()
     {
         Vec3 w;
         w.setRandom();
         return SO3::exp(w);
+    }
+
+    Vec3 rotp(const Vec3& v) { return rot_ * v; }
+    Vec3 rota(const Vec3& v) { return rot_.transpose() * v; }
+
+    static SO3 from_axis_angle(const Vec3& axis, const T angle)
+    {
+        return exp(-axis.normalized() * angle);
+    }
+
+    static SO3 from_two_unit_vectors(const Vec3& _u1, const Vec3& _u2)
+    {
+        const Vec3 u1 = _u1.normalized();
+        const Vec3 u2 = _u2.normalized();
+
+        const Vec3 axis = u1.cross(u2);
+        const double c = u1.dot(u2);  // cosine of angle
+
+        return exp(axis.normalized() * acos(c));
     }
 
  private:
