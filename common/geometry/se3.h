@@ -42,6 +42,7 @@ class SE3
     const Vec3& t() const { return t_; }
 
     SE3 operator*(const SE3& other) const { return SE3(r_ * other.r_, (r_ * other.t_) + t_); }
+
     SE3 inverse() const
     {
         const SO3<T> Rinv = r_.inverse();
@@ -65,27 +66,37 @@ class SE3
         return mat;
     }
 
-    Vec3 operator*(const Vec3& v) { return transformp(v); }
-    Vec3 transformp(const Vec3& v) { return r_ * v + t_; }
-    Vec3 transforma(const Vec3& v) { return r_.inverse() * (v - t_); }
+    Vec3 operator*(const Vec3& v) const { return transformp(v); }
+    Vec3 transformp(const Vec3& v) const { return r_ * v + t_; }
+    Vec3 transforma(const Vec3& v) const { return r_.inverse() * (v - t_); }
 
     static SE3 exp(const Vec6& wu)
     {
         auto w = wu.template head<3>();
         auto v = wu.template tail<3>();
-        const double th2 = w.squaredNorm();
-        const double th = std::sqrt(th2);
-        const double A = std::sin(th) / th;
-        const double B = ((T)1. - std::cos(th)) / th2;
-        const double C = ((T)1. - A) / th2;
-        Mat3 R = Mat3::Identity();
-        Mat3 V = Mat3::Identity();
-        Mat3 sk_w = skew(w);
-        if (th > 1e-8)
+        const T th2 = w.squaredNorm();
+
+        T a, b, c;
+        if (th2 < 4e-6)
         {
-            R += A * sk_w + B * sk_w * sk_w;
-            V += B * sk_w + C * sk_w * sk_w;
+            const T th4 = th2 * th2;
+            a = 1 - th2 / 6. + th4 / 120.;
+            b = 0.5 - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
         }
+        else
+        {
+            const T th = sqrt(th2);
+            const T st = sin(th);
+            a = st / th;
+            b = (1. - cos(th)) / th2;
+            c = (1. - a) / th2;
+        }
+
+        // There is redudancy here
+        const Mat3 sk_w = skew(w);
+        const Mat3 R = Mat3::Identity() + a * sk_w + b * sk_w * sk_w;
+        const Mat3 V = Mat3::Identity() + b * sk_w + c * sk_w * sk_w;
         return SE3(R, V * v);
     }
 
@@ -95,21 +106,17 @@ class SE3
         auto w = wv.template head<3>();
         w = r_.log();
 
-        const double th2 = w.squaredNorm();
-        const double th = std::sqrt(th2);
-        const double A = std::sin(th) / th;
-        const double B = ((T)1. - std::cos(th)) / th2;
-        const double C = ((T)1. - A) / th2;
+        const T th2 = w.squaredNorm();
+        const T th = std::sqrt(th2);
+        const T A = std::sin(th) / th;
+        const T B = ((T)1. - std::cos(th)) / th2;
+        const T C = ((T)1. - A) / th2;
 
-        double D;
+        T D;
         if (th < 1e-4)
         {
             D = (1. / 12.) + th2 * ((1. / 720.) + th2 * (1. / 30240.));
         }
-        // else if (th > M_PI - 1e-4)
-        // {
-        //     D = (B - (0.5 * A)) / (B * th2);
-        // }
         else
         {
             D = (B * 0.5 - C) / A;
@@ -122,11 +129,6 @@ class SE3
 
         return wv;
     }
-
-    SE3 operator+(const Vec6& v) const { return boxplus(v); }
-    SE3 boxplus(const Vec6& v) const { return SE3::exp(v) * (*this); }
-    Vec6 operator-(const SE3& T2) const { return boxminus(T2); }
-    Vec6 boxminus(const SE3& T2) const { return ((*this) * T2.inverse()).log(); }
 
     static SE3 Random() { return SE3(SO3<T>::Random(), Vec3::Random()); }
 
