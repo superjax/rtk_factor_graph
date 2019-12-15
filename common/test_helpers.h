@@ -48,6 +48,12 @@ template <typename Derived1, typename Derived2>
         MATRIX_CLOSE((q1).arr_, sign*((q2).arr_), 1e-8)                                    \
     }
 
+#define DQUAT_EQUALS(Q1, Q2)                         \
+    {                                                \
+        QUATERNION_EQUALS((Q1).real(), (Q2).real()); \
+        QUATERNION_EQUALS((Q1).dual(), (Q2).dual()); \
+    }
+
 #define TRANSFORM_EQUALS(t1, t2)       \
     MATRIX_EQUALS((t1).t(), (t2).t()); \
     QUATERNION_EQUALS((t1).q(), (t2).q())
