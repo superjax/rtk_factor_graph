@@ -60,6 +60,25 @@ class Quat
     inline const Vec4 elements() const { return arr_; }
     inline const T* data() const { return arr_.data(); }
 
+    Quat operator+(const Quat& q2) const
+    {
+        Quat q3;
+        q3.arr_ = arr_ + q2.arr_;
+        return q3;
+    }
+    Quat operator-(const Quat& q2) const
+    {
+        Quat q3;
+        q3.arr_ = arr_ - q2.arr_;
+        return q3;
+    }
+    Quat operator*(const T& s) const
+    {
+        Quat q3;
+        q3.arr_ = s * arr_;
+        return q3;
+    }
+
     template <typename T2>
     Quat operator*(const Quat<T2>& q) const
     {
@@ -86,6 +105,7 @@ class Quat
     Quat& operator=(Eigen::MatrixBase<Derived> const& in)
     {
         arr_ = in;
+        return *this;
     }
 
     template <typename T2>
@@ -135,6 +155,13 @@ class Quat
             const T w5 = w3 * w() * w();
             return (T)2.0 * v * (1. / w() - norm_v2 / (3. * w3) + norm_v4 / (5. * w5));
         }
+    }
+
+    static Quat make_pure(const Vec3& v)
+    {
+        Quat q;
+        q.arr_ << 0, v;
+        return q;
     }
 
     static Quat from_R(const Eigen::Matrix<T, 3, 3>& m)
@@ -391,6 +418,14 @@ inline std::ostream& operator<<(std::ostream& os, const Quat<T>& q)
 {
     os << "[ " << q.w() << ", " << q.x() << "i, " << q.y() << "j, " << q.z() << "k]";
     return os;
+}
+
+template <typename T>
+Quat<T> operator*(const T& s, const Quat<T>& q)
+{
+    Quat<T> q2;
+    q2.arr_ = q.arr_ * s;
+    return q2;
 }
 
 typedef Quat<double> Quatd;

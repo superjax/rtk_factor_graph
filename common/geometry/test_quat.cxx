@@ -228,3 +228,11 @@ TEST(Quat, log_close)
         MATRIX_EQUALS(delta, delta_recovered);
     }
 }
+
+TEST(Quat, make_pure)
+{
+    const Vec3 v = Vec3::Random();
+    const Quat<double> q_pure = Quat<double>::make_pure(v);
+    const Vec4 expected(0, v(0), v(1), v(2));
+    MATRIX_EQUALS(expected, q_pure.elements());
+}

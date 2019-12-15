@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <Eigen/Core>
-#include <unsupported/Eigen/MatrixFunctions>
 
 #include "common/geometry/so3.h"
 #include "common/matrix_defs.h"
