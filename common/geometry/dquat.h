@@ -119,6 +119,7 @@ class DQuat
         const T gm = w.dot(v);
         const T ct = cos(th / 2.0);
         T sinct, gross;
+
         if (th2 > (T)4e-6)
         {
             sinct = sin(th / 2.0) / th;
@@ -129,7 +130,7 @@ class DQuat
             // Use taylor series
             const T th4 = th2 * th2;
             sinct = 0.5 - 1. / 48. * th2 + 1. / 3840. * th4;
-            gross = -1. / 24. + 1. / 960. * th2 - 1. / 107520. * th4;
+            gross = gm * (-1. / 24. + 1. / 960. * th2 - 1. / 107520. * th4);
         }
 
         DQuat Q;
@@ -175,6 +176,17 @@ class DQuat
             // clang-format on
         }
         return wv;
+    }
+
+    Mat6 Ad() const
+    {
+        const Mat3 RT = r_.R().transpose();
+        Mat6 A;
+        A.template topLeftCorner<3, 3>() = RT;
+        A.template topRightCorner<3, 3>().setZero();
+        A.template bottomLeftCorner<3, 3>() = skew(translation()) * RT;
+        A.template bottomRightCorner<3, 3>() = RT;
+        return A;
     }
 };
 
