@@ -131,6 +131,16 @@ class SE3
 
     static SE3 Random() { return SE3(SO3<T>::Random(), Vec3::Random()); }
 
+    Mat6 Ad() const
+    {
+        Mat6 A;
+        A.template topLeftCorner<3, 3>() = r_.matrix();
+        A.template bottomRightCorner<3, 3>() = r_.matrix();
+        A.template bottomLeftCorner<3, 3>() = skew(t_) * r_.matrix();
+        A.template topRightCorner<3, 3>().setZero();
+        return A;
+    }
+
     SO3<T> r_;
     Vec3 t_;
 };

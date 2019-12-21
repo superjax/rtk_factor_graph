@@ -130,3 +130,29 @@ TEST(SE3, boxplus_rules)
         // EXPECT_LE(((T1 + delta1) - (T1 + delta2)).norm(), (delta1 - delta2).norm());
     }
 }
+
+TEST(SE3, Adjoint)
+{
+    for (int j = 0; j < NUM_ITERS; ++j)
+    {
+        constexpr double eps = 1e-8;
+        const SE3<double> T = SE3<double>::Random();
+        Mat6 fd = Mat6::Zero();
+        for (int i = 0; i < 6; ++i)
+        {
+            fd.col(i) = (T * SE3<double>::exp(Vec6::Unit(i) * eps) * T.inverse()).log() / eps;
+        }
+
+        MATRIX_CLOSE(fd, T.Ad(), 1e-3);
+    }
+}
+
+TEST(SE3, AdjointIdentities)
+{
+    const SE3<double> T = SE3<double>::Random();
+    const SE3<double> T2 = SE3<double>::Random();
+    const Vec6 v = Vec6::Random();
+
+    SE3_EQUALS(T * SE3<double>::exp(v), SE3<double>::exp(T.Ad() * v) * T);
+    MATRIX_EQUALS((T * T2).Ad(), T.Ad() * T2.Ad());
+}
