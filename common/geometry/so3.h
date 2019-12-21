@@ -141,6 +141,9 @@ class SO3
         return exp(axis.normalized() * acos(c));
     }
 
+    // SO3 is self-adjoint
+    Mat3 Ad() const { return rot_; }
+
  private:
     static void orthonormalize(Mat3& mat)
     {

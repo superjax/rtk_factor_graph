@@ -175,3 +175,30 @@ TEST(SO3, boxplus_rules)
         EXPECT_LE(((R1 + delta1) - (R1 + delta2)).norm(), (delta1 - delta2).norm());
     }
 }
+
+TEST(SO3, Adjoint)
+{
+    for (int j = 0; j < NUM_ITERS; ++j)
+    {
+        constexpr double eps = 1e-8;
+        const SO3<double> R = SO3<double>::Random();
+        Mat3 fd = Mat3::Zero();
+        for (int i = 0; i < 3; ++i)
+        {
+            fd.col(i) = (R * SO3<double>::exp(Vec3::Unit(i) * eps) * R.inverse()).log() / eps;
+        }
+
+        MATRIX_CLOSE(fd, R.Ad(), 1e-3);
+    }
+}
+
+TEST(SO3, AdjointIdentities)
+{
+    constexpr double eps = 1e-8;
+    const SO3<double> R = SO3<double>::Random();
+    const SO3<double> R2 = SO3<double>::Random();
+    const Vec3 v = Vec3::Random();
+
+    SO3_EQUALS(R * SO3<double>::exp(v), SO3<double>::exp(R.Ad() * v) * R);
+    MATRIX_EQUALS((R * R2).Ad(), R.Ad() * R2.Ad());
+}
