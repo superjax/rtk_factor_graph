@@ -411,6 +411,8 @@ class Quat
             w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
         return qout;
     }
+
+    Mat3 Ad() const { return R().transpose(); }
 };
 
 template <typename T>

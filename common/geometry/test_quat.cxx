@@ -256,14 +256,38 @@ TEST(Quat, check_dynamics)
     Vec3 v(1, 0, 0);
     const Quat<double> q_I2a = Quat<double>::from_euler(0, 0.5, 0);
     const Quat<double> q_I2b = q_I2a * Quat<double>::exp(v);
-    std::cout << "ROLL1 = " << q_I2b.roll();
-    std::cout << "PITCH1 = " << q_I2b.pitch();
-    std::cout << std::endl;
+    EXPECT_FLOAT_EQ(q_I2b.roll(), 1.0);
+    EXPECT_FLOAT_EQ(q_I2b.pitch(), 0.5);
 
     const Quat<double> q_a2I = Quat<double>::from_euler(0, -0.5, 0);
     const Quat<double> q_b2I = Quat<double>::exp(-v) * q_a2I;
 
-    std::cout << "ROLL2 = " << q_b2I.inverse().roll();
-    std::cout << "PITCH2 = " << q_b2I.inverse().pitch();
-    std::cout << std::endl;
+    EXPECT_FLOAT_EQ(q_b2I.inverse().roll(), 1.0);
+    EXPECT_FLOAT_EQ(q_b2I.inverse().pitch(), 0.5);
+}
+
+TEST(Quat, Adjoint)
+{
+    for (int j = 0; j < NUM_ITERS; ++j)
+    {
+        constexpr double eps = 1e-8;
+        const Quat<double> q = Quat<double>::Random();
+        Mat3 fd = Mat3::Zero();
+        for (int i = 0; i < 3; ++i)
+        {
+            fd.col(i) = (q * Quat<double>::exp(Vec3::Unit(i) * eps) * q.inverse()).log() / eps;
+        }
+
+        MATRIX_CLOSE(fd, q.Ad(), 1e-3);
+    }
+}
+
+TEST(Quat, AdjointIdentities)
+{
+    const Quat<double> q = Quat<double>::Random();
+    const Quat<double> q2 = Quat<double>::Random();
+    const Vec3 v = Vec3::Random();
+
+    QUATERNION_EQUALS(q * Quat<double>::exp(v), Quat<double>::exp(q.Ad() * v) * q);
+    MATRIX_EQUALS((q * q2).Ad(), q.Ad() * q2.Ad());
 }
