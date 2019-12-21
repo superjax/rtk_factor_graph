@@ -53,6 +53,20 @@ TEST(Quat, quat_rot_invrot_R)
     }
 }
 
+TEST(Quat, quat_rot_invrot_otimes)
+{
+    for (int i = 0; i < NUM_ITERS; i++)
+    {
+        const Vec3 v = Vec3::Random();
+        const Quat<double> q1 = Quat<double>::Random();
+        const Quat<double> v_pure = Quat<double>::make_pure(v);
+
+        // Check that I can use otimes to rotate a vector
+        MATRIX_EQUALS(q1.rota(v), (q1 * v_pure * q1.inverse()).bar());
+        MATRIX_EQUALS(q1.rotp(v), (q1.inverse() * v_pure * q1).bar());
+    }
+}
+
 TEST(Quat, quat_from_two_unit_vectors)
 {
     Vec3 v1, v2;
@@ -235,4 +249,21 @@ TEST(Quat, make_pure)
     const Quat<double> q_pure = Quat<double>::make_pure(v);
     const Vec4 expected(0, v(0), v(1), v(2));
     MATRIX_EQUALS(expected, q_pure.elements());
+}
+
+TEST(Quat, check_dynamics)
+{
+    Vec3 v(1, 0, 0);
+    const Quat<double> q_I2a = Quat<double>::from_euler(0, 0.5, 0);
+    const Quat<double> q_I2b = q_I2a * Quat<double>::exp(v);
+    std::cout << "ROLL1 = " << q_I2b.roll();
+    std::cout << "PITCH1 = " << q_I2b.pitch();
+    std::cout << std::endl;
+
+    const Quat<double> q_a2I = Quat<double>::from_euler(0, -0.5, 0);
+    const Quat<double> q_b2I = Quat<double>::exp(-v) * q_a2I;
+
+    std::cout << "ROLL2 = " << q_b2I.inverse().roll();
+    std::cout << "PITCH2 = " << q_b2I.inverse().pitch();
+    std::cout << std::endl;
 }
