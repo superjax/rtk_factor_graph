@@ -181,3 +181,29 @@ TEST(DQuat, log)
         MATRIX_CLOSE(w_ours, omega, 1e-8);
     }
 }
+
+TEST(DQuat, Adjoint)
+{
+    for (int j = 0; j < NUM_ITERS; ++j)
+    {
+        constexpr double eps = 1e-8;
+        const DQuat<double> q = DQuat<double>::Random();
+        Mat6 fd;
+        for (int i = 0; i < 6; ++i)
+        {
+            fd.col(i) = (q * DQuat<double>::exp(Vec6::Unit(i) * eps) * q.inverse()).log() / eps;
+        }
+
+        MATRIX_CLOSE(fd, q.Ad(), 1e-3);
+    }
+}
+
+TEST(DQuat, AdjointIdentities)
+{
+    const DQuat<double> q = DQuat<double>::Random();
+    const DQuat<double> q2 = DQuat<double>::Random();
+    const Vec6 v = Vec6::Random();
+
+    DQUAT_EQUALS(q * DQuat<double>::exp(v), DQuat<double>::exp(q.Ad() * v) * q);
+    MATRIX_EQUALS((q * q2).Ad(), q.Ad() * q2.Ad());
+}
