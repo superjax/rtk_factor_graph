@@ -7,6 +7,7 @@
 
 #include "common/geometry/quat.h"
 #include "common/matrix_defs.h"
+#include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
 
 constexpr int NUM_ITERS = 100;
@@ -99,14 +100,14 @@ TEST(Quat, from_R)
     for (int i = 0; i < NUM_ITERS; i++)
     {
         const Quat<double> q1 = Quat<double>::Random();
-        const Mat3 R = q1.R();
+        const SO3<double> R = q1.R();
         const Quat<double> qR = Quat<double>::from_R(R);
         v.setRandom();
         MATRIX_EQUALS(qR.rota(v), R.transpose() * v);
         MATRIX_EQUALS(q1.rota(v), R.transpose() * v);
         MATRIX_EQUALS(qR.rotp(v), R * v);
         MATRIX_EQUALS(q1.rotp(v), R * v);
-        MATRIX_EQUALS(R, qR.R());
+        SO3_EQUALS(R, qR.R());
         QUATERNION_EQUALS(qR, q1);
     }
 }
@@ -199,7 +200,7 @@ TEST(Quat, active_rotation_derivative)
     const Mat3 I = Mat3::Identity();
     const double epsilon = 1e-8;
 
-    const Mat3 a = -q0.R().transpose() * skew(v);  // -R(q).T * [v]
+    const Mat3 a = -(q0.R().transpose() * skew(v));  // -R(q).T * [v]
     Mat3 fd;
 
     for (int i = 0; i < 3; i++)
@@ -290,4 +291,126 @@ TEST(Quat, AdjointIdentities)
 
     QUATERNION_EQUALS(q * Quat<double>::exp(v), Quat<double>::exp(q.Ad() * v) * q);
     MATRIX_EQUALS((q * q2).Ad(), q.Ad() * q2.Ad());
+}
+
+TEST(Quat, GroupJacobians)
+{
+    const auto log_fun1 = [](const Quat<double>& x, const Quat<double>& y) { return (y * x); };
+    const auto log_fun2 = [](const Quat<double>& x, const Quat<double>& y) {
+        return (x.inverse() * y);
+    };
+    const auto log_fun3 = [](const Quat<double>& x, const Quat<double>& y) {
+        return (y * x.inverse());
+    };
+    const auto log_fun4 = [](const Quat<double>& x, const Quat<double>& y) { return (x * y); };
+
+    for (int i = 0; i < NUM_ITERS; ++i)
+    {
+        Quat<double> x = Quat<double>::Random();
+        Quat<double> y = Quat<double>::Random();
+
+        Mat3 right_jac1 = right_jac(x, log_fun1, y);
+        Mat3 right_jac2 = right_jac(x, log_fun2, y);
+        Mat3 right_jac3 = right_jac(x, log_fun3, y);
+        Mat3 right_jac4 = right_jac(x, log_fun4, y);
+
+        MATRIX_CLOSE(right_jac1, Mat3::Identity(), 1e-3);
+        MATRIX_CLOSE(right_jac2, -(x.inverse() * y).Ad().transpose(), 1e-3);
+        MATRIX_CLOSE(right_jac3, -x.Ad(), 1e-3);
+        MATRIX_CLOSE(right_jac4, y.Ad().transpose(), 1e-3);
+
+        Mat3 left_jac1 = left_jac(x, log_fun1, y);
+        Mat3 left_jac2 = left_jac(x, log_fun2, y);
+        Mat3 left_jac3 = left_jac(x, log_fun3, y);
+        Mat3 left_jac4 = left_jac(x, log_fun4, y);
+
+        MATRIX_CLOSE(left_jac1, y.Ad(), 1e-3);
+        MATRIX_CLOSE(left_jac2, -x.Ad().transpose(), 1e-3);
+        MATRIX_CLOSE(left_jac3, -(y * x.inverse()).Ad(), 1e-3);
+        MATRIX_CLOSE(left_jac4, Mat3::Identity(), 1e-3);
+    }
+}
+
+TEST(Quat, VectorJacobians)
+{
+    const auto passive = [](const Quat<double>& x, const Vec3& v) { return x.rotp(v); };
+    const auto active = [](const Quat<double>& x, const Vec3& v) { return x.rota(v); };
+
+    Quat<double> x = Quat<double>::Random();
+    Vec3 v = Vec3::Random();
+
+    Mat3 right1 = right_jac2(x, passive, v);
+    Mat3 right2 = right_jac2(x, active, v);
+
+    MATRIX_CLOSE(right1, skew(x.Ad().inverse() * v), 1e-3);
+    MATRIX_CLOSE(right2, -x.Ad() * skew(v), 1e-3);
+
+    Mat3 left1 = left_jac2(x, passive, v);
+    Mat3 left2 = left_jac2(x, active, v);
+
+    MATRIX_CLOSE(left1, x.Ad().inverse() * skew(v), 1e-3);
+    MATRIX_CLOSE(left2, -skew(x.Ad() * v), 1e-3);
+}
+
+TEST(Quat, ExpLogJacobians)
+{
+    const auto exp = [](const Vec3& v) { return Quat<double>::exp(v); };
+    const auto log = [](const Quat<double>& R) { return R.log(); };
+
+    Quat<double> R = Quat<double>::Random();
+    Vec3 v = Vec3::Random();
+
+    Mat3 exp_left = left_jac3(v, exp);
+    Mat3 jac_exp;
+    Quat<double>::exp(v, &jac_exp);
+
+    MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
+
+    Mat3 log_left = left_jac2(R, log);
+    Mat3 jac_log;
+    R.log(&jac_log);
+
+    MATRIX_CLOSE(jac_log, log_left, 1e-6);
+
+    Mat3 exp_right = right_jac3(v, exp);
+    Quat<double>::exp(v, &jac_exp);
+
+    MATRIX_CLOSE(jac_exp.transpose(), exp_right, 1e-6);
+
+    Mat3 log_right = right_jac2(R, log);
+
+    MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
+}
+
+TEST(Quat, SO3Equivalent)
+{
+    // Exp same
+    const Vec3 w = Vec3::Random();
+    Quat<double> q = Quat<double>::exp(w);
+    SO3<double> R = SO3<double>::exp(w);
+    SO3_EQUALS(q.R(), R.transpose());
+    QUATERNION_EQUALS(q, R.q().inverse());
+
+    // Log same
+    MATRIX_EQUALS(R.log(), q.log());
+    MATRIX_EQUALS(R.log(), w);
+
+    // rotate vector same
+    q = Quat<double>::Random();
+    R = q.R();
+    const Vec3 v = Vec3::Random();
+    MATRIX_EQUALS(R * v, q.rotp(v));
+    MATRIX_EQUALS(R.transpose() * v, q.rota(v));
+
+    // concanate correctly
+    const Quat<double> qa2b = Quat<double>::Random();
+    const Quat<double> qb2c = Quat<double>::Random();
+    const SO3<double> Ra2b = qa2b.R();
+    const SO3<double> Rb2c = qb2c.R();
+
+    const SO3<double> Ra2c = Rb2c * Ra2b;
+    const Quat<double> qa2c = qa2b * qb2c;
+
+    SO3_EQUALS(Ra2c, qa2c.R());
+    QUATERNION_EQUALS(Ra2c.q(), qa2c);
 }

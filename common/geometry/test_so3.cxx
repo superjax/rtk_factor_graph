@@ -5,6 +5,7 @@
 
 #include "common/geometry/so3.h"
 #include "common/matrix_defs.h"
+#include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
 
 static constexpr int NUM_ITERS = 3;
@@ -201,4 +202,97 @@ TEST(SO3, AdjointIdentities)
 
     SO3_EQUALS(R * SO3<double>::exp(v), SO3<double>::exp(R.Ad() * v) * R);
     MATRIX_EQUALS((R * R2).Ad(), R.Ad() * R2.Ad());
+}
+
+TEST(SO3, GroupJacobians)
+{
+    const auto log_fun1 = [](const SO3<double>& R1, const SO3<double>& R2) {
+        return (R2.inverse() * R1);
+    };
+    const auto log_fun2 = [](const SO3<double>& R1, const SO3<double>& R2) {
+        return (R1.inverse() * R2);
+    };
+    const auto log_fun3 = [](const SO3<double>& R1, const SO3<double>& R2) {
+        return (R2 * R1.inverse());
+    };
+    const auto log_fun4 = [](const SO3<double>& R1, const SO3<double>& R2) {
+        return (R1 * R2.inverse());
+    };
+
+    for (int i = 0; i < NUM_ITERS; ++i)
+    {
+        SO3<double> R1 = SO3<double>::Random();
+        SO3<double> R2 = SO3<double>::Random();
+
+        Mat3 right_jac1 = right_jac(R1, log_fun1, R2);
+        Mat3 right_jac2 = right_jac(R1, log_fun2, R2);
+        Mat3 right_jac3 = right_jac(R1, log_fun3, R2);
+        Mat3 right_jac4 = right_jac(R1, log_fun4, R2);
+
+        MATRIX_CLOSE(right_jac1, Mat3::Identity(), 1e-3);
+        MATRIX_CLOSE(right_jac2, -(R2.inverse() * R1).Ad(), 1e-3);
+        MATRIX_CLOSE(right_jac3, -R1.Ad(), 1e-3);
+        MATRIX_CLOSE(right_jac4, R2.Ad(), 1e-3);
+
+        Mat3 left_jac1 = left_jac(R1, log_fun1, R2);
+        Mat3 left_jac2 = left_jac(R1, log_fun2, R2);
+        Mat3 left_jac3 = left_jac(R1, log_fun3, R2);
+        Mat3 left_jac4 = left_jac(R1, log_fun4, R2);
+
+        MATRIX_CLOSE(left_jac1, R2.Ad().transpose(), 1e-3);
+        MATRIX_CLOSE(left_jac2, -R1.Ad().transpose(), 1e-3);
+        MATRIX_CLOSE(left_jac3, -(R2 * R1.inverse()).Ad(), 1e-3);
+        MATRIX_CLOSE(left_jac4, Mat3::Identity(), 1e-3);
+    }
+}
+
+TEST(SO3, VectorJacobians)
+{
+    const auto passive = [](const SO3<double>& R1, const Vec3& v) { return R1 * v; };
+    const auto active = [](const SO3<double>& R1, const Vec3& v) { return R1.inverse() * v; };
+
+    SO3<double> R = SO3<double>::Random();
+    Vec3 v = Vec3::Random();
+
+    Mat3 right1 = right_jac2(R, passive, v);
+    Mat3 right2 = right_jac2(R, active, v);
+
+    MATRIX_CLOSE(right1, -R * skew(v), 1e-3);
+    MATRIX_CLOSE(right2, skew(R.transpose() * v), 1e-3);
+
+    Mat3 left1 = left_jac2(R, passive, v);
+    Mat3 left2 = left_jac2(R, active, v);
+
+    MATRIX_CLOSE(left1, -skew(R * v), 1e-3);
+    MATRIX_CLOSE(left2, R.transpose() * skew(v), 1e-3);
+}
+
+TEST(SO3, ExpLogJacobians)
+{
+    const auto exp = [](const Vec3& v) { return SO3<double>::exp(v); };
+    const auto log = [](const SO3<double>& R) { return R.log(); };
+
+    SO3<double> R = SO3<double>::Random();
+    Vec3 v = Vec3::Random();
+
+    Mat3 exp_left = left_jac3(v, exp);
+    Mat3 jac_exp;
+    SO3<double>::exp(v, &jac_exp);
+
+    MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
+
+    Mat3 log_left = left_jac2(R, log);
+    Mat3 jac_log;
+    R.log(&jac_log);
+
+    MATRIX_CLOSE(jac_log, log_left, 1e-6);
+
+    Mat3 exp_right = right_jac3(v, exp);
+    SO3<double>::exp(v, &jac_exp);
+
+    MATRIX_CLOSE(jac_exp.transpose(), exp_right, 1e-6);
+
+    Mat3 log_right = right_jac2(R, log);
+
+    MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
 }

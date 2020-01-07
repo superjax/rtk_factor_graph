@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -27,7 +29,7 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
 #elif defined(LOGGING_LEVEL_FATAL)
 #define LOGGING_LEVEL LoggingLevel::FATAL;
 #else
-#define LOGGING_LEVEL LoggingLevel::DEBUG
+#define LOGGING_LEVEL LoggingLevel::INFO
 #endif
 
 #define print(level, fmt, ...)                                        \

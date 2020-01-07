@@ -42,3 +42,20 @@ inline Eigen::Matrix<typename Derived::Scalar, 3, 3> skew(const Eigen::MatrixBas
     // clang-format on
     return mat;
 }
+
+/// TODO: Use variadic templates to handle arbitrary number of arguments
+Eigen::MatrixXd hstack(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b)
+{
+    assert(a.rows() == b.rows() && a.rows() != 0);
+    Eigen::MatrixXd out(a.rows(), a.cols() + b.cols());
+    out << a, b;
+    return out;
+}
+
+Eigen::MatrixXd vstack(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b)
+{
+    assert(a.cols() == b.cols() && a.cols() != 0);
+    Eigen::MatrixXd out(a.rows() + b.rows(), a.cols());
+    out << a, b;
+    return out;
+}
