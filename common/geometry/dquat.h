@@ -22,6 +22,7 @@ class DQuat
     T buf_[8];
 
  public:
+    static constexpr int DOF = 6;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Eigen::Map<Vec8> arr_;
     Quat<T> r_;
@@ -139,6 +140,58 @@ class DQuat
         return Q;
     }
 
+    static DQuat exp(const Vec6& wv, Mat6* jac)
+    {
+        const auto w = wv.template head<3>();
+        const auto v = wv.template tail<3>();
+
+        const T th2 = w.squaredNorm();
+        const T th = sqrt(th2);
+        const T gm = w.dot(v);
+        const T ct = cos(th / 2.0);
+        T sinct, gross;
+
+        T a, b, c;
+        T C1, C2;
+        Mat3 A;
+        Quat<double>::exp(w, &A);
+        if (th2 > (T)4e-6)
+        {
+            sinct = sin(th / 2.0) / th;
+            gross = gm * ((0.5 * ct - sinct) / th2);
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+            c = (1 - a) / th2;
+            C1 = (a - 2 * b) / th2;
+            C2 = (b - 3 * c) / th2;
+        }
+        else
+        {
+            // Use taylor series
+            const T th4 = th2 * th2;
+            sinct = 0.5 - 1. / 48. * th2 + 1. / 3840. * th4;
+            gross = gm * (-1. / 24. + 1. / 960. * th2 - 1. / 107520. * th4);
+            a = 1 - th2 / 6. + th4 / 120.;
+            b = 0.5 - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
+            C1 = -1. / 12. + th2 / 180. - th4 / 6720.;    // (a-2b)/th2
+            C2 = -1. / 60. + th2 / 1260. - th4 / 60480.;  // (b-3c)/th2
+        }
+
+        DQuat Q;
+        Q.r_.arr_ << ct, sinct * w;
+        Q.d_.arr_ << -gm / 2.0 * sinct, (gross * w + sinct * v);
+
+        const Mat3 B = w * v.transpose() + v * w.transpose();
+        const Mat3 sk_w = skew(w);
+        const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
+        const Mat3 D = b * skew(v) + c * B + gm * C;
+
+        *jac << A, Mat3::Zero(), D, A;
+
+        return Q;
+    }
+
     Vec6 log() const
     {
         const auto r = real().bar();
@@ -178,6 +231,71 @@ class DQuat
         return wv;
     }
 
+    Vec6 log(Mat6* jac) const
+    {
+        const auto r = real().bar();
+        const auto d = dual().bar();
+        const auto r0 = real().w();
+        const auto d0 = dual().w();
+
+        const T s2 = r.squaredNorm();
+        const T gm = r.dot(d);
+
+        Vec6 wv;
+        auto w = wv.template head<3>();
+        auto v = wv.template tail<3>();
+        Mat3 Ainv;
+        w = r_.log(&Ainv);
+
+        const T th2 = w.squaredNorm();
+        const T th = sqrt(th2);
+
+        T a, b, c;
+        T C1, C2;
+        if (th2 > (T)4e-6)
+        {
+            const T s = sqrt(s2);
+            const T a1 = atan2(s, r0) / s;
+            const T b1 = gm / s2;
+            v = (T)2.0 * (a1 * d + ((r0 - a1) * b1 - d0) * r);
+
+            a = sin(th) / th;
+            b = ((T)1. - cos(th)) / th2;
+            c = ((T)1. - a) / th2;
+            C1 = (a - 2 * b) / th2;
+            C2 = (b - 3 * c) / th2;
+        }
+        else
+        {
+            const T r02 = r0 * r0;
+            const T r03 = r02 * r0;
+            const T r05 = r03 * r02;
+            const T s4 = s2 * s2;
+            const T s6 = s4 * s2;
+            const T a1 = 1. - 1. / (3. * r03) * s2 + 1. / (5. * r05) * s4;
+            const T c1 =
+                5. / 24. - 379. / 1920. * s2 + 46073. / 322560. * s4 - 127431. / 1146880. * s6;
+            v = (T)2.0 * (a1 * d + (gm * c1 - d0) * r);
+
+            const double th4 = th2 * th2;
+            a = 1 - th2 / 6. + th4 / 120.;
+            b = 0.5 - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
+            C1 = -1. / 12. + th2 / 180. - th4 / 6720.;    // (a-2b)/th2
+            C2 = -1. / 60. + th2 / 1260. - th4 / 60480.;  // (b-3c)/th2
+        }
+
+        const T gm2 = v.dot(w);
+        const Mat3 B = w * v.transpose() + v * w.transpose();
+        const Mat3 sk_w = skew(w);
+        const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
+        const Mat3 D = b * skew(v) + c * B + gm2 * C;
+
+        *jac << Ainv, Mat3::Zero(), -Ainv * D * Ainv, Ainv;
+
+        return wv;
+    }
+
     Mat6 Ad() const
     {
         const Mat3 RT = r_.R().transpose();
@@ -188,6 +306,8 @@ class DQuat
         A.template bottomRightCorner<3, 3>() = RT;
         return A;
     }
+
+    SO3<T> R() const { return r_.R(); }
 };
 
 template <typename T>

@@ -5,7 +5,11 @@
 #include <cmath>
 #include <iostream>
 
+#include "common/geometry/so3.h"
 #include "common/matrix_defs.h"
+
+template <typename T>
+class SO3;
 
 template <typename T = double>
 class Quat
@@ -16,6 +20,7 @@ class Quat
     T buf_[4];
 
  public:
+    static constexpr int DOF = 3;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Quat() : buf_{1, 0, 0, 0}, arr_(buf_) {}
 
@@ -26,6 +31,8 @@ class Quat
     Quat(const Quat& q) : arr_(buf_) { arr_ = q.arr_; }
 
     Quat(const T* data) : arr_(const_cast<T*>(data)) {}
+
+    Quat(const SO3<T>& rot) { this = Quat<T>::from_R(rot); }
 
     Quat(const T& roll, const T& pitch, const T& yaw) : arr_(buf_)
     {
@@ -137,6 +144,37 @@ class Quat
         }
     }
 
+    static Quat exp(const Vec3& w, Mat3* jac)
+    {
+        const T th2 = w.squaredNorm();
+        const T th = w.norm();
+
+        T a, b, c, s;
+        if (th > (T)4e-6)
+        {
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+            c = (1 - a) / th2;
+            s = sin(th / 2.0) / th;
+        }
+        else
+        {
+            // Use Taylor series
+            const T th4 = th2 * th2;
+            a = 1. - th2 / 6. + th4 / 120.;
+            b = 1. / 2. - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
+            s = 0.5 - th2 / 48.0 + th4 / 3840.0;
+        }
+
+        Quat q(cos(th / 2.0), s * w(0), s * w(1), s * w(2));
+        q.normalize();
+
+        *jac = a * Mat3::Identity() + b * skew(w) + c * w * w.transpose();
+
+        return q;
+    }
+
     Vec3 log() const
     {
         const auto v = arr_.template block<3, 1>(1, 0);
@@ -155,6 +193,44 @@ class Quat
             const T w5 = w3 * w() * w();
             return (T)2.0 * v * (1. / w() - norm_v2 / (3. * w3) + norm_v4 / (5. * w5));
         }
+    }
+
+    Vec3 log(Mat3* jac) const
+    {
+        const auto v = arr_.template block<3, 1>(1, 0);
+        const T norm_v = v.norm();
+
+        T th, e;
+        const Vec3 r = v / norm_v;
+        if (norm_v > (T)4e-6)
+        {
+            th = 2. * atan2(norm_v, w());
+            const T th2 = th * th;
+            const T a = sin(th) / th;
+            const T b = (1 - cos(th)) / th2;
+            const T c = (1 - a) / th2;
+            e = (b - 2 * c) / (2 * a);
+        }
+        else
+        {
+            const T n2 = norm_v * norm_v;
+            const T n3 = n2 * norm_v;
+            const T n5 = n3 * n2;
+            const T w2 = w() * w();
+            const T w3 = w2 * w();
+            const T w5 = w3 * w2;
+            th = 2. * (norm_v / w() - n3 / (3 * w3) + (n5 / 5 * w5));
+            const T th2 = th * th;
+            const T th4 = th2 * th2;
+            e = 1. / 12. + th2 / 720. + th4 / 30240.;
+        }
+
+        const Vec3 omg = th * r;
+
+        const Mat3 sk_w = skew(omg);
+        const Mat3 sk_w2 = sk_w * sk_w;
+        *jac << Mat3::Identity() - 1. / 2. * sk_w + e * sk_w2;
+        return omg;
     }
 
     static Quat make_pure(const Vec3& v)
@@ -280,7 +356,7 @@ class Quat
     }
     Eigen::VectorBlock<Eigen::Map<Vec4>, 3> bar() { return arr_.template segment<3>(1); }
 
-    Eigen::Matrix<T, 3, 3> R() const
+    SO3<T> R() const
     {
         T wx = w() * x();
         T wy = w() * y();
@@ -291,10 +367,12 @@ class Quat
         T yy = y() * y();
         T yz = y() * z();
         T zz = z() * z();
-        Eigen::Matrix<T, 3, 3> out;
-        out << 1. - 2. * yy - 2. * zz, 2. * xy + 2. * wz, 2. * xz - 2. * wy, 2. * xy - 2. * wz,
-            1. - 2. * xx - 2. * zz, 2. * yz + 2. * wx, 2. * xz + 2. * wy, 2. * yz - 2. * wx,
-            1. - 2. * xx - 2. * yy;
+        SO3<T> out;
+        // clang-format off
+        out.matrix() << 1. - 2. * yy - 2. * zz, 2. * xy + 2. * wz,      2. * xz - 2. * wy,
+                        2. * xy - 2. * wz,      1. - 2. * xx - 2. * zz, 2. * yz + 2. * wx,
+                        2. * xz + 2. * wy,      2. * yz - 2. * wx,      1. - 2. * xx - 2. * yy;
+        // clang-format on
         return out;
     }
 

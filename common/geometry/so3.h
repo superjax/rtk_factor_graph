@@ -2,22 +2,41 @@
 
 #include <Eigen/Core>
 #include <iostream>
+#include "common/geometry/quat.h"
 #include "common/matrix_defs.h"
+
+template <typename T>
+class Quat;
 
 template <typename T>
 class SO3
 {
  public:
+    static constexpr int DOF = 3;
     using Vec3 = Eigen::Matrix<T, 3, 1>;
     using Mat3 = Eigen::Matrix<T, 3, 3>;
 
     SO3() = default;
     SO3(const Mat3& rot) : rot_(rot) {}
+    SO3(const Quat<T>& q) : rot_(q.R()) {}
 
     static SO3 identity() { return SO3(Mat3::Identity()); }
 
+    operator Eigen::Matrix<T, 3, 3>() const { return rot_; }
+    operator Eigen::MatrixXd() const { return rot_; }
+
     SO3 operator*(const SO3& other) const { return SO3(rot_ * other.rot_); }
-    Vec3 operator*(const Vec3& v) const { return rot_ * v; }
+
+    // TODO: It'd be awesome to return the matrix expression, rather than a matrix so Eigen can
+    // optimize through a rotation
+    template <typename Derived>
+    const Eigen::Matrix<typename Derived::Scalar, 3, Derived::ColsAtCompileTime> operator*(
+        const Eigen::MatrixBase<Derived>& m) const
+    {
+        return rot_ * m;
+    }
+
+    SO3 operator-() const { return SO3(-rot_); }
 
     SO3 transpose() const { return SO3(rot_.transpose()); }
     SO3 inverse() const { return SO3(rot_.transpose()); }
@@ -58,6 +77,34 @@ class SO3
         // There is redundant effort here that could be worked out.
         const Mat3 w_skew = skew(w);
         const Mat3 R = Mat3::Identity() + a * w_skew + b * w_skew * w_skew;
+        return SO3(R);
+    }
+
+    static SO3 exp(const Vec3& w, Mat3* jac)
+    {
+        const T th2 = w.squaredNorm();
+
+        T a, b, c;
+        if (th2 < 4e-6)
+        {
+            const T th4 = th2 * th2;
+            a = 1. - th2 / 6. + th4 / 120.;
+            b = 1. / 2. - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
+        }
+        else
+        {
+            const T th = sqrt(th2);
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+            c = (1 - a) / th2;
+        }
+
+        // There is redundant effort here that could be worked out (same as above)
+        const Mat3 w_skew = skew(w);
+        const Mat3 R = Mat3::Identity() + a * w_skew + b * w_skew * w_skew;
+
+        *jac = a * Mat3::Identity() + b * w_skew + c * w * w.transpose();
         return SO3(R);
     }
 
@@ -113,6 +160,80 @@ class SO3
         }
     }
 
+    Vec3 log(Mat3* jac) const
+    {
+        // https://math.stackexchange.com/questions/83874/efficient-and-accurate-numerical-implementation-of-the-inverse-rodrigues-rotatio
+        // and the quat.h file for the third case, because ^ doesn't always work
+        const T t = rot_.trace();
+        static constexpr T eps = 1e-8;
+
+        // clang-format off
+        const Vec3 r(rot_(2,1) - rot_(1,2),
+                     rot_(0,2) - rot_(2,0),
+                     rot_(1,0) - rot_(0,1));
+        // clang-format on
+
+        Vec3 w;
+        T a, b, c;
+        if (t >= 3.0 - eps)  // Theta close to zero
+        {
+            const T th = std::acos((t - 1.) / 2.);
+            const T th2 = th * th;
+            const T th4 = th2 * th2;
+            a = 1. - th2 / 6. + th4 / 120.;
+            b = 1. / 2. - th2 / 24. + th4 / 720.;
+            c = 1. / 6. - th2 / 120. + th4 / 5040.;
+            w = (1. / 2. - (t - 3.) / (12.)) * r;
+        }
+        else if (3. - eps > t && t > -1. + eps)
+        {
+            const T th = std::acos((t - 1.) / 2.);
+            const T th2 = th * th;
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+            c = (1 - a) / th2;
+            w = (th / (2. * std::sin(th))) * r;
+        }
+        else  // theta close to Pi
+        {
+            // First, go to quaternion, then compute the axis-angle
+            Vec4 qarr;
+            const Mat3& m(rot_);
+            if ((m(0, 0) > m(1, 1)) && (m(0, 0) > m(2, 2)))
+            {
+                T S = sqrt(1.0 + m(0, 0) - m(1, 1) - m(2, 2)) * 2.;
+                qarr << (m(1, 2) - m(2, 1)) / S, 0.25 * S, (m(1, 0) + m(0, 1)) / S,
+                    (m(2, 0) + m(0, 2)) / S;
+            }
+            else if (m(1, 1) > m(2, 2))
+            {
+                T S = sqrt(1.0 + m(1, 1) - m(0, 0) - m(2, 2)) * 2.;
+                qarr << (m(2, 0) - m(0, 2)) / S, (m(1, 0) + m(0, 1)) / S, 0.25 * S,
+                    (m(2, 1) + m(1, 2)) / S;
+            }
+            else
+            {
+                T S = sqrt(1.0 + m(2, 2) - m(0, 0) - m(1, 1)) * 2.;
+                qarr << (m(0, 1) - m(1, 0)) / S, (m(2, 0) + m(0, 2)) / S, (m(2, 1) + m(1, 2)) / S,
+                    0.25 * S;
+            }
+            auto v = qarr.tail<3>();
+            T& qo = qarr[0];
+            const T norm_v = v.norm();
+            const T th = std::atan2(norm_v, qo);
+            const T th2 = th * th;
+            a = sin(th) / th;
+            b = (1 - cos(th)) / th2;
+            c = (1 - a) / th2;
+            w = 2.0 * th * v / norm_v;
+        }
+        const T e = (b - 2 * c) / (2 * a);
+        const Mat3 sk_w = skew(w);
+        *jac = Mat3::Identity() - 1. / 2. * sk_w + e * sk_w * sk_w;
+
+        return w;
+    }
+
     SO3 times(const SO3& other) const { return SO3(rot_ * other.rot_); }
 
     static SO3 Random()
@@ -144,6 +265,8 @@ class SO3
     // SO3 is self-adjoint
     Mat3 Ad() const { return rot_; }
 
+    Quat<T> q() const { return Quat<T>::from_R(rot_); }
+
  private:
     static void orthonormalize(Mat3& mat)
     {
@@ -154,3 +277,15 @@ class SO3
     }
     Mat3 rot_;
 };
+
+template <typename T, typename Derived>
+auto operator*(const Eigen::MatrixBase<Derived>& m, const SO3<T>& R)
+{
+    return m * R.matrix();
+}
+
+std::ostream& operator<<(std::ostream& os, const SO3<double>& r)
+{
+    os << r.matrix();
+    return os;
+}
