@@ -3,8 +3,9 @@ project(globalai)
 
 
 # Project-Wide Settings
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+include(cmake/Options.cmake)
+include(cmake/CleanRule.cmake)
+include(cmake/CompileFlags.cmake)
 
 include(cmake/CleanRule.cmake)
 
@@ -17,8 +18,6 @@ include(cmake/External_GTest.cmake)
 # include(cmake/External_Ceres.cmake)
 include(cmake/GTestRule.cmake)
 
-# Strict C++ compilation
-include(cmake/StrictCompilation.cmake)
 
 # Project Code
 add_subdirectory(scratch)

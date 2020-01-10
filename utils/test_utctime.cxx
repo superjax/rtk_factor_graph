@@ -5,6 +5,23 @@
 TEST(Time, Now)
 {
     std::cout << "now: " << UTCTime::now() << std::endl;
+    std::cout << "now: " << UTCTime::now().str() << std::endl;
+}
+
+TEST(Time, Wrap)
+{
+    UTCTime t = UTCTime::now();
+    UTCTime t2 = t;
+    t2.nsec += UTCTime::E9;
+    t2.wrapNsec();
+    EXPECT_EQ(t + 1, t2);
+}
+
+TEST(Time, FromSeconds)
+{
+    UTCTime t1(12345.6789);
+    UTCTime t2(12345, 678900000);
+    EXPECT_EQ(t1, t2);
 }
 
 TEST(Time, CompareSec)
@@ -54,7 +71,13 @@ TEST(Time, Plus)
 
     EXPECT_EQ(t2.sec, 1564005746);
     EXPECT_EQ(t2.nsec, 100001234);
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
+
+    t2 = t + 1;
+    t += 1;
+    EXPECT_EQ(t2.sec, 1564005747);
+    EXPECT_EQ(t2.nsec, 100001234);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, PlusWrap)
@@ -65,7 +88,7 @@ TEST(Time, PlusWrap)
 
     EXPECT_EQ(t2.sec, 1564005750);
     EXPECT_EQ(t2.nsec, int64_t(0.1 * 1e9));
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, Minus)
@@ -76,7 +99,13 @@ TEST(Time, Minus)
 
     EXPECT_EQ(t2.sec, 1564005746);
     EXPECT_EQ(t2.nsec, int64_t(0.4 * 1e9));
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
+
+    t2 = t - 1;
+    t -= 1;
+    EXPECT_EQ(t2.sec, 1564005745);
+    EXPECT_EQ(t2.nsec, 400000000);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, MinusWrap)
@@ -87,7 +116,7 @@ TEST(Time, MinusWrap)
 
     EXPECT_EQ(t2.sec, 1564005742);
     EXPECT_EQ(t2.nsec, int64_t(0.9 * 1e9));
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, AddWrap)
@@ -99,7 +128,7 @@ TEST(Time, AddWrap)
 
     EXPECT_EQ(t2.sec, 1564005750);
     EXPECT_EQ(t2.nsec, int64_t(0.1 * 1e9));
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, SubtractWrap)
@@ -111,7 +140,7 @@ TEST(Time, SubtractWrap)
 
     EXPECT_EQ(t2.sec, 1564005742);
     EXPECT_EQ(t2.nsec, int64_t(0.9 * 1e9));
-    EXPECT_TRUE(t2 == t);
+    EXPECT_EQ(t2, t);
 }
 
 TEST(Time, getGPSWeek)
@@ -121,6 +150,7 @@ TEST(Time, getGPSWeek)
     EXPECT_EQ((t + (double)(UTCTime::LEAP_SECONDS)).GpsWeek(), 2063);  // 20 Jul 2019 23:59:42 AM
     EXPECT_EQ((t + (double)(UTCTime::LEAP_SECONDS - 1)).GpsWeek(),
               2062);  // 20 Jul 2019 23:59:41 AM
+    EXPECT_EQ(t.week(), 2585);
 }
 
 TEST(Time, getGlonassWeek)

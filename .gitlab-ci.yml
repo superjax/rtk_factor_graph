@@ -1,21 +1,27 @@
 default:
-    image: superjax/ci:latest
+    image: registry.gitlab.com/globalai/repo:latest
 
 stages:
   - build
   - test
 
-job 1:
+static analysis:
   stage: build
-  before_script:
+  script:
     - mkdir -p build
     - cd build
-  script: 
     - scan-build cmake .. -DCMAKE_BUILD_TYPE=Release
-    - scan-build make
-    - cd ..
-    - ./script/run_tests.sh
-  after_script:
-    - cd $CI_BUILDS_DIR
-    
+    - scan-build make -j
+    - ../script/run_tests.sh
 
+coverage:
+  stage: test
+  when: manual
+  script:
+    - mkdir -p build
+    - cd build
+    - ../script/run_coverage.sh
+  artifacts:
+    paths:
+      - build/coverage
+    expire_in: 1 week

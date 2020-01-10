@@ -56,14 +56,14 @@ class Quat
     Eigen::Map<Vec4> arr_;
 
     inline T& operator[](int i) { return arr_[i]; }
-    inline T w() const { return arr_(0); }
-    inline T x() const { return arr_(1); }
-    inline T y() const { return arr_(2); }
-    inline T z() const { return arr_(3); }
-    inline void setW(T w) { arr_(0) = w; }
-    inline void setX(T x) { arr_(1) = x; }
-    inline void setY(T y) { arr_(2) = y; }
-    inline void setZ(T z) { arr_(3) = z; }
+    inline T& w() { return arr_(0); }
+    inline T& x() { return arr_(1); }
+    inline T& y() { return arr_(2); }
+    inline T& z() { return arr_(3); }
+    inline const T& w() const { return arr_(0); }
+    inline const T& x() const { return arr_(1); }
+    inline const T& y() const { return arr_(2); }
+    inline const T& z() const { return arr_(3); }
     inline const Vec4 elements() const { return arr_; }
     inline const T* data() const { return arr_.data(); }
 

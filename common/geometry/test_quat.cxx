@@ -173,6 +173,19 @@ TEST(Quat, euler)
     }
 }
 
+TEST(Quat, euler_singularity)
+{
+    const double pitch = M_PI / 2.0;
+    Quat<double> q = Quat<double>::from_euler(0, pitch, 0);
+    q.y() += 1e-8;  // Make the quaternion invalid on purpose to see what happens
+
+    std::cout << q << std::endl;
+
+    EXPECT_NEAR(pitch, q.pitch(), 1e-8);
+    const Quat<double> q2 = Quat<double>::from_euler(q.roll(), q.pitch(), q.yaw());
+    QUATERNION_EQUALS(q, q2);
+}
+
 TEST(Quat, passive_rotation_derivative)
 {
     const Quat<double> q0 = Quat<double>::Random();

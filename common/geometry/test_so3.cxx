@@ -6,9 +6,10 @@
 #include "common/geometry/so3.h"
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
+#include "common/print.h"
 #include "common/test_helpers.h"
 
-static constexpr int NUM_ITERS = 3;
+static constexpr int NUM_ITERS = 24;
 
 TEST(SO3, rotation_direction)
 {
@@ -89,12 +90,44 @@ TEST(SO3, exp)
     }
 }
 
+Vec3 get_new_sample()
+{
+    Vec3 omega = Vec3::Random();
+    bool new_sample;
+    static int balance = 0;
+    do
+    {
+        new_sample = false;
+        Mat3 R = SO3<double>::exp(omega);
+        double R00 = R(0, 0);
+        double R11 = R(1, 1);
+        double R22 = R(2, 2);
+        switch (balance)
+        {
+        case 0:
+            new_sample = R00 > R11 && R00 > R22;
+            break;
+        case 1:
+            new_sample = R11 > R00 && R11 > R22;
+            break;
+        case 2:
+            new_sample = R22 > R00 && R22 > R11;
+            break;
+        }
+        if (!new_sample)
+        {
+            omega.setRandom();
+        }
+    } while (!new_sample);
+    balance = (balance + 1) % 3;
+    return omega;
+}
+
 TEST(SO3, exp_log_inverses)
 {
     for (int i = 0; i < NUM_ITERS; i++)
     {
-        Vec3 omega;
-        omega.setRandom();
+        Vec3 omega = get_new_sample();
 
         if (i < NUM_ITERS / 3.0)
         {
@@ -108,7 +141,7 @@ TEST(SO3, exp_log_inverses)
         }
         else if (i < 4. * NUM_ITERS / 6.)
         {
-            // Really close to Pi (just above)
+            // Really close to Pi (just above Pi)
             omega = (M_PI + 1e-8) * omega.normalized();
         }
         const Mat3 R_omega_exp = skew(omega).exp();
@@ -195,7 +228,6 @@ TEST(SO3, Adjoint)
 
 TEST(SO3, AdjointIdentities)
 {
-    constexpr double eps = 1e-8;
     const SO3<double> R = SO3<double>::Random();
     const SO3<double> R2 = SO3<double>::Random();
     const Vec3 v = Vec3::Random();
@@ -271,28 +303,46 @@ TEST(SO3, ExpLogJacobians)
 {
     const auto exp = [](const Vec3& v) { return SO3<double>::exp(v); };
     const auto log = [](const SO3<double>& R) { return R.log(); };
+    for (int i = 0; i < NUM_ITERS; ++i)
+    {
+        Vec3 v = get_new_sample();
 
-    SO3<double> R = SO3<double>::Random();
-    Vec3 v = Vec3::Random();
+        if (i < NUM_ITERS / 3)
+        {
+            // Close to zero
+            v *= 1e-6 / v.norm();
+        }
+        else if (i < 3. * NUM_ITERS / 6.0)
+        {
+            // Just above π
+            v *= (M_PI + 1e-8) / v.norm();
+        }
+        else if (i < 4. * NUM_ITERS / 6.0)
+        {
+            // Just below π
+            v *= (M_PI - 1e-8) / v.norm();
+        }
+        SO3<double> R = SO3<double>::exp(v);
 
-    Mat3 exp_left = left_jac3(v, exp);
-    Mat3 jac_exp;
-    SO3<double>::exp(v, &jac_exp);
+        Mat3 exp_left = left_jac3(v, exp);
+        Mat3 jac_exp;
+        SO3<double>::exp(v, &jac_exp);
 
-    MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
+        MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
 
-    Mat3 log_left = left_jac2(R, log);
-    Mat3 jac_log;
-    R.log(&jac_log);
+        Mat3 log_left = left_jac2(R, log);
+        Mat3 jac_log;
+        R.log(&jac_log);
 
-    MATRIX_CLOSE(jac_log, log_left, 1e-6);
+        MATRIX_CLOSE(jac_log, log_left, 1e-6);
 
-    Mat3 exp_right = right_jac3(v, exp);
-    SO3<double>::exp(v, &jac_exp);
+        Mat3 exp_right = right_jac3(v, exp);
+        SO3<double>::exp(v, &jac_exp);
 
-    MATRIX_CLOSE(jac_exp.transpose(), exp_right, 1e-6);
+        MATRIX_CLOSE(jac_exp.transpose(), exp_right, 1e-6);
 
-    Mat3 log_right = right_jac2(R, log);
+        Mat3 log_right = right_jac2(R, log);
 
-    MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
+        MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
+    }
 }
