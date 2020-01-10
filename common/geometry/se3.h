@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 #include <Eigen/Core>
 
 #include "common/geometry/so3.h"

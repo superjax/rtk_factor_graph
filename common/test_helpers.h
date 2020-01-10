@@ -7,8 +7,8 @@ template <typename Derived1, typename Derived2>
 ::testing::AssertionResult matrixClose(const char* a_expr,
                                        const char* b_expr,
                                        const char* tol_expr,
-                                       const Derived1& a,
-                                       const Derived2& b,
+                                       const Eigen::MatrixBase<Derived1>& a,
+                                       const Eigen::MatrixBase<Derived2>& b,
                                        const double tol)
 {
     if (a.rows() != b.rows() || a.cols() != b.cols())

@@ -6,7 +6,6 @@ project(globalai)
 include(cmake/Options.cmake)
 include(cmake/CleanRule.cmake)
 include(cmake/CompileFlags.cmake)
-
 include(cmake/CleanRule.cmake)
 
 # Third-Party Libraries

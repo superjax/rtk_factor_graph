@@ -267,12 +267,12 @@ class SO3
 };
 
 template <typename T, typename Derived>
-auto operator*(const Eigen::MatrixBase<Derived>& m, const SO3<T>& R)
+inline auto operator*(const Eigen::MatrixBase<Derived>& m, const SO3<T>& R)
 {
     return m * R.matrix();
 }
 
-std::ostream& operator<<(std::ostream& os, const SO3<double>& r)
+inline std::ostream& operator<<(std::ostream& os, const SO3<double>& r)
 {
     os << r.matrix();
     return os;
