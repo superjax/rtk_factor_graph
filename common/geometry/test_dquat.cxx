@@ -283,7 +283,13 @@ TEST(DQuat, ExpLogJacobians)
     for (int i = 0; i < NUM_ITERS; ++i)
     {
         DQuat<double> T = DQuat<double>::Random();
-        const Vec6 v = Vec6::Random();
+        Vec6 v = Vec6::Random();
+
+        if (i < NUM_ITERS / 3)
+        {
+            v *= 1e-6 / v.norm();
+            T = DQuat<double>::exp(v);
+        }
 
         const Mat6 exp_left = left_jac3(v, exp);
         Mat6 jac_exp;

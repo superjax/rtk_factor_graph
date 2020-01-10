@@ -102,13 +102,13 @@ UTCTime& UTCTime::operator+=(double sec_)
 UTCTime UTCTime::operator+(int sec_) const
 {
     UTCTime out;
-    out.sec = sec + std::floor(sec_);
+    out.sec = sec + sec_;
+    out.nsec = nsec;
     return out;
 }
 UTCTime& UTCTime::operator+=(int sec_)
 {
-    UTCTime out;
-    sec = sec + std::floor(sec_);
+    sec = sec + sec_;
     return *this;
 }
 
@@ -131,11 +131,11 @@ UTCTime UTCTime::operator-(int sec_) const
 {
     UTCTime out;
     out.sec = sec - sec_;
+    out.nsec = nsec;
     return out;
 }
 UTCTime& UTCTime::operator-=(int sec_)
 {
-    UTCTime out;
     sec = sec - sec_;
     return *this;
 }
@@ -242,12 +242,6 @@ void UTCTime::wrapNsec()
     }
 }
 
-// static time_t epoch_tm(tm* _Tm)
-// {
-//     auto t = mktime(_Tm);
-//     return t + (mktime(localtime(&t)) - mktime(gmtime(&t)));
-// }
-
 UTCTime UTCTime::fromCalendar(int year, int month, int day, int hour, int minute, double sec)
 {
     tm gtime;
@@ -262,7 +256,6 @@ UTCTime UTCTime::fromCalendar(int year, int month, int day, int hour, int minute
     int64_t nsec = std::round(1e9 * (sec - std::floor(sec)));
     return UTCTime((int64_t)epoch_time, nsec);
 }
-#include <iostream>
 std::string UTCTime::str() const
 {
     time_t time(sec);

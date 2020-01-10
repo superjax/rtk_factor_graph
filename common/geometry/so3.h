@@ -197,36 +197,24 @@ class SO3
         else  // theta close to Pi
         {
             // First, go to quaternion, then compute the axis-angle
-            Vec4 qarr;
-            const Mat3& m(rot_);
-            if ((m(0, 0) > m(1, 1)) && (m(0, 0) > m(2, 2)))
-            {
-                T S = sqrt(1.0 + m(0, 0) - m(1, 1) - m(2, 2)) * 2.;
-                qarr << (m(1, 2) - m(2, 1)) / S, 0.25 * S, (m(1, 0) + m(0, 1)) / S,
-                    (m(2, 0) + m(0, 2)) / S;
-            }
-            else if (m(1, 1) > m(2, 2))
-            {
-                T S = sqrt(1.0 + m(1, 1) - m(0, 0) - m(2, 2)) * 2.;
-                qarr << (m(2, 0) - m(0, 2)) / S, (m(1, 0) + m(0, 1)) / S, 0.25 * S,
-                    (m(2, 1) + m(1, 2)) / S;
-            }
-            else
-            {
-                T S = sqrt(1.0 + m(2, 2) - m(0, 0) - m(1, 1)) * 2.;
-                qarr << (m(0, 1) - m(1, 0)) / S, (m(2, 0) + m(0, 2)) / S, (m(2, 1) + m(1, 2)) / S,
-                    0.25 * S;
-            }
-            auto v = qarr.tail<3>();
-            T& qo = qarr[0];
-            const T norm_v = v.norm();
-            const T th = std::atan2(norm_v, qo);
-            const T th2 = th * th;
+            // Because the quaternion log is inverse the rotation log,
+            // we need to return the negative transpose of the quaternion jacobian
+            Quat<T> q = Quat<T>::from_R(rot_);
+            w = -q.log();
+            const T th2 = w.squaredNorm();
+            const T th = sqrt(th2);
             a = sin(th) / th;
             b = (1 - cos(th)) / th2;
             c = (1 - a) / th2;
-            w = 2.0 * th * v / norm_v;
+
+            // log_q = log_Rᵀ
+            const T e = (b - 2 * c) / (2 * a);
+            const Mat3 sk_w = skew(w);
+            *jac = -Mat3::Identity() + 1. / 2. * sk_w - e * sk_w * sk_w;
+
+            return w;
         }
+
         const T e = (b - 2 * c) / (2 * a);
         const Mat3 sk_w = skew(w);
         *jac = Mat3::Identity() - 1. / 2. * sk_w + e * sk_w * sk_w;

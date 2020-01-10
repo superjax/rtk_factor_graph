@@ -3,9 +3,9 @@
 function echo_bred    { echo -e "\033[1;31m$@\033[0m"; }
 function echo_bgreen  { echo -e "\033[1;32m$@\033[0m"; }
 function echo_bblue   { echo -e "\033[1;34m$@\033[0m"; }
-function echo_red    { echo -e "\033[0;31m$@\033[0m"; }
-function echo_green  { echo -e "\033[0;32m$@\033[0m"; }
-function echo_blue   { echo -e "\033[0;34m$@\033[0m"; }
+function echo_red     { echo -e "\033[0;31m$@\033[0m"; }
+function echo_green   { echo -e "\033[0;32m$@\033[0m"; }
+function echo_blue    { echo -e "\033[0;34m$@\033[0m"; }
 
 EXIT_CODE=0
 FAILED_TESTS=()
