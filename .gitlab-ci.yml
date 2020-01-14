@@ -10,9 +10,14 @@ static analysis:
   script:
     - mkdir -p build
     - cd build
-    - scan-build cmake .. -DCMAKE_BUILD_TYPE=Release
-    - scan-build make -j
+    - mkdir scan_results
+    - scan-build -o scan_results cmake .. -DCMAKE_BUILD_TYPE=Release
+    - scan-build -o scan_results make -j $nproc
     - ../script/run_tests.sh
+  artifacts:
+    paths:
+      - build/scan_results
+    expire_in: 1 week
 
 coverage:
   stage: test

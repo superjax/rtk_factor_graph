@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 #include <iostream>
-#include "common/geometry/quat.h"
+#include "common/math/quat.h"
 #include "common/matrix_defs.h"
 
 template <typename T>

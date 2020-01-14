@@ -4,7 +4,7 @@
 
 #include <Eigen/Core>
 
-#include "common/geometry/quat.h"
+#include "common/math/quat.h"
 #include "common/matrix_defs.h"
 #include "common/print.h"
 

@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include "common/geometry/so3.h"
+#include "common/math/so3.h"
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
 #include "common/print.h"
@@ -97,7 +97,6 @@ Vec3 get_new_sample()
     static int balance = 0;
     do
     {
-        new_sample = false;
         Mat3 R = SO3<double>::exp(omega);
         double R00 = R(0, 0);
         double R11 = R(1, 1);
@@ -112,6 +111,10 @@ Vec3 get_new_sample()
             break;
         case 2:
             new_sample = R22 > R00 && R22 > R11;
+            break;
+        default:
+            new_sample = true;
+            balance = 0;
             break;
         }
         if (!new_sample)

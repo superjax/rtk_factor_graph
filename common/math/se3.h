@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 
-#include "common/geometry/so3.h"
+#include "common/math/so3.h"
 #include "common/matrix_defs.h"
 #include "common/print.h"
 

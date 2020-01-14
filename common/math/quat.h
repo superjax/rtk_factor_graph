@@ -6,7 +6,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "common/geometry/so3.h"
+#include "common/math/so3.h"
 #include "common/matrix_defs.h"
 
 template <typename T>

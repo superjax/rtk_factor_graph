@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include "common/geometry/se3.h"
+#include "common/math/se3.h"
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"

@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 
-#include "common/geometry/dquat.h"
+#include "common/math/dquat.h"
 #include "common/matrix_defs.h"
 #include "utils/utctime.h"
 

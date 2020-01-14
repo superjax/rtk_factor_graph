@@ -5,8 +5,8 @@
 #include <Eigen/Geometry>
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include "common/geometry/dquat.h"
-#include "common/geometry/se3.h"
+#include "common/math/dquat.h"
+#include "common/math/se3.h"
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
