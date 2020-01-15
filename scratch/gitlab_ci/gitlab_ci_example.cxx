@@ -2,6 +2,4 @@
 
 #include <cstdlib>
 
-TEST (Gitlab, Example)
-{
-}
+TEST(Gitlab, Example) {}

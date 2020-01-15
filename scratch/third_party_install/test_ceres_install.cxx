@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 
-TEST (Ceres, IsInstalled)
+TEST(Ceres, IsInstalled)
 {
     ceres::Problem problem;
 }
