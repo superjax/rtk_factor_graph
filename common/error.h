@@ -35,7 +35,7 @@ class Error
         static_assert(len > 0u, "cannot create error with empty message");
         return Error(_what);
     }
-    static Error noError() { return Error(nullptr); }
+    static Error none() { return Error(nullptr); }
 
     inline bool operator==(const Error& other) const
     {

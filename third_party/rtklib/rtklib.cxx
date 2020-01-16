@@ -7,7 +7,7 @@
 
 namespace rtklib
 {
-
+#define CLIGHT      299792458.0         /* speed of light (m/s) */
 #define SC2RAD      3.1415926535898     /* semi-circle to radian (IS-GPS) */
 #define P2_5        0.03125             /* 2^-5 */
 #define P2_6        0.015625            /* 2^-6 */
@@ -38,6 +38,9 @@ namespace rtklib
 #define P2_59       1.734723475976810E-18 /* 2^-59 */
 #define P2_66       1.355252715606881E-20 /* 2^-66 for BeiDou ephemeris */
 
+#define SIN_5 -0.0871557427476582 /* sin(-5.0 deg) */
+#define COS_5  0.9961946980917456 /* cos(-5.0 deg) */
+
 #define SYS_NONE    0x00                /* navigation system: none */
 #define SYS_GPS     0x01                /* navigation system: GPS */
 #define SYS_SBS     0x02                /* navigation system: SBAS */
@@ -48,6 +51,8 @@ namespace rtklib
 #define SYS_IRN     0x40                /* navigation system: IRNS */
 #define SYS_LEO     0x80                /* navigation system: LEO */
 #define SYS_ALL     0xFF                /* navigation system: all */
+
+#define OMGE        7.2921151467E-5     /* earth angular velocity (IS-GPS) (rad/s) */
 
 #define MINPRNGPS   1                   /* min satellite PRN number of GPS */
 #define MAXPRNGPS   32                  /* max satellite PRN number of GPS */
@@ -134,7 +139,23 @@ namespace rtklib
                                         /* max satellite number (1 to MAXSAT) */
 #define MAXSTA      255
 
-#define trace(level, fmt, ...) printf(fmt, ##__VA_ARGS__);
+#define SQR(x)      ((x)*(x))
+
+
+#define MU_GPS   3.9860050E14     /* gravitational constant         ref [1] */
+#define MU_GLO   3.9860044E14     /* gravitational constant         ref [2] */
+#define MU_GAL   3.986004418E14   /* earth gravitational constant   ref [7] */
+#define MU_CMP   3.986004418E14   /* earth gravitational constant   ref [9] */
+
+#define OMGE_GLO 7.292115E-5      /* earth angular velocity (rad/s) ref [2] */
+#define OMGE_GAL 7.2921151467E-5  /* earth angular velocity (rad/s) ref [7] */
+#define OMGE_CMP 7.292115E-5      /* earth angular velocity (rad/s) ref [9] */
+
+#define RTOL_KEPLER 1E-13         /* relative tolerance for Kepler equation */
+#define MAX_ITER_KEPLER 30        /* max number of iteration of Kelpler */
+
+// #define trace(level, fmt, ...) printf(fmt, ##__VA_ARGS__);
+#define trace(level, fmt, ...)
 
 static const double gpst0[]={1980,1, 6,0,0,0}; /* gps time reference */
 static const double gst0 []={1999,8,22,0,0,0}; /* galileo system time reference */
@@ -182,6 +203,75 @@ extern gtime_t gst2time(int week, double sec)
     t.time+=(time_t)86400*7*week+(int)sec;
     t.sec=sec-(int)sec;
     return t;
+}
+
+void time2epoch(gtime_t t, double *ep)
+{
+    const int mday[]={ /* # of days in a month */
+        31,28,31,30,31,30,31,31,30,31,30,31,31,28,31,30,31,30,31,31,30,31,30,31,
+        31,29,31,30,31,30,31,31,30,31,30,31,31,28,31,30,31,30,31,31,30,31,30,31
+    };
+    int days,sec,mon,day;
+
+    /* leap year if year%4==0 in 1901-2099 */
+    days=(int)(t.time/86400);
+    sec=(int)(t.time-(time_t)days*86400);
+    for (day=days%1461,mon=0;mon<48;mon++) {
+        if (day>=mday[mon]) day-=mday[mon]; else break;
+    }
+    ep[0]=1970+days/1461*4+mon/12; ep[1]=mon%12+1; ep[2]=day+1;
+    ep[3]=sec/3600; ep[4]=sec%3600/60; ep[5]=sec%60+t.sec;
+}
+
+void time2str(gtime_t t, char *s, int n)
+{
+    double ep[6];
+
+    if (n<0) n=0; else if (n>12) n=12;
+    if (1.0-t.sec<0.5/pow(10.0,n)) {t.time++; t.sec=0.0;};
+    time2epoch(t,ep);
+    sprintf(s,"%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%0*.*f",ep[0],ep[1],ep[2],
+            ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
+}
+
+char *time_str(gtime_t t, int n)
+{
+    static char buff[64];
+    time2str(t,buff,n);
+    return buff;
+}
+
+extern int satsys(int sat, int *prn)
+{
+    int sys=SYS_NONE;
+    if (sat<=0||MAXSAT<sat) sat=0;
+    else if (sat<=NSATGPS) {
+        sys=SYS_GPS; sat+=MINPRNGPS-1;
+    }
+    else if ((sat-=NSATGPS)<=NSATGLO) {
+        sys=SYS_GLO; sat+=MINPRNGLO-1;
+    }
+    else if ((sat-=NSATGLO)<=NSATGAL) {
+        sys=SYS_GAL; sat+=MINPRNGAL-1;
+    }
+    else if ((sat-=NSATGAL)<=NSATQZS) {
+        sys=SYS_QZS; sat+=MINPRNQZS-1;
+    }
+    else if ((sat-=NSATQZS)<=NSATCMP) {
+        sys=SYS_CMP; sat+=MINPRNCMP-1;
+    }
+    else if ((sat-=NSATCMP)<=NSATIRN) {
+        sys=SYS_IRN; sat+=MINPRNIRN-1;
+    }
+    else if ((sat-=NSATIRN)<=NSATLEO) {
+        sys=SYS_LEO; sat+=MINPRNLEO-1;
+    }
+    else if ((sat-=NSATLEO)<=NSATSBS) {
+        sys=SYS_SBS; sat+=MINPRNSBS-1;
+    }
+    else sat=0;
+    if (prn) *prn=sat;
+    return sys;
 }
 
 
@@ -315,6 +405,99 @@ extern int decode_gal_inav(const unsigned char *buff, eph_t *eph)
     eph->week=week+1024; /* gal-week = gst-week + 1024 */
     eph->code =(1<<0)|(1<<9); /* data source = i/nav e1b, af0-2,toc,sisa for e5b-e1 */
     return 1;
+}
+
+double sisa_value(int sisa)
+{
+    if (sisa<= 49) return sisa*0.01;
+    if (sisa<= 74) return 0.5+(sisa- 50)*0.02;
+    if (sisa<= 99) return 1.0+(sisa- 75)*0.04;
+    if (sisa<=125) return 2.0+(sisa-100)*0.16;
+    return -1.0; /* unknown or NAPA */
+}
+
+const double ura_value[]={              /* ura max values */
+    2.4,3.4,4.85,6.85,9.65,13.65,24.0,48.0,96.0,192.0,384.0,768.0,1536.0,
+    3072.0,6144.0
+};
+
+/* variance by ura ephemeris -------------------------------------------------*/
+static double var_uraeph(int sys, int ura)
+{   if (sys==SYS_GAL)
+        return SQR(sisa_value(ura));
+    else
+        return ura<0||14<ura?SQR(6144.0):SQR(ura_value[ura]);
+}
+
+void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
+                    double *var)
+{
+    double tk,M,E,Ek,sinE,cosE,u,r,i,O,sin2u,cos2u,x,y,sinO,cosO,cosi,mu,omge;
+    double xg,yg,zg,sino,coso;
+    int n,sys,prn;
+
+    trace(4,"eph2pos : time=%s sat=%2d\n",time_str(time,3),eph->sat);
+
+    if (eph->A<=0.0) {
+        rs[0]=rs[1]=rs[2]=*dts=*var=0.0;
+        return;
+    }
+    tk=timediff(time,eph->toe);
+
+    switch ((sys=satsys(eph->sat,&prn))) {
+        case SYS_GAL: mu=MU_GAL; omge=OMGE_GAL; break;
+        case SYS_CMP: mu=MU_CMP; omge=OMGE_CMP; break;
+        default:      mu=MU_GPS; omge=OMGE;     break;
+    }
+    M=eph->M0+(sqrt(mu/(eph->A*eph->A*eph->A))+eph->deln)*tk;
+
+    for (n=0,E=M,Ek=0.0;fabs(E-Ek)>RTOL_KEPLER&&n<MAX_ITER_KEPLER;n++) {
+        Ek=E; E-=(E-eph->e*sin(E)-M)/(1.0-eph->e*cos(E));
+    }
+    if (n>=MAX_ITER_KEPLER) {
+        trace(2,"eph2pos: kepler iteration overflow sat=%2d\n",eph->sat);
+        return;
+    }
+    sinE=sin(E); cosE=cos(E);
+
+    trace(4,"kepler: sat=%2d e=%8.5f n=%2d del=%10.3e\n",eph->sat,eph->e,n,E-Ek);
+
+    u=atan2(sqrt(1.0-eph->e*eph->e)*sinE,cosE-eph->e)+eph->omg;
+    r=eph->A*(1.0-eph->e*cosE);
+    i=eph->i0+eph->idot*tk;
+    sin2u=sin(2.0*u); cos2u=cos(2.0*u);
+    u+=eph->cus*sin2u+eph->cuc*cos2u;
+    r+=eph->crs*sin2u+eph->crc*cos2u;
+    i+=eph->cis*sin2u+eph->cic*cos2u;
+    x=r*cos(u); y=r*sin(u); cosi=cos(i);
+
+    /* beidou geo satellite */
+    if (sys==SYS_CMP&&(eph->flag==2||(eph->flag==0&&prn<=5))) {
+        O=eph->OMG0+eph->OMGd*tk-omge*eph->toes;
+        sinO=sin(O); cosO=cos(O);
+        xg=x*cosO-y*cosi*sinO;
+        yg=x*sinO+y*cosi*cosO;
+        zg=y*sin(i);
+        sino=sin(omge*tk); coso=cos(omge*tk);
+        rs[0]= xg*coso+yg*sino*COS_5+zg*sino*SIN_5;
+        rs[1]=-xg*sino+yg*coso*COS_5+zg*coso*SIN_5;
+        rs[2]=-yg*SIN_5+zg*COS_5;
+    }
+    else {
+        O=eph->OMG0+(eph->OMGd-omge)*tk-omge*eph->toes;
+        sinO=sin(O); cosO=cos(O);
+        rs[0]=x*cosO-y*cosi*sinO;
+        rs[1]=x*sinO+y*cosi*cosO;
+        rs[2]=y*sin(i);
+    }
+    tk=timediff(time,eph->toc);
+    *dts=eph->f0+eph->f1*tk+eph->f2*tk*tk;
+
+    /* relativity correction */
+    *dts-=2.0*sqrt(mu*eph->A)*eph->e*sinE/SQR(CLIGHT);
+
+    /* position and clock error variance */
+    *var=var_uraeph(sys,eph->sva);
 }
 
 // clang-format on

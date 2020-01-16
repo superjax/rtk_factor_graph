@@ -15,7 +15,7 @@ TEST(Error, OnlyCreateFromConstexprCharArr)
 
 TEST(Error, NoError)
 {
-    Error none = Error::noError();
+    Error none = Error::none();
     EXPECT_TRUE(none.ok());
 }
 

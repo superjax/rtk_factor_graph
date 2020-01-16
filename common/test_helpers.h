@@ -77,3 +77,6 @@ template <typename Derived1, typename Derived2>
         double sign = (std::signbit(m1(0, 0)) == std::signbit(m2(0, 0))) ? 1. : -1.; \
         MATRIX_CLOSE(m1, sign*(m2), tol);                                            \
     }
+
+#define EXPECT_OK(err) EXPECT_TRUE(err.ok())
+#define EXPECT_NOK(err) EXPECT_FALSE(err.ok())

@@ -58,4 +58,19 @@ typedef struct
  *-----------------------------------------------------------------------------*/
 extern int decode_gal_inav(const unsigned char *buff, eph_t *eph);
 
+/* broadcast ephemeris to satellite position and clock bias --------------------
+ * compute satellite position and clock bias with broadcast ephemeris (gps,
+ * galileo, qzss)
+ * args   : gtime_t time     I   time (gpst)
+ *          eph_t *eph       I   broadcast ephemeris
+ *          double *rs       O   satellite position (ecef) {x,y,z} (m)
+ *          double *dts      O   satellite clock bias (s)
+ *          double *var      O   satellite position and clock variance (m^2)
+ * return : none
+ * notes  : see ref [1],[7],[8]
+ *          satellite clock includes relativity correction without code bias
+ *          (tgd or bgd)
+ *-----------------------------------------------------------------------------*/
+extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts, double *var);
+
 }  // namespace rtklib

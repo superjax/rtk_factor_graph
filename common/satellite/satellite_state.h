@@ -4,6 +4,7 @@
 
 #include "client/parsers/eph.h"
 #include "client/parsers/glonass.h"
+#include "common/error.h"
 #include "common/matrix_defs.h"
 #include "utils/utctime.h"
 
@@ -14,3 +15,6 @@ struct SatelliteState
     Vec3 vel;
     Vec2 clk;
 };
+
+Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* sat);
+// Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat);
