@@ -1,10 +1,14 @@
 #pragma once
 
 #include "client/parsers/eph.h"
+#include "common/matrix_defs.h"
 
 class GlonassEphemeris : public EphBase
 {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
  public:
+    GlonassEphemeris();
     explicit GlonassEphemeris(int sat_id);
     static constexpr double FREQ1_GLO = 1.60200e9;   // GLONASS G1 base frequency (Hz)
     static constexpr double DFRQ1_GLO = 0.56250E6;   // GLONASS G1 bias frequency (Hz/n)
@@ -16,9 +20,9 @@ class GlonassEphemeris : public EphBase
     int svh, sva, age;                               // satellite health, accuracy, age of operation
     UTCTime toe;                                     // epoch of epherides (UTC)
     UTCTime tof;                                     // message frame time (UTC)
-    double pos[3];                                   // satellite position (ecef) (m)
-    double vel[3];                                   // satellite velocity (ecef) (m/s)
-    double acc[3];                                   // satellite acceleration (ecef) (m/s^2)
+    Vec3 pos;                                        // satellite position (ecef) (m)
+    Vec3 vel;                                        // satellite velocity (ecef) (m/s)
+    Vec3 acc;                                        // satellite acceleration (ecef) (m/s^2)
     double taun, gamn;                               // SV clock bias (s)/relative freq bias
     double dtaun;                                    // delay between L1 and L2 (s)
 

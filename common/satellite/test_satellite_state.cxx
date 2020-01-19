@@ -5,7 +5,7 @@
 #include "third_party/rtklib/rtklib.h"
 #include "third_party/rtklib/rtklib_adapter.h"
 
-class TestSatState : public ::testing::Test
+class KeplerSatState : public ::testing::Test
 {
  public:
     KeplerianEphemeris eph;
@@ -45,11 +45,11 @@ class TestSatState : public ::testing::Test
     }
 };
 
-TEST_F(TestSatState, CheckSatPositionVelClockAgainstRTKLIB)
+TEST_F(KeplerSatState, CheckSatPositionVelClockAgainstRTKLIB)
 {
     rtklib::eph_t rtk_eph = rtklib::toRtklib(eph);
 
-    double dt = 1e-3;
+    const double dt = 1e-3;
     UTCTime t2 = t + dt;
     const Vec3 truth_pos(-12611434.19782218519, -13413103.97797041226, 19062913.07357876760);
     const Vec3 truth_vel(266.280379332602, -2424.768347293139, -1529.762077704072);
@@ -78,11 +78,81 @@ TEST_F(TestSatState, CheckSatPositionVelClockAgainstRTKLIB)
     EXPECT_NEAR(sat_state.clk(1), oracle_clk_rate, 1e-12);
 }
 
-TEST_F(TestSatState, StaleEphemeris)
+TEST_F(KeplerSatState, StaleEphemeris)
 {
     SatelliteState sat_state;
     t -= 2.0;
     const Error result = eph2Sat(t, eph, &sat_state);
 
     EXPECT_NOK(result);
+}
+
+class GlonassSatState : public ::testing::Test
+{
+ public:
+    GlonassEphemeris eph;
+    UTCTime t;
+
+    void SetUp() override
+    {
+        eph.gnssID = GnssID::Glonass;
+        eph.sat = 42;
+        eph.iode = 67;
+        eph.slot = -7;
+        eph.svh = 0;
+        eph.sva = 3;
+        eph.age = 0;
+        eph.toe = UTCTime::fromGPS(2060, 135918000);
+        eph.tof = UTCTime::fromGPS(2060, 135498000);
+        eph.pos << -625159.179688, -11415025.3906, 22774500.9766;
+        eph.vel << 2802.14977264, -1387.57514954, -626.088142395;
+        eph.acc << 3.72529029846e-06, -1.86264514923e-06, -9.31322574615e-07;
+        eph.taun = -5.34374267e-05;
+        eph.gamn = 0;
+        eph.dtaun = 8.38190317e-09;
+    }
+};
+
+TEST_F(GlonassSatState, OrbitEquation)
+{
+    Vec6 x;
+    x.head<3>() = eph.pos;
+    x.tail<3>() = eph.vel;
+
+    glonassOrbit(x, eph.acc);
+
+    const rtklib::geph_t geph = rtklib::toRtklib(eph);
+    Vec3 x_oracle;
+    double clk;
+    double var;
+    rtklib::geph2pos(geph.toe, &geph, x_oracle.data(), &clk, &var);
+
+    MATRIX_EQUALS(x_oracle, x.head<3>());
+}
+
+TEST_F(GlonassSatState, VsRTKLIB)
+{
+    UTCTime log_start(1561988124.550);
+
+    // numerically differentiate for velocity
+    const double dt = 1e-3;
+    const rtklib::gtime_t gtime = rtklib::toRtklib(log_start);
+    const rtklib::gtime_t gtime2 = rtklib::toRtklib(log_start + dt);
+    const rtklib::geph_t geph = rtklib::toRtklib(eph);
+    Vec3 oracle_pos, oracle_pos2;
+    double oracle_clk, oracle_clk2;
+    double var;
+    rtklib::geph2pos(gtime, &geph, oracle_pos.data(), &oracle_clk, &var);
+    rtklib::geph2pos(gtime2, &geph, oracle_pos2.data(), &oracle_clk2, &var);
+    const Vec3 oracle_vel = (oracle_pos2 - oracle_pos) / dt;
+    const double oracle_clk_rate = (oracle_clk2 - oracle_clk) / dt;
+
+    SatelliteState sat_state;
+    const Error result = eph2Sat(log_start, eph, &sat_state);
+
+    EXPECT_OK(result);
+    MATRIX_CLOSE(sat_state.pos, oracle_pos, 1e-8);
+    MATRIX_CLOSE(sat_state.vel, oracle_vel, 3e-4);
+    EXPECT_NEAR(sat_state.clk(0), oracle_clk, 1e-16);
+    EXPECT_NEAR(sat_state.clk(1), oracle_clk_rate, 1e-16);
 }

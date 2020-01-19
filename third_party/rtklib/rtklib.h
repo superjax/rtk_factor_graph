@@ -44,6 +44,21 @@ typedef struct
     double Adot, ndot; /* Adot,ndot for CNAV */
 } eph_t;
 
+typedef struct
+{                      /* GLONASS broadcast ephemeris type */
+    int sat;           /* satellite number */
+    int iode;          /* IODE (0-6 bit of tb field) */
+    int frq;           /* satellite frequency number */
+    int svh, sva, age; /* satellite health, accuracy, age of operation */
+    gtime_t toe;       /* epoch of epherides (gpst) */
+    gtime_t tof;       /* message frame time (gpst) */
+    double pos[3];     /* satellite position (ecef) (m) */
+    double vel[3];     /* satellite velocity (ecef) (m/s) */
+    double acc[3];     /* satellite acceleration (ecef) (m/s^2) */
+    double taun, gamn; /* SV clock bias (s)/relative freq bias */
+    double dtaun;      /* delay between L1 and L2 (s) */
+} geph_t;
+
 /* decode Galileo I/NAV ephemeris ----------------------------------------------
  * decode Galileo I/NAV (ref [5] 4.3)
  * args   : unsigned char *buff I Galileo I/NAV subframe bits
@@ -72,5 +87,17 @@ extern int decode_gal_inav(const unsigned char *buff, eph_t *eph);
  *          (tgd or bgd)
  *-----------------------------------------------------------------------------*/
 extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts, double *var);
+
+/* glonass ephemeris to satellite position and clock bias ----------------------
+ * compute satellite position and clock bias with glonass ephemeris
+ * args   : gtime_t time     I   time (gpst)
+ *          geph_t *geph     I   glonass ephemeris
+ *          double *rs       O   satellite position {x,y,z} (ecef) (m)
+ *          double *dts      O   satellite clock bias (s)
+ *          double *var      O   satellite position and clock variance (m^2)
+ * return : none
+ * notes  : see ref [2]
+ *-----------------------------------------------------------------------------*/
+extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts, double *var);
 
 }  // namespace rtklib

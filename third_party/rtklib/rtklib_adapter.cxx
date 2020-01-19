@@ -39,4 +39,31 @@ gtime_t toRtklib(const UTCTime& t)
     out.sec = t.nsec * 1e-9;
     return out;
 }
+
+geph_t toRtklib(const GlonassEphemeris& eph)
+{
+    geph_t out;
+    out.sat = eph.sat;
+    out.iode = eph.iode;
+    out.frq = eph.slot;
+    out.svh = eph.svh;
+    out.sva = eph.sva;
+    out.age = eph.age;
+    out.toe = toRtklib(eph.toe);
+    out.tof = toRtklib(eph.tof);
+    out.pos[0] = eph.pos[0];
+    out.pos[1] = eph.pos[1];
+    out.pos[2] = eph.pos[2];
+    out.vel[0] = eph.vel[0];
+    out.vel[1] = eph.vel[1];
+    out.vel[2] = eph.vel[2];
+    out.acc[0] = eph.acc[0];
+    out.acc[1] = eph.acc[1];
+    out.acc[2] = eph.acc[2];
+    out.taun = eph.taun;
+    out.gamn = eph.gamn;
+    out.dtaun = eph.dtaun;
+    return out;
+}
+
 }  // namespace rtklib

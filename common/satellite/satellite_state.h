@@ -17,4 +17,6 @@ struct SatelliteState
 };
 
 Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* sat);
-// Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat);
+Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat);
+
+Vec6 glonassOrbit(const Vec6& x, const Vec3& acc);

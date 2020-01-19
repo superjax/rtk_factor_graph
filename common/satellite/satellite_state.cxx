@@ -1,4 +1,5 @@
 #include "common/satellite/satellite_state.h"
+#include "common/math/rk4.h"
 #include "common/print.h"
 
 static constexpr double GM_EARTH = 3.986005e14;         // Mass of the earth (kg)
@@ -102,7 +103,64 @@ Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* s
     return Error::none();
 }
 
-// void eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat_state)
-// {
-//     assert(false);
-// }
+Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat_state)
+{
+    double dt = (t - eph.toe).toSec();
+    static constexpr double TSTEP = 60.0; /* integration step glonass ephemeris (s) */
+
+    using std::abs;
+
+    // Clock Biases
+    sat_state->clk(0) = -eph.taun + eph.gamn * dt;
+    sat_state->clk(1) = eph.gamn;
+
+    Vec6 x;
+    auto p = x.head<3>();
+    auto v = x.tail<3>();
+    p = eph.pos;
+    v = eph.vel;
+
+    double timestep = dt < 0.0 ? -TSTEP : TSTEP;
+    while (abs(dt) > 1e-9)
+    {
+        if (abs(dt) < TSTEP)
+        {
+            timestep = dt;
+        }
+        std::function<Vec6(const Vec6&, const Vec3&)> f = &glonassOrbit;
+        x = RK4(glonassOrbit, timestep, x, eph.acc);
+        dt -= timestep;
+    }
+
+    sat_state->pos = x.head<3>();
+    sat_state->vel = x.tail<3>();
+
+    return Error::none();
+}
+
+Vec6 glonassOrbit(const Vec6& x, const Vec3& acc)
+{
+    static constexpr double OMGE_GLO = 7.292115E-5; /* earth angular velocity (rad/s) ref [2] */
+    static constexpr double RE_GLO = 6378136.0;     /* radius of earth (m)            ref [2] */
+    static constexpr double J2_GLO = 1.0826257E-3;  /* 2nd zonal harmonic of geopot   ref [2] */
+    static constexpr double MU_GLO = 3.9860044E14;  /* gravitational constant         ref [2] */
+    auto p = x.head<3>();
+    auto v = x.tail<3>();
+    Vec6 xdot;
+    auto pdot = xdot.head<3>();
+    auto vdot = xdot.tail<3>();
+    const double r2 = p.transpose() * p;
+    const double r3 = r2 * std::sqrt(r2);
+    const double r5 = r2 * r3;
+    const double omg2 = OMGE_GLO * OMGE_GLO;
+    const double re2 = RE_GLO * RE_GLO;
+
+    double a = 1.5 * J2_GLO * MU_GLO * re2 / r5;  // 3/2*J2*mu*Ae^2/r^5
+    double b = 5.0 * p.z() * p.z() / r2;
+    double c = -MU_GLO / r3 - a * (1.0 - b);
+    pdot = v;
+    vdot.x() = (c + omg2) * p.x() + 2.0 * OMGE_GLO * v.y() + acc.x();
+    vdot.y() = (c + omg2) * p.y() - 2.0 * OMGE_GLO * v.x() + acc.y();
+    vdot.z() = (c - 2.0 * a) * p.z() + acc.z();
+    return xdot;
+}

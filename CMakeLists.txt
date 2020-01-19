@@ -7,6 +7,7 @@ include(cmake/Options.cmake)
 include(cmake/CleanRule.cmake)
 include(cmake/CompileFlags.cmake)
 include(cmake/CleanRule.cmake)
+include(cmake/LibRule.cmake)
 
 # Third-Party Libraries
 include(ExternalProject)
@@ -16,7 +17,6 @@ include(cmake/External_GTest.cmake)
 # include(cmake/External_GLog.cmake)
 # include(cmake/External_Ceres.cmake)
 include(cmake/GTestRule.cmake)
-
 
 # Project Code
 add_subdirectory(scratch)

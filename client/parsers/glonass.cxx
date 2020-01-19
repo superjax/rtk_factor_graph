@@ -9,6 +9,12 @@ constexpr double GlonassEphemeris::FREQ2_GLO;
 constexpr double GlonassEphemeris::DFRQ2_GLO;
 constexpr double GlonassEphemeris::FREQ3_GLO;
 
+GlonassEphemeris::GlonassEphemeris()
+{
+    gnssID = GnssID::Glonass;
+    sat = 255;
+}
+
 GlonassEphemeris::GlonassEphemeris(int sat_id)
 {
     gnssID = GnssID::Glonass;
