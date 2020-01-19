@@ -39,8 +39,12 @@ while read p; do
     # Run each test
     lcov --zerocounters --directory .
     $p
-    lcov --capture --directory . --output-file ${p}.info.tmp --rc lcov_branch_coverage=$BRANCH_COVERAGE
-    python3 ../script/fix_lcov_output.py --input ${p}.info.tmp --output ${p}.info
+    if [[ "$(python3 -V)" =~ "Python 3" ]]; then
+        lcov --capture --directory . --output-file ${p}.info.tmp --rc lcov_branch_coverage=$BRANCH_COVERAGE
+        python3 ../script/fix_lcov_output.py --input ${p}.info.tmp --output ${p}.info
+    else
+        lcov --capture --directory . --output-file ${p}.info --rc lcov_branch_coverage=$BRANCH_COVERAGE
+    fi
     if [[ -e all_tests.info ]]; then
         echo_bgreen "appending to tracefile"
         lcov --add-tracefile all_tests.info \

@@ -7,26 +7,54 @@ stages:
 
 static analysis:
   stage: build
-  script:
+  before_script:
+    - pwd
+    - which gcc
     - mkdir -p build
     - cd build
+    - mkdir -p ccache
+    - export CCACHE_DIR="$(pwd)/ccache"
+    - ccache -M 100M
+    - ccache -s
+  script:
     - mkdir scan_results
     - scan-build -o scan_results cmake .. -DCMAKE_BUILD_TYPE=Release
     - scan-build -o scan_results make -j $nproc
+    - ccache -s
     - ../script/run_tests.sh
   artifacts:
     paths:
       - build/scan_results
     expire_in: 1 week
+  cache:
+    key: master_key
+    paths:
+      - build/ccache
+      - build/eigen_ext-prefix
+      - build/googletest-prefix
+      - build/celero_ext-prefix
 
 coverage:
   stage: test
-  when: manual
-  script:
+  before_script:
+    - pwd
+    - which gcc
     - mkdir -p build
     - cd build
+    - mkdir -p ccache
+    - export CCACHE_DIR="$(pwd)/ccache"
+    - ccache -M 100M
+    - ccache -s
+  script:
     - ../script/run_coverage.sh
   artifacts:
     paths:
       - build/coverage
     expire_in: 1 week
+  cache:
+    key: master_key
+    paths:
+      - build/ccache
+      - build/eigen_ext-prefix
+      - build/googletest-prefix
+      - build/celero_ext-prefix
