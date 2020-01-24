@@ -14,6 +14,7 @@ class SE3
     using Vec3 = Eigen::Matrix<T, 3, 1>;
     using Mat3 = Eigen::Matrix<T, 3, 3>;
     using Vec6 = Eigen::Matrix<T, 6, 1>;
+    using Mat6 = Eigen::Matrix<T, 6, 6>;
 
  public:
     static constexpr int DOF = 6;
@@ -130,8 +131,8 @@ class SE3
         // There is redudancy here
         const Mat3 sk_w = skew(w);
         Mat3 A;
-        const Mat3 R = SO3<double>::exp(w, &A);
-        const double d = w.dot(v);
+        const Mat3 R = SO3<T>::exp(w, &A);
+        const T d = w.dot(v);
         const Mat3 B = w * v.transpose() + v * w.transpose();
         const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
         const Mat3 D = b * skew(v) + c * B + d * C;
@@ -173,13 +174,13 @@ class SE3
             C2 = (b - 3 * c) / th2;
         }
 
-        Vec3 wxt = w.cross(t_);
-        Vec3 w2xt = w.cross(wxt);
+        const Vec3 wxt = w.cross(t_);
+        const Vec3 w2xt = w.cross(wxt);
 
         wv.template tail<3>() = t_ - (0.5 * wxt) + (e * w2xt);
         const auto& v = wv.template tail<3>();
 
-        const double d = w.dot(v);
+        const T d = w.dot(v);
         const Mat3 B = w * v.transpose() + v * w.transpose();
         const Mat3 C = (c - b) * Mat3::Identity() + C1 * skew(w) + C2 * w * w.transpose();
         const Mat3 D = b * skew(v) + c * B + d * C;

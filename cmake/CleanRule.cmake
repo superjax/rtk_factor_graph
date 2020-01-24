@@ -4,7 +4,20 @@
 # First, create the script (This will need to be manually updated if we add source code in other
 # directories)
 file(WRITE "${PROJECT_BINARY_DIR}/tmp/clean"
-     "#!/bin/bash\n\n rm -rf client common scratch third_party utils tmp")
+     "#!/bin/bash\n\n rm -rf cmake_install.cmake\
+                             coverage\
+                             bench_results\
+                             CMakeCache.txt\
+                             CMakeFiles\
+                             Makefile\
+                             run_benchmarks\
+                             run_tests\
+                             client\
+                             common\
+                             scratch\
+                             third_party\
+                             utils\
+                             tmp")
 
 # Now, move the file into the build directory, and apply the right permisions.  You can't set the
 # permissions on a new file through CMAKE, so this hack of starting in the /tmp folder, then moving

@@ -18,7 +18,8 @@ class Quat
  private:
     typedef Eigen::Matrix<T, 4, 1> Vec4;
     typedef Eigen::Matrix<T, 3, 1> Vec3;
-    T buf_[4];
+    typedef Eigen::Matrix<T, 3, 3> Mat3;
+    alignas(64) T buf_[4];
 
  public:
     static constexpr int DOF = 3;
@@ -411,51 +412,18 @@ class Quat
     }
 
     // The same as R.T * v but faster
-    template <typename Tout = T, typename Derived>
-    Eigen::Matrix<Tout, 3, 1> rota(const Derived& v) const
+    Vec3 rota(const Vec3& v) const
     {
-        static_assert(
-            Derived::RowsAtCompileTime == Eigen::Dynamic || Derived::RowsAtCompileTime == 3,
-            "Can only rotate 3x1 vectors");
-        static_assert(
-            Derived::ColsAtCompileTime == Eigen::Dynamic || Derived::ColsAtCompileTime == 1,
-            "Can only rotate 3x1 vectors");
-        Eigen::Matrix<Tout, 3, 1> t = (Tout)2.0 * v.cross(arr_.template segment<3>(1));
+        Vec3 t = (T)2.0 * v.cross(arr_.template segment<3>(1));
         return v - w() * t + t.cross(arr_.template segment<3>(1));
     }
 
-    //  Vec3 rota(const Vec3& v) const
-    //  {
-    //    Vec3 t = 2.0 * v.cross(bar());
-    //    return v - w() * t + t.cross(bar());
-    //  }
-
     // The same as R * v but faster
-    template <typename Tout = T, typename Derived>
-    Eigen::Matrix<Tout, 3, 1> rotp(const Derived& v) const
+    Vec3 rotp(const Vec3& v) const
     {
-        static_assert(
-            Derived::RowsAtCompileTime == Eigen::Dynamic || Derived::RowsAtCompileTime == 3,
-            "Can only rotate 3x1 vectors");
-        static_assert(
-            Derived::ColsAtCompileTime == Eigen::Dynamic || Derived::ColsAtCompileTime == 1,
-            "Can only rotate 3x1 vectors");
-        Eigen::Matrix<Tout, 3, 1> t = (Tout)2.0 * v.cross(arr_.template segment<3>(1));
+        Vec3 t = (T)2.0 * v.cross(arr_.template segment<3>(1));
         return v + w() * t + t.cross(arr_.template segment<3>(1));
     }
-
-    //  template<typename Tout=T, typename T2>
-    //  Eigen::Matrix<Tout, 3, 1> rota(const Eigen::Matrix<T2, 3, 1>& v) const
-    //  {
-    //      Eigen::Matrix<Tout, 3, 1> t = (Tout)2.0 * v.cross(bar());
-    //      return v - w() * t + t.cross(bar());
-    //  }
-
-    //  Vec3 rotp(const Vec3& v) const
-    //  {
-    //      Vec3 t = 2.0 * v.cross(bar());
-    //      return v + w() * t + t.cross(bar());
-    //  }
 
     Quat& invert() { arr_.template block<3, 1>(1, 0) *= (T)-1.0; }
 
@@ -468,17 +436,6 @@ class Quat
         tmp.arr_(3) = -arr_(3);
         return tmp;
     }
-
-    //  template <typename T2>
-    //  Quat otimes(const Quat<T2>& q) const
-    //  {
-    //    Quat qout;
-    //    qout.arr_ <<  w() * q.w() - x() *q.x() - y() * q.y() - z() * q.z(),
-    //                  w() * q.x() + x() *q.w() + y() * q.z() - z() * q.y(),
-    //                  w() * q.y() - x() *q.z() + y() * q.w() + z() * q.x(),
-    //                  w() * q.z() + x() *q.y() - y() * q.x() + z() * q.w();
-    //    return qout;
-    //  }
 
     template <typename Tout = T, typename T2>
     Quat<Tout> otimes(const Quat<T2>& q) const
@@ -493,6 +450,39 @@ class Quat
 
     Mat3 Ad() const { return R().transpose(); }
 };
+
+// Specialized double-versions of rotation
+template <>
+inline Vec3 Quat<double>::rotp(const Vec3& v) const
+{
+    // clang-format off
+        const double qvw = x() * v.x() + y() * v.y() + z() * v.z();
+        const double qvx = w() * v.x() - y() * v.z() + z() * v.y();
+        const double qvy = w() * v.y() + x() * v.z() - z() * v.x();
+        const double qvz = w() * v.z() - x() * v.y() + y() * v.x();
+
+        Vec3 out(qvw * x() + qvx * w() + qvy * z() - qvz * y(),
+                 qvw * y() - qvx * z() + qvy * w() + qvz * x(),
+                 qvw * z() + qvx * y() - qvy * x() + qvz * w());
+    // clang-format on
+    return out;
+}
+
+template <>
+inline Vec3 Quat<double>::rota(const Vec3& v) const
+{
+    // clang-format off
+        const double qvw = -x() * v.x() - y() * v.y() - z() * v.z();
+        const double qvx =  w() * v.x() + y() * v.z() - z() * v.y();
+        const double qvy =  w() * v.y() - x() * v.z() + z() * v.x();
+        const double qvz =  w() * v.z() + x() * v.y() - y() * v.x() ;
+
+        Vec3 out(-qvw * x() + qvx * w() - qvy * z() + qvz * y(),
+                 -qvw * y() + qvx * z() + qvy * w() - qvz * x(),
+                 -qvw * z() - qvx * y() + qvy * x() + qvz * w());
+    // clang-format on
+    return out;
+}
 
 template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const Quat<T>& q)

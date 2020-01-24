@@ -14,6 +14,17 @@ typedef Eigen::Matrix<double, 8, 1> Vec8;
 typedef Eigen::Matrix<double, 9, 1> Vec9;
 typedef Eigen::Matrix<double, 10, 1> Vec10;
 
+typedef Eigen::Matrix<float, 1, 1> Vec1f;
+typedef Eigen::Matrix<float, 2, 1> Vec2f;
+typedef Eigen::Matrix<float, 3, 1> Vec3f;
+typedef Eigen::Matrix<float, 4, 1> Vec4f;
+typedef Eigen::Matrix<float, 5, 1> Vec5f;
+typedef Eigen::Matrix<float, 6, 1> Vec6f;
+typedef Eigen::Matrix<float, 7, 1> Vec7f;
+typedef Eigen::Matrix<float, 8, 1> Vec8f;
+typedef Eigen::Matrix<float, 9, 1> Vec9f;
+typedef Eigen::Matrix<float, 10, 1> Vec10f;
+
 typedef Eigen::Matrix<double, 1, 1> Mat1;
 typedef Eigen::Matrix<double, 2, 2> Mat2;
 typedef Eigen::Matrix<double, 3, 3> Mat3;
@@ -24,6 +35,17 @@ typedef Eigen::Matrix<double, 7, 7> Mat7;
 typedef Eigen::Matrix<double, 8, 8> Mat8;
 typedef Eigen::Matrix<double, 9, 9> Mat9;
 typedef Eigen::Matrix<double, 10, 10> Mat10;
+
+typedef Eigen::Matrix<float, 1, 1> Mat1f;
+typedef Eigen::Matrix<float, 2, 2> Mat2f;
+typedef Eigen::Matrix<float, 3, 3> Mat3f;
+typedef Eigen::Matrix<float, 4, 4> Mat4f;
+typedef Eigen::Matrix<float, 5, 5> Mat5f;
+typedef Eigen::Matrix<float, 6, 6> Mat6f;
+typedef Eigen::Matrix<float, 7, 7> Mat7f;
+typedef Eigen::Matrix<float, 8, 8> Mat8f;
+typedef Eigen::Matrix<float, 9, 9> Mat9f;
+typedef Eigen::Matrix<float, 10, 10> Mat10f;
 
 static const Eigen::Vector3d e_x(1.0, 0, 0);
 static const Eigen::Vector3d e_y(0, 1.0, 0);

@@ -57,7 +57,7 @@ class DQuat
     DQuat(const Quat<T>& q, const Vec3& t) : DQuat(buf_)
     {
         r_ = q;
-        d_ = 0.5 * (Quat<T>::make_pure(t) * q);
+        d_ = (T)0.5 * (Quat<T>::make_pure(t) * q);
     }
 
     T* data() { return arr_.data(); }
@@ -94,7 +94,7 @@ class DQuat
         return out;
     }
 
-    Vec3 translation() const { return 2.0 * (d_ * r_.inverse()).bar(); }
+    Vec3 translation() const { return (T)2.0 * (d_ * r_.inverse()).bar(); }
     const Quat<T>& rotation() const { return r_; }
 
     Vec3 transformp(const Vec3& v) const { return r_.rotp(v - translation()); }
@@ -154,7 +154,7 @@ class DQuat
         T a, b, c;
         T C1, C2;
         Mat3 A;
-        Quat<double>::exp(w, &A);
+        Quat<T>::exp(w, &A);
         if (th2 > (T)4e-6)
         {
             sinct = sin(th / 2.0) / th;

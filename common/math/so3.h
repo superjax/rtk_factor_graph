@@ -133,7 +133,7 @@ class SO3
         else  // theta close to Pi
         {
             // First, go to quaternion, then generate the rotation matrix
-            Vec4 qarr;
+            Eigen::Matrix<T, 4, 1> qarr;
             const Mat3& m(rot_);
             if ((m(0, 0) > m(1, 1)) && (m(0, 0) > m(2, 2)))
             {
@@ -153,7 +153,7 @@ class SO3
                 qarr << (m(0, 1) - m(1, 0)) / S, (m(2, 0) + m(0, 2)) / S, (m(2, 1) + m(1, 2)) / S,
                     0.25 * S;
             }
-            auto v = qarr.tail<3>();
+            auto v = qarr.template tail<3>();
             T& w = qarr[0];
             T norm_v = v.norm();
             return 2.0 * std::atan2(norm_v, w) * v / norm_v;

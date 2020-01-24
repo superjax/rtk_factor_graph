@@ -8,11 +8,13 @@ include(cmake/CleanRule.cmake)
 include(cmake/CompileFlags.cmake)
 include(cmake/CleanRule.cmake)
 include(cmake/LibRule.cmake)
+include(cmake/BenchRule.cmake)
 
 # Third-Party Libraries
 include(ExternalProject)
 include(cmake/External_Eigen3.cmake)
 include(cmake/External_GTest.cmake)
+include(cmake/External_Benchmark.cmake)
 # include(cmake/External_GFlags.cmake)
 # include(cmake/External_GLog.cmake)
 # include(cmake/External_Ceres.cmake)

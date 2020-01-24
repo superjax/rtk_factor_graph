@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 file(REMOVE "${PROJECT_BINARY_DIR}/run_tests")
 file(WRITE  "${PROJECT_BINARY_DIR}/run_tests" "#!/bin/bash\n\n")
 file(REMOVE "${PROJECT_BINARY_DIR}/test_list")
@@ -8,17 +6,9 @@ file(REMOVE "${PROJECT_BINARY_DIR}/test_list")
 set(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 
 function(add_gtest name)
-    cmake_parse_arguments(
-        PARSED_ARGS #prefix of output variables
-        "" #list of names of the boolean arguments(only defined ones will be true)
-        "" #list of names of mono - valued arguments
-        "SRCS;DEPS" #list of names of multi - valued arguments(output variables are lists)
-        ${ARGN} #arguments of the function to parse, here we take the all original ones
-    )
-    add_executable(${name} ${PARSED_ARGS_SRCS})
+    add_executable(${name} ${ARGV})
     target_link_libraries(${name} ${GTEST_LIBRARY} gtest_main)
     add_dependencies(${name} eigen_ext)
-    target_link_libraries(${name} ${PARSED_ARGS_DEPS})
     target_include_directories(${name} PUBLIC
                                ${GTEST_INCLUDE_DIRS}
                                ${REPO_ROOT}
