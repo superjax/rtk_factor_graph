@@ -2,6 +2,10 @@
 
 #include "client/parsers/gps.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 TEST(GPSParse, KnownData)
 {
     // clang-format off
@@ -60,3 +64,7 @@ TEST(GPSParse, KnownData)
     }
     EXPECT_TRUE(finished);
 }
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

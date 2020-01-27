@@ -8,6 +8,9 @@
 #include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
 
+namespace mc {
+namespace math {
+
 static constexpr int NUM_ITERS = 100;
 
 Mat4 up(const Vec6& u)
@@ -252,3 +255,6 @@ TEST(SE3, ExpLogJacobians)
 
     MATRIX_CLOSE(jac_log, log_right, 1e-6);
 }
+
+}  // namespace math
+}  // namespace mc

@@ -10,6 +10,9 @@
 #include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
 
+namespace mc {
+namespace math {
+
 constexpr int NUM_ITERS = 100;
 
 TEST(Quat, quat_rotation_direction)
@@ -427,3 +430,6 @@ TEST(Quat, SO3Equivalent)
     SO3_EQUALS(Ra2c, qa2c.R());
     QUATERNION_EQUALS(Ra2c.q(), qa2c);
 }
+
+}  // namespace math
+}  // namespace mc

@@ -3,6 +3,9 @@
 #include <Eigen/Core>
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 template <typename Fun, typename X, typename... Args>
 X RK4(Fun&& f, double dt, const X& x0, const Args&... args)
 {
@@ -16,3 +19,6 @@ X RK4(Fun&& f, double dt, const X& x0, const Args&... args)
     const DX k4 = f(w3, args...);
     return x0 + ((k1 + 2.0 * k2 + 2.0 * k3 + k4) * (dt / 6.0));
 }
+
+}  // namespace math
+}  // namespace mc

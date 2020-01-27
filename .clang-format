@@ -14,6 +14,7 @@ BraceWrapping:
   BeforeCatch:     true
   BeforeElse:      true
   IndentBraces:    false
+  AfterNamespace: false
 BreakBeforeBraces: Custom
 ColumnLimit: 100
 AlignTrailingComments: true

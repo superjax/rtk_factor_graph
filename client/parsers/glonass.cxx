@@ -3,6 +3,10 @@
 #include "common/print.h"
 #include "utils/crc.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 constexpr double GlonassEphemeris::FREQ1_GLO;
 constexpr double GlonassEphemeris::DFRQ1_GLO;
 constexpr double GlonassEphemeris::FREQ2_GLO;
@@ -43,7 +47,7 @@ bool GlonassEphemeris::parse(const uint8_t* msg, const size_t size)
     }
 
     // Check the Hamming Code
-    if (!gloTest(buf))
+    if (!utils::gloTest(buf))
     {
         dbg("GLONASS failed Hamming code check");
         return false;
@@ -178,10 +182,12 @@ bool GlonassEphemeris::convertTime()
     if (!got(FRAME4) || !got(FRAME5))
         return false;
 
-    static UTCTime Jan1_1996 = UTCTime::fromCalendar(1996, 1, 1, 0, 0, 0);
-    UTCTime start_of_year =
-        Jan1_1996 + (N4_ - 1) * (3 * UTCTime::SEC_IN_YEAR + UTCTime::SEC_IN_LEAP_YEAR) - (3 * 3600);
-    UTCTime start_of_day = start_of_year + (NA_ - 1) * UTCTime::SEC_IN_DAY;
+    static utils::UTCTime Jan1_1996 = utils::UTCTime::fromCalendar(1996, 1, 1, 0, 0, 0);
+    utils::UTCTime start_of_year =
+        Jan1_1996 +
+        (N4_ - 1) * (3 * utils::UTCTime::SEC_IN_YEAR + utils::UTCTime::SEC_IN_LEAP_YEAR) -
+        (3 * 3600);
+    utils::UTCTime start_of_day = start_of_year + (NA_ - 1) * utils::UTCTime::SEC_IN_DAY;
 
     // Convert t_k (tof) to UTC
     if (got(FRAME1))
@@ -197,3 +203,6 @@ bool GlonassEphemeris::convertTime()
 
     return (got(FRAME1) && got(FRAME2));
 }
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

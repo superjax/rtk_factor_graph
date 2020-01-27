@@ -3,6 +3,10 @@
 #include "common/print.h"
 #include "utils/crc.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 GalileoEphemeris::GalileoEphemeris(int sat_id)
 {
     gnssID = GnssID::Galileo;
@@ -58,7 +62,7 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
         setBit<8>(crc_buff, j, buf[16 + i]);
         j += 8;
     }
-    if (crc24(crc_buff, 25) != getBit<24>(buf + 16, 82))
+    if (utils::crc24(crc_buff, 25) != getBit<24>(buf + 16, 82))
     {
         dbg("Galileo CRC Error: sat=%2d\n", sat);
         return false;
@@ -127,15 +131,15 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
 
     // Compute time stamps
     iode = iodc = iod[0];
-    UTCTime ttr = UTCTime::fromGalileo(week, tow * 1000.0);
-    double dt = (UTCTime::fromGalileo(week, toes * 1000.0) - ttr).toSec();
+    utils::UTCTime ttr = utils::UTCTime::fromGalileo(week, tow * 1000.0);
+    double dt = (utils::UTCTime::fromGalileo(week, toes * 1000.0) - ttr).toSec();
     if (dt > 302400.0)
         week--;
     else if (dt < -302400.0)
         week++;
     week += 1024;
-    toe = UTCTime::fromGalileo(week, toes * 1000);
-    toc = UTCTime::fromGalileo(week, tocs * 1000.0);
+    toe = utils::UTCTime::fromGalileo(week, toes * 1000);
+    toc = utils::UTCTime::fromGalileo(week, tocs * 1000.0);
 
     return true;
 }
@@ -254,3 +258,6 @@ bool GalileoEphemeris::frame5(const uint8_t* buf)
     collected_subframes |= FRAME5;
     return true;
 }
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

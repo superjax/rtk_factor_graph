@@ -3,6 +3,9 @@
 #include "common/math/so3.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 static void passiveRotate(benchmark::State& state)
 {
     SO3<double> R = SO3<double>::Random();
@@ -310,3 +313,6 @@ static void logPiFloatJac(benchmark::State& state)
     }
 }
 BENCHMARK(logPiFloatJac);
+
+}  // namespace math
+}  // namespace mc

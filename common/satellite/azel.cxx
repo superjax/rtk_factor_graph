@@ -2,10 +2,13 @@
 
 #include <cmath>
 
+namespace mc {
+namespace satellite {
+
 void los2AzEl(const Vec3& receiver_pos_ecef, const Vec3& los_ecef, AzimuthElevation* az_el)
 {
     // Compute the transform from ECEF -> NED
-    const DQuat<double> dq_e2n = WGS84::dq_ecef2ned(receiver_pos_ecef);
+    const math::DQuat<double> dq_e2n = utils::WGS84::dq_ecef2ned(receiver_pos_ecef);
 
     // Rotate the line-of-sight vector into the NED frame
     const Vec3 los_ned = dq_e2n.real().rotp(los_ecef.normalized());
@@ -27,3 +30,6 @@ AzimuthElevation getAzEl(const Vec3& receiver_pos_ecef, const SatelliteState& sa
     Vec3 los_ecef = sat.pos - receiver_pos_ecef;
     return los2AzEl(receiver_pos_ecef, los_ecef);
 }
+
+}  // namespace satellite
+}  // namespace mc

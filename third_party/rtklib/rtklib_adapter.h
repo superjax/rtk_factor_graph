@@ -5,10 +5,12 @@
 #include "third_party/rtklib/rtklib.h"
 #include "utils/utctime.h"
 
-namespace rtklib
-{
-eph_t toRtklib(const KeplerianEphemeris& eph);
-gtime_t toRtklib(const UTCTime& t);
-geph_t toRtklib(const GlonassEphemeris& eph);
+namespace third_party {
+namespace rtklib {
+
+eph_t toRtklib(const mc::client::parsers::KeplerianEphemeris& eph);
+gtime_t toRtklib(const mc::utils::UTCTime& t);
+geph_t toRtklib(const mc::client::parsers::GlonassEphemeris& eph);
 
 }  // namespace rtklib
+}  // namespace third_party

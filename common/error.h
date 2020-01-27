@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <ostream>
 
+namespace mc {
+
 class Error
 {
  private:
@@ -66,3 +68,5 @@ inline std::ostream& operator<<(std::ostream& os, const Error& err)
     os << err.what();
     return os;
 }
+
+}  // namespace mc

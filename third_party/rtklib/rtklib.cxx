@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cmath>
 
+namespace third_party {
 namespace rtklib
 {
 #define CLIGHT      299792458.0         /* speed of light (m/s) */
@@ -578,3 +579,4 @@ void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
 
 // clang-format on
 }  // namespace rtklib
+}  // namespace third_party

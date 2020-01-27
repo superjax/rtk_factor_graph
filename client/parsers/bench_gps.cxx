@@ -2,6 +2,10 @@
 
 #include "client/parsers/gps.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 // clang-format off
 uint32_t msgs[6][10]{
     {0x22c00e31, 0xb04aebf3, 0x2dd80a, 0x8717a3e7, 0x3ff28987, 0x2b0c8c8f, 0xaa7f16f, 0x34de804e, 0xbfe9d329, 0x93beda23},
@@ -27,3 +31,7 @@ static void parseGPS(benchmark::State& state)
     }
 }
 BENCHMARK(parseGPS);
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

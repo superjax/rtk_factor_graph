@@ -2,6 +2,8 @@
 
 #include <Eigen/Core>
 
+namespace mc {
+
 // f(G, ...) → G
 // @returns ∂f/∂x, x ∈ G
 template <typename T, typename Fun, typename... Args>
@@ -148,3 +150,5 @@ Eigen::MatrixXd right_jac3(const T& x, const Fun& fun, const Args&... args)
     }
     return out;
 }
+
+}  // namespace mc

@@ -2,6 +2,10 @@
 
 #include "client/parsers/eph.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 class GPSEphemeris : public KeplerianEphemeris
 {
  public:
@@ -37,3 +41,6 @@ class GPSEphemeris : public KeplerianEphemeris
     };
     uint8_t collected_subframes = 0x00;
 };
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

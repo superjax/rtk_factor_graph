@@ -2,6 +2,10 @@
 
 #include "client/parsers/eph.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 class GalileoEphemeris : public KeplerianEphemeris
 {
  public:
@@ -44,3 +48,6 @@ class GalileoEphemeris : public KeplerianEphemeris
     int time_f;
     int iod[4] = {0};
 };
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

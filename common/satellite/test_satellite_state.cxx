@@ -5,24 +5,29 @@
 #include "third_party/rtklib/rtklib.h"
 #include "third_party/rtklib/rtklib_adapter.h"
 
+namespace mc {
+namespace satellite {
+
+using namespace third_party;
+
 class KeplerSatState : public ::testing::Test
 {
  public:
-    KeplerianEphemeris eph;
-    UTCTime t;
+    client::parsers::KeplerianEphemeris eph;
+    utils::UTCTime t;
     void SetUp() override
     {
-        const int week = 86400.00 / UTCTime::SEC_IN_WEEK;
-        const int tow_sec = 86400.00 - (week * UTCTime::SEC_IN_WEEK);
-        t = UTCTime::fromGPS(week, tow_sec * 1000);
+        const int week = 86400.00 / utils::UTCTime::SEC_IN_WEEK;
+        const int tow_sec = 86400.00 - (week * utils::UTCTime::SEC_IN_WEEK);
+        t = utils::UTCTime::fromGPS(week, tow_sec * 1000);
 
-        int toe_week = 93600.0 / UTCTime::SEC_IN_WEEK;
-        int toe_tow_sec = 93600.0 - (toe_week * UTCTime::SEC_IN_WEEK);
+        int toe_week = 93600.0 / utils::UTCTime::SEC_IN_WEEK;
+        int toe_tow_sec = 93600.0 - (toe_week * utils::UTCTime::SEC_IN_WEEK);
 
         eph.sat = 1;
         eph.gnssID = GnssID::GPS;
         eph.sqrta = 5153.79589081;
-        eph.toe = UTCTime::fromGPS(toe_week, toe_tow_sec * 1000);
+        eph.toe = utils::UTCTime::fromGPS(toe_week, toe_tow_sec * 1000);
         eph.toc = eph.toe;
         eph.toes = 93600.0;
         eph.delta_n = 0.465376527657e-08;
@@ -50,7 +55,7 @@ TEST_F(KeplerSatState, CheckSatPositionVelClockAgainstRTKLIB)
     rtklib::eph_t rtk_eph = rtklib::toRtklib(eph);
 
     const double dt = 1e-3;
-    UTCTime t2 = t + dt;
+    utils::UTCTime t2 = t + dt;
     const Vec3 truth_pos(-12611434.19782218519, -13413103.97797041226, 19062913.07357876760);
     const Vec3 truth_vel(266.280379332602, -2424.768347293139, -1529.762077704072);
 
@@ -90,8 +95,8 @@ TEST_F(KeplerSatState, StaleEphemeris)
 class GlonassSatState : public ::testing::Test
 {
  public:
-    GlonassEphemeris eph;
-    UTCTime t;
+    client::parsers::GlonassEphemeris eph;
+    utils::UTCTime t;
 
     void SetUp() override
     {
@@ -102,8 +107,8 @@ class GlonassSatState : public ::testing::Test
         eph.svh = 0;
         eph.sva = 3;
         eph.age = 0;
-        eph.toe = UTCTime::fromGPS(2060, 135918000);
-        eph.tof = UTCTime::fromGPS(2060, 135498000);
+        eph.toe = utils::UTCTime::fromGPS(2060, 135918000);
+        eph.tof = utils::UTCTime::fromGPS(2060, 135498000);
         eph.pos << -625159.179688, -11415025.3906, 22774500.9766;
         eph.vel << 2802.14977264, -1387.57514954, -626.088142395;
         eph.acc << 3.72529029846e-06, -1.86264514923e-06, -9.31322574615e-07;
@@ -132,7 +137,7 @@ TEST_F(GlonassSatState, OrbitEquation)
 
 TEST_F(GlonassSatState, VsRTKLIB)
 {
-    UTCTime log_start(1561988124.550);
+    utils::UTCTime log_start(1561988124.550);
 
     // numerically differentiate for velocity
     const double dt = 1e-3;
@@ -156,3 +161,6 @@ TEST_F(GlonassSatState, VsRTKLIB)
     EXPECT_NEAR(sat_state.clk(0), oracle_clk, 1e-16);
     EXPECT_NEAR(sat_state.clk(1), oracle_clk_rate, 1e-16);
 }
+
+}  // namespace satellite
+}  // namespace mc

@@ -6,6 +6,9 @@
 #include "common/matrix_defs.h"
 #include "common/print.h"
 
+namespace mc {
+namespace math {
+
 template <typename T>
 class SE3
 {
@@ -236,3 +239,6 @@ class SE3
     SO3<T> r_;
     Vec3 t_;
 };
+
+}  // namespace math
+}  // namespace mc

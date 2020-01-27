@@ -2,6 +2,8 @@
 
 #include "common/error.h"
 
+namespace mc {
+
 TEST(Error, OnlyCreateFromConstexprCharArr)
 {
     Error a = Error::create("test");
@@ -51,3 +53,5 @@ TEST(Error, Stream)
     EXPECT_STREQ(a.what(), "Test 1");
     EXPECT_EQ(a.what(), message);
 }
+
+}  // namespace mc

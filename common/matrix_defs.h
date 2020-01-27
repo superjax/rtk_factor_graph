@@ -3,6 +3,8 @@
 
 #include <Eigen/Core>
 
+namespace mc {
+
 typedef Eigen::Matrix<double, 1, 1> Vec1;
 typedef Eigen::Matrix<double, 2, 1> Vec2;
 typedef Eigen::Matrix<double, 3, 1> Vec3;
@@ -81,3 +83,5 @@ inline Eigen::MatrixXd vstack(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b
     out << a, b;
     return out;
 }
+
+}  // namespace mc

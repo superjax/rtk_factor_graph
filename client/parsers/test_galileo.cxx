@@ -3,6 +3,12 @@
 #include "client/parsers/galileo.h"
 #include "third_party/rtklib/rtklib.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
+using namespace third_party;
+
 // clang-format off
 std::array<std::array<uint32_t, 9>, 23> buffer = {{
     {0x050da0ec, 0x08907cff, 0x30083c86, 0xc84a8000, 0xaaaa8000, 0x0000002a, 0xaaaabe26, 0x99ff4000, 0x00000001},
@@ -110,8 +116,8 @@ TEST(Galileo, CompareRTKLIB)
             EXPECT_EQ(eph.gnssID, GnssID::Galileo);
             EXPECT_EQ(eph.sat, 19);
 
-            EXPECT_EQ(eph.toe.sec, rtklib_eph.toe.time + UTCTime::LEAP_SECONDS);
-            EXPECT_EQ(eph.toc.sec, rtklib_eph.toc.time + UTCTime::LEAP_SECONDS);
+            EXPECT_EQ(eph.toe.sec, rtklib_eph.toe.time + utils::UTCTime::LEAP_SECONDS);
+            EXPECT_EQ(eph.toc.sec, rtklib_eph.toc.time + utils::UTCTime::LEAP_SECONDS);
 
             EXPECT_EQ(eph.toe.nsec, rtklib_eph.toe.sec * 1e9);
             EXPECT_EQ(eph.toc.nsec, rtklib_eph.toc.sec * 1e9);
@@ -149,3 +155,7 @@ TEST(Galileo, CompareRTKLIB)
     EXPECT_TRUE(finished);
     EXPECT_EQ(rtklib_result, 1);
 }
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 
+namespace mc {
+
 struct GnssID
 {
     enum
@@ -30,4 +32,6 @@ constexpr double deg2Rad(const double deg)
 constexpr double rad2Deg(const double rad)
 {
     return 180.0 * rad / M_PI;
+}
+
 }

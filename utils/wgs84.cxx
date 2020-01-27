@@ -1,5 +1,8 @@
 #include "utils/wgs84.h"
 
+namespace mc {
+namespace utils {
+
 constexpr double WGS84::A;
 constexpr double WGS84::B;
 constexpr double WGS84::F;
@@ -7,6 +10,9 @@ constexpr double WGS84::F_INV;
 constexpr double WGS84::A2;
 constexpr double WGS84::B2;
 constexpr double WGS84::E2;
+
+using math::DQuat;
+using math::Quat;
 
 Eigen::Vector3d WGS84::ecef2lla(const Eigen::Vector3d& ecef)
 {
@@ -140,3 +146,6 @@ std::string printLla(const Eigen::Vector3d& lla)
     ss << lla(0) * 180.0 / M_PI << ", " << lla(1) * 180.0 / M_PI << ", " << lla(2);
     return ss.str();
 }
+
+}  // namespace utils
+}  // namespace mc

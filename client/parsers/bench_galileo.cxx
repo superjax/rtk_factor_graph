@@ -2,6 +2,10 @@
 
 #include "client/parsers/galileo.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 // clang-format off
 std::array<std::array<uint32_t, 9>, 23> buffer = {{
     {0x050da0ec, 0x08907cff, 0x30083c86, 0xc84a8000, 0xaaaa8000, 0x0000002a, 0xaaaabe26, 0x99ff4000, 0x00000001},
@@ -45,3 +49,7 @@ static void parseGalileo(benchmark::State& state)
     }
 }
 BENCHMARK(parseGalileo);
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

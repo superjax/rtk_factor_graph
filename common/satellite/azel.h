@@ -5,6 +5,9 @@
 #include "common/satellite/satellite_state.h"
 #include "utils/wgs84.h"
 
+namespace mc {
+namespace satellite {
+
 struct AzimuthElevation
 {
     double az;
@@ -20,3 +23,6 @@ AzimuthElevation getAzEl(const Vec3& receiver_pos_ecef, const SatelliteState& sa
 void azEl2Los(const Vec3& receiver_pos_ecef, const AzimuthElevation& az_el, Vec3* los_ecef);
 
 Vec3 azEl2Los(const Vec3& receiver_pos_ecef, const AzimuthElevation& az_el);
+
+}  // namespace satellite
+}  // namespace mc

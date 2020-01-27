@@ -2,8 +2,9 @@
 
 #include <time.h>
 
-namespace rtklib
-{
+namespace third_party {
+namespace rtklib {
+
 #ifdef WIN32
 typedef struct
 {                /* time struct */
@@ -101,3 +102,4 @@ extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts, dou
 extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts, double *var);
 
 }  // namespace rtklib
+}  // namespace third_party

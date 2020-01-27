@@ -2,6 +2,10 @@
 
 #include "client/parsers/bit_tools.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 TEST(GetBits, Aligned)
 {
     uint8_t data[] = {0x12, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89, 0x9A, 0xAB, 0xBC, 0xCD, 0xDE, 0xEF};
@@ -180,3 +184,7 @@ TEST(GetBitsSigned, RealData3)
     int32_t bits = getBit<21, Signed>(buf, 99);
     EXPECT_EQ(bits, 253);
 }
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

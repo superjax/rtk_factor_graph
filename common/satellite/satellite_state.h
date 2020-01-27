@@ -8,6 +8,9 @@
 #include "common/matrix_defs.h"
 #include "utils/utctime.h"
 
+namespace mc {
+namespace satellite {
+
 struct SatelliteState
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -16,7 +19,14 @@ struct SatelliteState
     Vec2 clk;
 };
 
-Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* sat);
-Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat);
+Error eph2Sat(const utils::UTCTime& t,
+              const client::parsers::KeplerianEphemeris& eph,
+              SatelliteState* sat);
+Error eph2Sat(const utils::UTCTime& t,
+              const client::parsers::GlonassEphemeris& eph,
+              SatelliteState* sat);
 
 Vec6 glonassOrbit(const Vec6& x, const Vec3& acc);
+
+}  // namespace satellite
+}  // namespace mc

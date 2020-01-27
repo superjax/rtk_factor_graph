@@ -6,6 +6,9 @@
 #include "common/matrix_defs.h"
 #include "utils/utctime.h"
 
+namespace mc {
+namespace utils {
+
 struct WGS84
 {
  private:
@@ -24,16 +27,16 @@ struct WGS84
     static Eigen::Vector3d lla2ecef(const Eigen::Vector3d& lla);
     static void lla2ecef(const Eigen::Vector3d& lla, Eigen::Vector3d* ecef);
 
-    static void dq_ecef2ned(const Eigen::Vector3d& ecef, DQuat<double>* dq_e2n);
-    static DQuat<double> dq_ecef2ned(const Eigen::Vector3d& ecef);
+    static void dq_ecef2ned(const Eigen::Vector3d& ecef, math::DQuat<double>* dq_e2n);
+    static math::DQuat<double> dq_ecef2ned(const Eigen::Vector3d& ecef);
 
-    static Eigen::Vector3d ned2ecef(const DQuat<double>& dq_e2n, const Eigen::Vector3d& ned);
-    static void ned2ecef(const DQuat<double>& dq_e2n,
+    static Eigen::Vector3d ned2ecef(const math::DQuat<double>& dq_e2n, const Eigen::Vector3d& ned);
+    static void ned2ecef(const math::DQuat<double>& dq_e2n,
                          const Eigen::Vector3d& ned,
                          Eigen::Vector3d* ecef);
 
-    static Eigen::Vector3d ecef2ned(const DQuat<double>& dq_e2n, const Eigen::Vector3d& ecef);
-    static void ecef2ned(const DQuat<double>& dq_e2n,
+    static Eigen::Vector3d ecef2ned(const math::DQuat<double>& dq_e2n, const Eigen::Vector3d& ecef);
+    static void ecef2ned(const math::DQuat<double>& dq_e2n,
                          const Eigen::Vector3d& ecef,
                          Eigen::Vector3d* ned);
 
@@ -47,7 +50,9 @@ struct WGS84
                         Eigen::Vector3d* lla);
     static Eigen::Vector3d ned2lla(const Eigen::Vector3d& lla0, const Eigen::Vector3d& ned);
 
-    static Quat<double> q_e2n(const Eigen::Vector3d& lla);
+    static math::Quat<double> q_e2n(const Eigen::Vector3d& lla);
 };
 
 std::string printLla(const Eigen::Vector3d& lla);
+}  // namespace utils
+}  // namespace mc

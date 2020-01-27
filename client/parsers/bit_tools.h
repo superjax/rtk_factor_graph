@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <limits>
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 enum
 {
     SwitchByteOrder,
@@ -175,3 +179,7 @@ double getBitGlo(const uint8_t *buf, const int pos)
     const double val = getBit<len - 1>(buf, pos + 1);
     return getBit<1>(buf, pos) ? -val : val;
 }
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

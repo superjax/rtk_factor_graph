@@ -5,6 +5,9 @@
 #include "common/math/quat.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 template <typename T>
 class Quat;
 
@@ -277,3 +280,6 @@ inline std::ostream& operator<<(std::ostream& os, const SO3<double>& r)
     os << r.matrix();
     return os;
 }
+
+}  // namespace math
+}  // namespace mc

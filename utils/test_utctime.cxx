@@ -2,6 +2,9 @@
 
 #include "utils/utctime.h"
 
+namespace mc {
+namespace utils {
+
 TEST(Time, Now)
 {
     std::cout << "now: " << UTCTime::now() << std::endl;
@@ -240,3 +243,6 @@ TEST(Time, GlonassFromTOD)
 
     EXPECT_EQ(glo, t2_end);
 }
+
+}  // namespace utils
+}  // namespace mc

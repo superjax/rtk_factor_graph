@@ -1,5 +1,9 @@
 #include <benchmark/benchmark.h>
 
+namespace mc {
+namespace scratch {
+namespace bench_example {
+
 static void BM_StringCreation(benchmark::State& state)
 {
     for (auto _ : state) std::string empty_string;
@@ -14,3 +18,7 @@ static void BM_StringCopy(benchmark::State& state)
     for (auto _ : state) std::string copy(x);
 }
 BENCHMARK(BM_StringCopy);
+
+}  // namespace bench_example
+}  // namespace scratch
+}  // namespace mc

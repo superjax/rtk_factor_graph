@@ -8,6 +8,9 @@
 #include "common/matrix_defs.h"
 #include "common/print.h"
 
+namespace mc {
+namespace math {
+
 template <typename T>
 class DQuat
 {
@@ -318,3 +321,6 @@ inline std::ostream& operator<<(std::ostream& os, const DQuat<T>& q)
        << q.dual().y() << "j, " << q.dual().z() << "k]";
     return os;
 }
+
+}  // namespace math
+}  // namespace mc

@@ -1,5 +1,8 @@
 #include "utils/crc.h"
 
+namespace mc {
+namespace utils {
+
 uint32_t crc24(const unsigned char *buf, int len)
 {
     static const unsigned int table[] = {
@@ -83,3 +86,6 @@ bool gloTest(const uint8_t *buf)
     return n == 0 || (n == 2 && crc);
 #pragma GCC diagnostic pop
 }
+
+}  // namespace utils
+}  // namespace mc

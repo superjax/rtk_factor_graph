@@ -3,6 +3,9 @@
 #include "common/math/dquat.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 static void passiveTransform(benchmark::State& state)
 {
     DQuat<double> Q = DQuat<double>::Random();
@@ -310,3 +313,6 @@ static void logPiFloatJac(benchmark::State& state)
     }
 }
 BENCHMARK(logPiFloatJac);
+
+}  // namespace math
+}  // namespace mc

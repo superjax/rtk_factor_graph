@@ -2,6 +2,10 @@
 #include "client/parsers/bit_tools.h"
 #include "common/print.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 GPSEphemeris::GPSEphemeris(int sat_id)
 {
     gnssID = GnssID::GPS;
@@ -63,8 +67,8 @@ bool GPSEphemeris::parse(const uint8_t* buf, size_t size)
     dbg("Got all subframes");
 
     // Set toe and toc
-    toe = UTCTime::fromGPS(week, toes * 1000);
-    toc = UTCTime::fromGPS(week, tocs * 1000);
+    toe = utils::UTCTime::fromGPS(week, toes * 1000);
+    toc = utils::UTCTime::fromGPS(week, tocs * 1000);
 
     // Reset synchronization
     iode1 = iode2 = iode3 = 0;
@@ -98,7 +102,7 @@ bool GPSEphemeris::frame1(const uint8_t* buf)
 
     tgd = _tgd == -128 ? 0.0 : _tgd * P2_31;
     iodc = (iodc0 << 8) + iode;
-    week = week_mod + UTCTime::GPS_WEEK_ROLLOVER;
+    week = week_mod + utils::UTCTime::GPS_WEEK_ROLLOVER;
 
     iode1 = iode;
     collected_subframes |= FRAME1;
@@ -155,3 +159,6 @@ bool GPSEphemeris::frame3(const uint8_t* buf)
 
     return true;
 }
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

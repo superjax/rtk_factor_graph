@@ -9,6 +9,9 @@
 #include "common/print.h"
 #include "common/test_helpers.h"
 
+namespace mc {
+namespace math {
+
 static constexpr int NUM_ITERS = 24;
 
 TEST(SO3, rotation_direction)
@@ -349,3 +352,6 @@ TEST(SO3, ExpLogJacobians)
         MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
     }
 }
+
+}  // namespace math
+}  // namespace mc

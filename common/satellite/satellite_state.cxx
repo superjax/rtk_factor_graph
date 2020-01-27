@@ -7,7 +7,12 @@ static constexpr double OMEGA_EARTH = 7.2921151467e-5;  // Angular Velocity of t
 static constexpr double C_LIGHT = 299792458.0;          // speed of light (m/s)
 static constexpr double MAXDTOE = 7200;                 // Maximum allowable age of ephemeris (s)
 
-Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* sat_state)
+namespace mc {
+namespace satellite {
+
+Error eph2Sat(const utils::UTCTime& t,
+              const client::parsers::KeplerianEphemeris& eph,
+              SatelliteState* sat_state)
 {
     using std::abs;
     using std::atan2;
@@ -103,7 +108,9 @@ Error eph2Sat(const UTCTime& t, const KeplerianEphemeris& eph, SatelliteState* s
     return Error::none();
 }
 
-Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat_state)
+Error eph2Sat(const utils::UTCTime& t,
+              const client::parsers::GlonassEphemeris& eph,
+              SatelliteState* sat_state)
 {
     double dt = (t - eph.toe).toSec();
     static constexpr double TSTEP = 60.0; /* integration step glonass ephemeris (s) */
@@ -128,7 +135,7 @@ Error eph2Sat(const UTCTime& t, const GlonassEphemeris& eph, SatelliteState* sat
             timestep = dt;
         }
         std::function<Vec6(const Vec6&, const Vec3&)> f = &glonassOrbit;
-        x = RK4(glonassOrbit, timestep, x, eph.acc);
+        x = math::RK4(glonassOrbit, timestep, x, eph.acc);
         dt -= timestep;
     }
 
@@ -164,3 +171,6 @@ Vec6 glonassOrbit(const Vec6& x, const Vec3& acc)
     vdot.z() = (c - 2.0 * a) * p.z() + acc.z();
     return xdot;
 }
+
+}  // namespace satellite
+}  // namespace mc

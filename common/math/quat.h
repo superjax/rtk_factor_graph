@@ -9,6 +9,9 @@
 #include "common/math/so3.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 template <typename T>
 class SO3;
 
@@ -500,3 +503,6 @@ Quat<T> operator*(const T& s, const Quat<T>& q)
 }
 
 typedef Quat<double> Quatd;
+
+}  // namespace math
+}  // namespace mc

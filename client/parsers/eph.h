@@ -5,6 +5,10 @@
 #include "common/defs.h"
 #include "utils/utctime.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 class EphBase
 {
  public:
@@ -51,8 +55,8 @@ class EphBase
 class KeplerianEphemeris : public EphBase
 {
  public:
-    UTCTime toe;  // reference time ephemeris (UTC Time) [s]
-    UTCTime toc;  // reference time (clock)   (UTC Time) [s]
+    utils::UTCTime toe;  // reference time ephemeris (UTC Time) [s]
+    utils::UTCTime toc;  // reference time (clock)   (UTC Time) [s]
 
     uint32_t tow;   // time of week in subframe1; the time of the leading bit edge of subframe 2 [s]
     uint16_t iodc;  // 10 bit issue of data (clock); 8 LSB bits will match the iode []
@@ -82,3 +86,6 @@ class KeplerianEphemeris : public EphBase
                  // [rad]
     double cis;  // amplitude of the sine harmonic correction term to the angle of inclination [rad]
 };
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

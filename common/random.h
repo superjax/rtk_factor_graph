@@ -2,6 +2,8 @@
 
 #include <random>
 
+namespace mc {
+
 // Returns an Eigen matrix of type Derived with every element selected from a normal distribution
 // with mean 0 and standard deviation 1.0
 template <typename Derived>
@@ -18,4 +20,6 @@ Derived randomNormal()
         }
     }
     return out;
+}
+
 }

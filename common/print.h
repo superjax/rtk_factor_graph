@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+namespace mc {
+
 enum class LoggingLevel
 {
     DEBUG,
@@ -82,3 +84,5 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
     {                                                                       \
         printMagenta("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
     }
+
+}

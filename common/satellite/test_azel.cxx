@@ -2,13 +2,16 @@
 
 #include "common/satellite/azel.h"
 
+namespace mc {
+namespace satellite {
+
 TEST(Azel, Los2AzelStraightUp)
 {
     const Vec3 surface_lla(deg2Rad(37.36964), deg2Rad(-122.0387867), 0);
-    const Vec3 surface_ecef = WGS84::lla2ecef(surface_lla);
+    const Vec3 surface_ecef = utils::WGS84::lla2ecef(surface_lla);
 
     const Vec3 sat_lla = surface_lla + 20'000'000 * Vec3::UnitZ();
-    const Vec3 sat_ecef = WGS84::lla2ecef(sat_lla);
+    const Vec3 sat_ecef = utils::WGS84::lla2ecef(sat_lla);
 
     const Vec3 los_ecef = (sat_ecef - surface_ecef).normalized();
 
@@ -20,7 +23,7 @@ TEST(Azel, Los2AzelStraightUp)
 TEST(Azel, Los2Azel)
 {
     const Vec3 rec_lla(deg2Rad(40.246184), deg2Rad(-111.647769), 1387.997511);
-    const Vec3 rec_ecef = WGS84::lla2ecef(rec_lla);
+    const Vec3 rec_ecef = utils::WGS84::lla2ecef(rec_lla);
     const Vec3 sat_pos_ecef(-12611434.2, -13413103.98, 19062913.07);
 
     const Vec3 los_ecef = sat_pos_ecef - rec_ecef;
@@ -61,3 +64,6 @@ TEST(Azel, FromSatState)
         EXPECT_NEAR(rad2Deg(azel.el), rad2Deg(truth_azel[i].el), 1);
     }
 }
+
+}  // namespace satellite
+}  // namespace mc

@@ -11,6 +11,9 @@
 #include "common/numerical_jacobian.h"
 #include "common/test_helpers.h"
 
+namespace mc {
+namespace math {
+
 constexpr int NUM_ITERS = 100;
 
 TEST(DQuat, compile)
@@ -329,3 +332,6 @@ TEST(DQuat, ExpLogJacobians)
         MATRIX_CLOSE(jac_log, log_right, 1e-6);
     }
 }
+
+}  // namespace math
+}  // namespace mc

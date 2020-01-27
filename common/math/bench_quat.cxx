@@ -3,6 +3,9 @@
 #include "common/math/quat.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace math {
+
 static void passiveRotate(benchmark::State& state)
 {
     Quat<double> q = Quat<double>::Random();
@@ -326,3 +329,6 @@ static void logPiFloatJac(benchmark::State& state)
     }
 }
 BENCHMARK(logPiFloatJac);
+
+}  // namespace math
+}  // namespace mc

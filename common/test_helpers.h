@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <cmath>
 
+namespace mc {
+
 template <typename Derived1, typename Derived2>
 ::testing::AssertionResult matrixClose(const char* a_expr,
                                        const char* b_expr,
@@ -80,3 +82,5 @@ template <typename Derived1, typename Derived2>
 
 #define EXPECT_OK(err) EXPECT_TRUE(err.ok())
 #define EXPECT_NOK(err) EXPECT_FALSE(err.ok())
+
+}

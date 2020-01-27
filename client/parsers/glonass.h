@@ -3,6 +3,10 @@
 #include "client/parsers/eph.h"
 #include "common/matrix_defs.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 class GlonassEphemeris : public EphBase
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -18,8 +22,8 @@ class GlonassEphemeris : public EphBase
     int iode;                                        // IODE (0-6 bit of tb field)
     int slot;                                        // satellite frequency slot
     int svh, sva, age;                               // satellite health, accuracy, age of operation
-    UTCTime toe;                                     // epoch of epherides (UTC)
-    UTCTime tof;                                     // message frame time (UTC)
+    utils::UTCTime toe;                                     // epoch of epherides (UTC)
+    utils::UTCTime tof;                                     // message frame time (UTC)
     Vec3 pos;                                        // satellite position (ecef) (m)
     Vec3 vel;                                        // satellite velocity (ecef) (m/s)
     Vec3 acc;                                        // satellite acceleration (ecef) (m/s^2)
@@ -64,3 +68,6 @@ class GlonassEphemeris : public EphBase
     int N4_;  // four-year interval number starting from 1996
     int NA_;  // calendar day number within the four-year period beginning since the leap year
 };
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

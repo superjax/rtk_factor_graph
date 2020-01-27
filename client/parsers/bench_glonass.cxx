@@ -2,6 +2,10 @@
 
 #include "client/parsers/glonass.h"
 
+namespace mc {
+namespace client {
+namespace parsers {
+
 // clang-format off
 std::array<std::array<uint32_t, 4>, 61> buffer = {{
     {0x7a7d18e5, 0x29d01307, 0xac846000, 0xd000406},
@@ -82,3 +86,7 @@ static void parseGlonass(benchmark::State& state)
     }
 }
 BENCHMARK(parseGlonass);
+
+}  // namespace parsers
+}  // namespace client
+}  // namespace mc

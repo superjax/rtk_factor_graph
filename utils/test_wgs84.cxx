@@ -6,6 +6,9 @@
 #include "common/matrix_defs.h"
 #include "common/test_helpers.h"
 
+namespace mc {
+namespace utils {
+
 TEST(WGS84, lla2ecef)
 {
     Vec3 lla = {deg2Rad(40.246184), -deg2Rad(111.647769), 1387.997511};  // BYU Campus
@@ -61,7 +64,7 @@ TEST(WGS84, x_ned2ecef)
     Vec3 lla1 = {deg2Rad(40.246587), -deg2Rad(111.647761), 1387.998309};
     Vec3 ecef1 = WGS84::lla2ecef(lla1);
 
-    DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
+    math::DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
     Vec3 ecef_hat = dq_e2n.transforma(ned1);
     Vec3 ned1_hat = dq_e2n.transformp(ecef1);
 
@@ -80,7 +83,7 @@ TEST(WGS84, ecef2ned_check_axes)
 {
     Vec3 lla0 = {deg2Rad(40.247082), -deg2Rad(111.647776), 1387.998309};
     Vec3 ecef0 = WGS84::lla2ecef(lla0);
-    DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
+    math::DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
 
     double sp = std::sin(lla0(0));
     double cp = std::cos(lla0(0));
@@ -111,7 +114,7 @@ TEST(WGS84, ned2ecef)
     Vec3 lla1 = {deg2Rad(40.246587), -deg2Rad(111.647761), 1387.998309};
     Vec3 ecef1 = WGS84::lla2ecef(lla1);
 
-    DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
+    math::DQuat<double> dq_e2n = WGS84::dq_ecef2ned(ecef0);
     Vec3 ecef_hat = WGS84::ned2ecef(dq_e2n, ned1);
     Vec3 ned1_hat = WGS84::ecef2ned(dq_e2n, ecef1);
 
@@ -131,3 +134,6 @@ TEST(WGS84, lla2ned)
     MATRIX_CLOSE(lla1_hat, lla1, 1e-6);
     MATRIX_CLOSE(ned1_hat, ned1, 1e-6);
 }
+
+}  // namespace utils
+}  // namespace mc

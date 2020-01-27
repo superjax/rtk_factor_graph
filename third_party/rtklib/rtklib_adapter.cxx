@@ -1,10 +1,11 @@
 #include "third_party/rtklib/rtklib_adapter.h"
 
-namespace rtklib
+namespace third_party {
+namespace rtklib {
+
+eph_t toRtklib(const mc::client::parsers::KeplerianEphemeris& eph)
 {
-eph_t toRtklib(const KeplerianEphemeris& eph)
-{
-    rtklib::eph_t out;
+    eph_t out;
     out.sat = eph.sat;  // Only works for GPS satellites
     out.A = eph.sqrta * eph.sqrta;
     out.toe.time = eph.toe.sec;
@@ -32,7 +33,7 @@ eph_t toRtklib(const KeplerianEphemeris& eph)
     return out;
 }
 
-gtime_t toRtklib(const UTCTime& t)
+gtime_t toRtklib(const mc::utils::UTCTime& t)
 {
     gtime_t out;
     out.time = t.sec;
@@ -40,7 +41,7 @@ gtime_t toRtklib(const UTCTime& t)
     return out;
 }
 
-geph_t toRtklib(const GlonassEphemeris& eph)
+geph_t toRtklib(const mc::client::parsers::GlonassEphemeris& eph)
 {
     geph_t out;
     out.sat = eph.sat;
@@ -67,3 +68,4 @@ geph_t toRtklib(const GlonassEphemeris& eph)
 }
 
 }  // namespace rtklib
+}  // namespace third_party
