@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "common/defs.h"
-#include "utils/utctime.h"
+#include "common/utctime.h"
 
 namespace mc {
 namespace client {
@@ -55,8 +55,8 @@ class EphBase
 class KeplerianEphemeris : public EphBase
 {
  public:
-    utils::UTCTime toe;  // reference time ephemeris (UTC Time) [s]
-    utils::UTCTime toc;  // reference time (clock)   (UTC Time) [s]
+    UTCTime toe;  // reference time ephemeris (UTC Time) [s]
+    UTCTime toc;  // reference time (clock)   (UTC Time) [s]
 
     uint32_t tow;   // time of week in subframe1; the time of the leading bit edge of subframe 2 [s]
     uint16_t iodc;  // 10 bit issue of data (clock); 8 LSB bits will match the iode []

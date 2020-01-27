@@ -131,15 +131,15 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
 
     // Compute time stamps
     iode = iodc = iod[0];
-    utils::UTCTime ttr = utils::UTCTime::fromGalileo(week, tow * 1000.0);
-    double dt = (utils::UTCTime::fromGalileo(week, toes * 1000.0) - ttr).toSec();
+    UTCTime ttr = UTCTime::fromGalileo(week, tow * 1000.0);
+    double dt = (UTCTime::fromGalileo(week, toes * 1000.0) - ttr).toSec();
     if (dt > 302400.0)
         week--;
     else if (dt < -302400.0)
         week++;
     week += 1024;
-    toe = utils::UTCTime::fromGalileo(week, toes * 1000);
-    toc = utils::UTCTime::fromGalileo(week, tocs * 1000.0);
+    toe = UTCTime::fromGalileo(week, toes * 1000);
+    toc = UTCTime::fromGalileo(week, tocs * 1000.0);
 
     return true;
 }

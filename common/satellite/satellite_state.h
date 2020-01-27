@@ -6,7 +6,7 @@
 #include "client/parsers/glonass.h"
 #include "common/error.h"
 #include "common/matrix_defs.h"
-#include "utils/utctime.h"
+#include "common/utctime.h"
 
 namespace mc {
 namespace satellite {
@@ -19,12 +19,10 @@ struct SatelliteState
     Vec2 clk;
 };
 
-Error eph2Sat(const utils::UTCTime& t,
+Error eph2Sat(const UTCTime& t,
               const client::parsers::KeplerianEphemeris& eph,
               SatelliteState* sat);
-Error eph2Sat(const utils::UTCTime& t,
-              const client::parsers::GlonassEphemeris& eph,
-              SatelliteState* sat);
+Error eph2Sat(const UTCTime& t, const client::parsers::GlonassEphemeris& eph, SatelliteState* sat);
 
 Vec6 glonassOrbit(const Vec6& x, const Vec3& acc);
 

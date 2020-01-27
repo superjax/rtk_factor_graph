@@ -22,8 +22,8 @@ class GlonassEphemeris : public EphBase
     int iode;                                        // IODE (0-6 bit of tb field)
     int slot;                                        // satellite frequency slot
     int svh, sva, age;                               // satellite health, accuracy, age of operation
-    utils::UTCTime toe;                                     // epoch of epherides (UTC)
-    utils::UTCTime tof;                                     // message frame time (UTC)
+    UTCTime toe;                                     // epoch of epherides (UTC)
+    UTCTime tof;                                     // message frame time (UTC)
     Vec3 pos;                                        // satellite position (ecef) (m)
     Vec3 vel;                                        // satellite velocity (ecef) (m/s)
     Vec3 acc;                                        // satellite acceleration (ecef) (m/s^2)

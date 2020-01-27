@@ -10,7 +10,7 @@ static constexpr double MAXDTOE = 7200;                 // Maximum allowable age
 namespace mc {
 namespace satellite {
 
-Error eph2Sat(const utils::UTCTime& t,
+Error eph2Sat(const UTCTime& t,
               const client::parsers::KeplerianEphemeris& eph,
               SatelliteState* sat_state)
 {
@@ -108,7 +108,7 @@ Error eph2Sat(const utils::UTCTime& t,
     return Error::none();
 }
 
-Error eph2Sat(const utils::UTCTime& t,
+Error eph2Sat(const UTCTime& t,
               const client::parsers::GlonassEphemeris& eph,
               SatelliteState* sat_state)
 {

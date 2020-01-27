@@ -116,8 +116,8 @@ TEST(Galileo, CompareRTKLIB)
             EXPECT_EQ(eph.gnssID, GnssID::Galileo);
             EXPECT_EQ(eph.sat, 19);
 
-            EXPECT_EQ(eph.toe.sec, rtklib_eph.toe.time + utils::UTCTime::LEAP_SECONDS);
-            EXPECT_EQ(eph.toc.sec, rtklib_eph.toc.time + utils::UTCTime::LEAP_SECONDS);
+            EXPECT_EQ(eph.toe.sec, rtklib_eph.toe.time + UTCTime::LEAP_SECONDS);
+            EXPECT_EQ(eph.toc.sec, rtklib_eph.toc.time + UTCTime::LEAP_SECONDS);
 
             EXPECT_EQ(eph.toe.nsec, rtklib_eph.toe.sec * 1e9);
             EXPECT_EQ(eph.toc.nsec, rtklib_eph.toc.sec * 1e9);

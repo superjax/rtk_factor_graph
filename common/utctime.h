@@ -8,7 +8,6 @@
 #include <sstream>
 
 namespace mc {
-namespace utils {
 class UTCTime
 {
  public:
@@ -98,5 +97,4 @@ class UTCTime
 
 std::ostream& operator<<(std::ostream& os, const UTCTime& t);
 
-}  // namespace utils
 }  // namespace mc

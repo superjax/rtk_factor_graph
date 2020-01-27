@@ -33,7 +33,7 @@ eph_t toRtklib(const mc::client::parsers::KeplerianEphemeris& eph)
     return out;
 }
 
-gtime_t toRtklib(const mc::utils::UTCTime& t)
+gtime_t toRtklib(const mc::UTCTime& t)
 {
     gtime_t out;
     out.time = t.sec;

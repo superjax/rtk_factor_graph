@@ -2,14 +2,14 @@
 
 #include "client/parsers/eph.h"
 #include "client/parsers/glonass.h"
+#include "common/utctime.h"
 #include "third_party/rtklib/rtklib.h"
-#include "utils/utctime.h"
 
 namespace third_party {
 namespace rtklib {
 
 eph_t toRtklib(const mc::client::parsers::KeplerianEphemeris& eph);
-gtime_t toRtklib(const mc::utils::UTCTime& t);
+gtime_t toRtklib(const mc::UTCTime& t);
 geph_t toRtklib(const mc::client::parsers::GlonassEphemeris& eph);
 
 }  // namespace rtklib

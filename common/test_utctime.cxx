@@ -3,6 +3,7 @@
 #include "common/utctime.h"
 
 namespace mc {
+namespace utils {
 
 TEST(Time, Now)
 {
@@ -243,4 +244,5 @@ TEST(Time, GlonassFromTOD)
     EXPECT_EQ(glo, t2_end);
 }
 
+}  // namespace utils
 }  // namespace mc

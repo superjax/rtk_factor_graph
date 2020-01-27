@@ -1,7 +1,6 @@
-#include "utils/utctime.h"
+#include "common/utctime.h"
 
 namespace mc {
-namespace utils {
 
 constexpr int64_t UTCTime::E9;
 constexpr int64_t UTCTime::E6;
@@ -282,5 +281,4 @@ std::ostream& operator<<(std::ostream& os, const UTCTime& t)
     return os;
 }
 
-}  // namespace utils
 }  // namespace mc
