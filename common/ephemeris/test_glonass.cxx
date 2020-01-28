@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "client/parsers/glonass.h"
+#include "common/ephemeris/glonass.h"
 #include "common/print.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 TEST(Glonass, Parse)
 {
@@ -114,6 +113,5 @@ TEST(Glonass, Parse)
     EXPECT_EQ(finished_count, 1);
 }
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

@@ -2,8 +2,8 @@
 
 #include <Eigen/Core>
 
-#include "client/parsers/eph.h"
-#include "client/parsers/glonass.h"
+#include "common/ephemeris/eph.h"
+#include "common/ephemeris/glonass.h"
 #include "common/error.h"
 #include "common/matrix_defs.h"
 #include "common/utctime.h"
@@ -19,10 +19,8 @@ struct SatelliteState
     Vec2 clk;
 };
 
-Error eph2Sat(const UTCTime& t,
-              const client::parsers::KeplerianEphemeris& eph,
-              SatelliteState* sat);
-Error eph2Sat(const UTCTime& t, const client::parsers::GlonassEphemeris& eph, SatelliteState* sat);
+Error eph2Sat(const UTCTime& t, const ephemeris::KeplerianEphemeris& eph, SatelliteState* sat);
+Error eph2Sat(const UTCTime& t, const ephemeris::GlonassEphemeris& eph, SatelliteState* sat);
 
 Vec6 glonassOrbit(const Vec6& x, const Vec3& acc);
 

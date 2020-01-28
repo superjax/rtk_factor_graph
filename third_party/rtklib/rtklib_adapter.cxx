@@ -3,7 +3,7 @@
 namespace third_party {
 namespace rtklib {
 
-eph_t toRtklib(const mc::client::parsers::KeplerianEphemeris& eph)
+eph_t toRtklib(const mc::ephemeris::KeplerianEphemeris& eph)
 {
     eph_t out;
     out.sat = eph.sat;  // Only works for GPS satellites
@@ -41,7 +41,7 @@ gtime_t toRtklib(const mc::UTCTime& t)
     return out;
 }
 
-geph_t toRtklib(const mc::client::parsers::GlonassEphemeris& eph)
+geph_t toRtklib(const mc::ephemeris::GlonassEphemeris& eph)
 {
     geph_t out;
     out.sat = eph.sat;

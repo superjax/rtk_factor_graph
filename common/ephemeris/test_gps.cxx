@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "client/parsers/gps.h"
+#include "common/ephemeris/gps.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 TEST(GPSParse, KnownData)
 {
@@ -65,6 +64,5 @@ TEST(GPSParse, KnownData)
     EXPECT_TRUE(finished);
 }
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

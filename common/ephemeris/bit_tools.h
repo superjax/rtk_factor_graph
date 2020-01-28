@@ -4,8 +4,7 @@
 #include <limits>
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 enum
 {
@@ -180,6 +179,5 @@ double getBitGlo(const uint8_t *buf, const int pos)
     return getBit<1>(buf, pos) ? -val : val;
 }
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

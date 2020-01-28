@@ -13,7 +13,7 @@ using namespace third_party;
 class KeplerSatState : public ::testing::Test
 {
  public:
-    client::parsers::KeplerianEphemeris eph;
+    ephemeris::KeplerianEphemeris eph;
     UTCTime t;
     void SetUp() override
     {
@@ -95,7 +95,7 @@ TEST_F(KeplerSatState, StaleEphemeris)
 class GlonassSatState : public ::testing::Test
 {
  public:
-    client::parsers::GlonassEphemeris eph;
+    ephemeris::GlonassEphemeris eph;
     UTCTime t;
 
     void SetUp() override

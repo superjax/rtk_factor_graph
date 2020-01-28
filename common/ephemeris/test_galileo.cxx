@@ -1,11 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "client/parsers/galileo.h"
+#include "common/ephemeris/galileo.h"
 #include "third_party/rtklib/rtklib.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 using namespace third_party;
 
@@ -156,6 +155,5 @@ TEST(Galileo, CompareRTKLIB)
     EXPECT_EQ(rtklib_result, 1);
 }
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

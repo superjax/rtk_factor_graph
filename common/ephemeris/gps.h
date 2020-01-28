@@ -1,10 +1,9 @@
 #pragma once
 
-#include "client/parsers/eph.h"
+#include "common/ephemeris/eph.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 class GPSEphemeris : public KeplerianEphemeris
 {
@@ -41,6 +40,6 @@ class GPSEphemeris : public KeplerianEphemeris
     };
     uint8_t collected_subframes = 0x00;
 };
-}  // namespace parsers
-}  // namespace client
+
+}  // namespace ephemeris
 }  // namespace mc

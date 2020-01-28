@@ -1,10 +1,9 @@
 #include <benchmark/benchmark.h>
 
-#include "client/parsers/galileo.h"
+#include "common/ephemeris/galileo.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 // clang-format off
 std::array<std::array<uint32_t, 9>, 23> buffer = {{
@@ -50,6 +49,5 @@ static void parseGalileo(benchmark::State& state)
 }
 BENCHMARK(parseGalileo);
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

@@ -1,10 +1,9 @@
 #include <benchmark/benchmark.h>
 
-#include "client/parsers/glonass.h"
+#include "common/ephemeris/glonass.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 // clang-format off
 std::array<std::array<uint32_t, 4>, 61> buffer = {{
@@ -87,6 +86,5 @@ static void parseGlonass(benchmark::State& state)
 }
 BENCHMARK(parseGlonass);
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

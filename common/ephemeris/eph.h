@@ -6,8 +6,7 @@
 #include "common/utctime.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 class EphBase
 {
@@ -86,6 +85,6 @@ class KeplerianEphemeris : public EphBase
                  // [rad]
     double cis;  // amplitude of the sine harmonic correction term to the angle of inclination [rad]
 };
-}  // namespace parsers
-}  // namespace client
+
+}  // namespace ephemeris
 }  // namespace mc

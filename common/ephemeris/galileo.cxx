@@ -1,11 +1,10 @@
-#include "client/parsers/galileo.h"
-#include "client/parsers/bit_tools.h"
+#include "common/ephemeris/galileo.h"
+#include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 #include "utils/crc.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 GalileoEphemeris::GalileoEphemeris(int sat_id)
 {
@@ -258,6 +257,6 @@ bool GalileoEphemeris::frame5(const uint8_t* buf)
     collected_subframes |= FRAME5;
     return true;
 }
-}  // namespace parsers
-}  // namespace client
+
+}  // namespace ephemeris
 }  // namespace mc

@@ -24,6 +24,5 @@ include(cmake/GTestRule.cmake)
 add_subdirectory(scratch)
 add_subdirectory(common)
 add_subdirectory(utils)
-add_subdirectory(client)
 
 add_subdirectory(third_party)

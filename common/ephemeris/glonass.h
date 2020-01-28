@@ -1,11 +1,10 @@
 #pragma once
 
-#include "client/parsers/eph.h"
+#include "common/ephemeris/eph.h"
 #include "common/matrix_defs.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 class GlonassEphemeris : public EphBase
 {
@@ -68,6 +67,5 @@ class GlonassEphemeris : public EphBase
     int N4_;  // four-year interval number starting from 1996
     int NA_;  // calendar day number within the four-year period beginning since the leap year
 };
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

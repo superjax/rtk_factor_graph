@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "client/parsers/bit_tools.h"
+#include "common/ephemeris/bit_tools.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 TEST(GetBits, Aligned)
 {
@@ -185,6 +184,5 @@ TEST(GetBitsSigned, RealData3)
     EXPECT_EQ(bits, 253);
 }
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

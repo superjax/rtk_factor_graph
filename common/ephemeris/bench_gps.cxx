@@ -1,10 +1,9 @@
 #include <benchmark/benchmark.h>
 
-#include "client/parsers/gps.h"
+#include "common/ephemeris/gps.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 // clang-format off
 uint32_t msgs[6][10]{
@@ -32,6 +31,5 @@ static void parseGPS(benchmark::State& state)
 }
 BENCHMARK(parseGPS);
 
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

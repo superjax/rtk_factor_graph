@@ -10,9 +10,7 @@ static constexpr double MAXDTOE = 7200;                 // Maximum allowable age
 namespace mc {
 namespace satellite {
 
-Error eph2Sat(const UTCTime& t,
-              const client::parsers::KeplerianEphemeris& eph,
-              SatelliteState* sat_state)
+Error eph2Sat(const UTCTime& t, const ephemeris::KeplerianEphemeris& eph, SatelliteState* sat_state)
 {
     using std::abs;
     using std::atan2;
@@ -108,9 +106,7 @@ Error eph2Sat(const UTCTime& t,
     return Error::none();
 }
 
-Error eph2Sat(const UTCTime& t,
-              const client::parsers::GlonassEphemeris& eph,
-              SatelliteState* sat_state)
+Error eph2Sat(const UTCTime& t, const ephemeris::GlonassEphemeris& eph, SatelliteState* sat_state)
 {
     double dt = (t - eph.toe).toSec();
     static constexpr double TSTEP = 60.0; /* integration step glonass ephemeris (s) */

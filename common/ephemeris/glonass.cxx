@@ -1,11 +1,10 @@
-#include "client/parsers/glonass.h"
-#include "client/parsers/bit_tools.h"
+#include "common/ephemeris/glonass.h"
+#include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 #include "utils/crc.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 constexpr double GlonassEphemeris::FREQ1_GLO;
 constexpr double GlonassEphemeris::DFRQ1_GLO;
@@ -201,6 +200,5 @@ bool GlonassEphemeris::convertTime()
 
     return (got(FRAME1) && got(FRAME2));
 }
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc

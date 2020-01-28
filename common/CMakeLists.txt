@@ -1,5 +1,6 @@
 add_subdirectory(math)
 add_subdirectory(satellite)
+add_subdirectory(ephemeris)
 
 add_gtest(test_error test_error.cxx)
 

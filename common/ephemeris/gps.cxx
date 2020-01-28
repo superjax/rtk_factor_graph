@@ -1,10 +1,9 @@
-#include "client/parsers/gps.h"
-#include "client/parsers/bit_tools.h"
+#include "common/ephemeris/gps.h"
+#include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 
 namespace mc {
-namespace client {
-namespace parsers {
+namespace ephemeris {
 
 GPSEphemeris::GPSEphemeris(int sat_id)
 {
@@ -159,6 +158,5 @@ bool GPSEphemeris::frame3(const uint8_t* buf)
 
     return true;
 }
-}  // namespace parsers
-}  // namespace client
+}  // namespace ephemeris
 }  // namespace mc
