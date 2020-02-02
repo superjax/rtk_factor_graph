@@ -19,6 +19,9 @@ include(cmake/External_Benchmark.cmake)
 # include(cmake/External_GLog.cmake)
 # include(cmake/External_Ceres.cmake)
 include(cmake/GTestRule.cmake)
+include(cmake/BuildGuard.cmake)
+
+build_guard()
 
 # Project Code
 add_subdirectory(scratch)
