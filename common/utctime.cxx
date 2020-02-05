@@ -19,27 +19,25 @@ UTCTime::UTCTime()
     nsec = 0;
 }
 
-UTCTime::UTCTime(int _sec, int _nsec) : sec(_sec), nsec(_nsec)
-{
-    wrapNsec();
-}
-
-UTCTime::UTCTime(double _sec)
-{
-    sec = std::floor(_sec);
-    nsec = (uint64_t)(_sec * E9) % E9;
-    wrapNsec();
-}
-
 bool UTCTime::operator>(const UTCTime& other) const
 {
     return (sec > other.sec) ? true
                              : (sec < other.sec) ? false : (nsec > other.nsec) ? true : false;
 }
+bool UTCTime::operator>=(const UTCTime& other) const
+{
+    return (sec >= other.sec) ? true
+                              : (sec < other.sec) ? false : (nsec >= other.nsec) ? true : false;
+}
 bool UTCTime::operator<(const UTCTime& other) const
 {
     return (sec < other.sec) ? true
                              : (sec > other.sec) ? false : (nsec < other.nsec) ? true : false;
+}
+bool UTCTime::operator<=(const UTCTime& other) const
+{
+    return (sec <= other.sec) ? true
+                              : (sec > other.sec) ? false : (nsec <= other.nsec) ? true : false;
 }
 
 bool UTCTime::operator==(const UTCTime& other) const

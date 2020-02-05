@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -8,6 +9,7 @@
 #include <sstream>
 
 namespace mc {
+
 class UTCTime
 {
  public:
@@ -43,14 +45,20 @@ class UTCTime
     static constexpr int64_t GLO_UTC_OFFSET = -3 * 3600;
     static constexpr int BD_UTC_OFFSET = GPS_UTC_OFFSET + GPS_BEIDOU_OFFSET;
 
+    constexpr UTCTime(const int64_t _sec, const int64_t _nsec)
+        : sec(_sec + _nsec / E9), nsec(_nsec % E9)
+    {
+        assert(nsec >= 0);
+    }
+
+    constexpr UTCTime(const double _sec) : sec(std::floor(_sec)), nsec((int64_t)(_sec * E9) % E9) {}
+
     UTCTime();
 
-    UTCTime(int _sec, int _nsec);
-
-    UTCTime(double _sec);
-
     bool operator>(const UTCTime& other) const;
+    bool operator>=(const UTCTime& other) const;
     bool operator<(const UTCTime& other) const;
+    bool operator<=(const UTCTime& other) const;
     bool operator==(const UTCTime& other) const;
 
     UTCTime operator-(const UTCTime& other) const;
@@ -93,8 +101,10 @@ class UTCTime
     int GlonassWeek() const;
     int GlonassDayOfWeek() const;
     //    int BeidouWeek();
-};
+};  // namespace mc
 
 std::ostream& operator<<(std::ostream& os, const UTCTime& t);
+
+static constexpr UTCTime INVALID_TIME = UTCTime{std::numeric_limits<int64_t>::lowest(), 0};
 
 }  // namespace mc
