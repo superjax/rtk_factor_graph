@@ -28,8 +28,12 @@ class EphBase
     static constexpr double P2_55 = 2.775557561562891E-17;  // 2^-55
     static constexpr double P2_59 = 1.734723475976810E-18;  // 2^-59
 
-    uint8_t gnssID;
-    uint8_t sat;
+    uint8_t gnssID;  // GNSS system
+    uint8_t sat;     // Satellite ID (within GNSS system)
+    UTCTime toe;     // reference time ephemeris (UTC Time) [s]
+
+    bool operator<(const EphBase& other) const { return toe < other.toe; }
+    bool operator>(const EphBase& other) const { return toe > other.toe; }
 
     std::string Type() const
     {
@@ -54,7 +58,6 @@ class EphBase
 class KeplerianEphemeris : public EphBase
 {
  public:
-    UTCTime toe;  // reference time ephemeris (UTC Time) [s]
     UTCTime toc;  // reference time (clock)   (UTC Time) [s]
 
     uint32_t tow;   // time of week in subframe1; the time of the leading bit edge of subframe 2 [s]

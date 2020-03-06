@@ -92,4 +92,10 @@ template <typename Derived1, typename Derived2>
 #define EXPECT_OK(err) EXPECT_TRUE(err.ok())
 #define EXPECT_NOK(err) EXPECT_FALSE(err.ok())
 
+#ifdef DISABLE_ASSERT
+#define EXPECT_DIE(...)
+#else
+#define EXPECT_DIE(...) EXPECT_DEATH(__VA_ARGS__)
+#endif
+
 }  // namespace mc

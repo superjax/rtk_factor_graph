@@ -79,7 +79,7 @@ UTCTime& UTCTime::operator+=(const UTCTime& other)
     return (*this);
 }
 
-double UTCTime::toSec()
+double UTCTime::toSec() const
 {
     return (double)sec + (double)nsec * 1e-9;
 }

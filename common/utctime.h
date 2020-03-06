@@ -76,7 +76,7 @@ class UTCTime
     UTCTime operator-(int sec_) const;
     UTCTime& operator-=(int sec_);
 
-    double toSec();
+    double toSec() const;
     void wrapNsec();
 
     static UTCTime now();

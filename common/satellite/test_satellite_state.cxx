@@ -70,7 +70,7 @@ TEST_F(KeplerSatState, CheckSatPositionVelClockAgainstRTKLIB)
     const double oracle_clk_rate = (oracle_clock2 - oracle_clock) / dt;
 
     SatelliteState sat_state;
-    const Error result = eph2Sat(t, eph, &sat_state);
+    const Error result = eph2Sat(t, eph, Out(sat_state));
 
     EXPECT_OK(result);
 
@@ -87,7 +87,7 @@ TEST_F(KeplerSatState, StaleEphemeris)
 {
     SatelliteState sat_state;
     t -= 2.0;
-    const Error result = eph2Sat(t, eph, &sat_state);
+    const Error result = eph2Sat(t, eph, Out(sat_state));
 
     EXPECT_NOK(result);
 }
@@ -153,7 +153,7 @@ TEST_F(GlonassSatState, VsRTKLIB)
     const double oracle_clk_rate = (oracle_clk2 - oracle_clk) / dt;
 
     SatelliteState sat_state;
-    const Error result = eph2Sat(log_start, eph, &sat_state);
+    const Error result = eph2Sat(log_start, eph, Out(sat_state));
 
     EXPECT_OK(result);
     MATRIX_CLOSE(sat_state.pos, oracle_pos, 1e-8);

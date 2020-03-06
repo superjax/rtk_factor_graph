@@ -6,6 +6,7 @@
 #include "common/ephemeris/glonass.h"
 #include "common/error.h"
 #include "common/matrix_defs.h"
+#include "common/out.h"
 #include "common/utctime.h"
 
 namespace mc {
@@ -19,8 +20,8 @@ struct SatelliteState
     Vec2 clk;
 };
 
-Error eph2Sat(const UTCTime& t, const ephemeris::KeplerianEphemeris& eph, SatelliteState* sat);
-Error eph2Sat(const UTCTime& t, const ephemeris::GlonassEphemeris& eph, SatelliteState* sat);
+Error eph2Sat(const UTCTime& t, const ephemeris::KeplerianEphemeris& eph, Out<SatelliteState> sat);
+Error eph2Sat(const UTCTime& t, const ephemeris::GlonassEphemeris& eph, Out<SatelliteState> sat);
 
 Vec6 glonassOrbit(const Vec6& x, const Vec3& acc);
 
