@@ -76,7 +76,7 @@ class DQuat
     void setDual(const Quat<T>& q) { d_ = q; }
 
     DQuat operator*(const DQuat& q) const { return otimes(q); }
-    DQuat& operator=(const Quat<T>& q)
+    DQuat& operator=(const DQuat& q)
     {
         arr_ = q.arr_;
         return *this;

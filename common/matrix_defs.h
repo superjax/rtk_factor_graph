@@ -5,49 +5,59 @@
 
 namespace mc {
 
-typedef Eigen::Matrix<double, 1, 1> Vec1;
-typedef Eigen::Matrix<double, 2, 1> Vec2;
-typedef Eigen::Matrix<double, 3, 1> Vec3;
-typedef Eigen::Matrix<double, 4, 1> Vec4;
-typedef Eigen::Matrix<double, 5, 1> Vec5;
-typedef Eigen::Matrix<double, 6, 1> Vec6;
-typedef Eigen::Matrix<double, 7, 1> Vec7;
-typedef Eigen::Matrix<double, 8, 1> Vec8;
-typedef Eigen::Matrix<double, 9, 1> Vec9;
-typedef Eigen::Matrix<double, 10, 1> Vec10;
+using Vec1 = Eigen::Matrix<double, 1, 1>;
+using Vec2 = Eigen::Matrix<double, 2, 1>;
+using Vec3 = Eigen::Matrix<double, 3, 1>;
+using Vec4 = Eigen::Matrix<double, 4, 1>;
+using Vec5 = Eigen::Matrix<double, 5, 1>;
+using Vec6 = Eigen::Matrix<double, 6, 1>;
+using Vec7 = Eigen::Matrix<double, 7, 1>;
+using Vec8 = Eigen::Matrix<double, 8, 1>;
+using Vec9 = Eigen::Matrix<double, 9, 1>;
+using Vec10 = Eigen::Matrix<double, 10, 1>;
+using Vec11 = Eigen::Matrix<double, 11, 1>;
 
-typedef Eigen::Matrix<float, 1, 1> Vec1f;
-typedef Eigen::Matrix<float, 2, 1> Vec2f;
-typedef Eigen::Matrix<float, 3, 1> Vec3f;
-typedef Eigen::Matrix<float, 4, 1> Vec4f;
-typedef Eigen::Matrix<float, 5, 1> Vec5f;
-typedef Eigen::Matrix<float, 6, 1> Vec6f;
-typedef Eigen::Matrix<float, 7, 1> Vec7f;
-typedef Eigen::Matrix<float, 8, 1> Vec8f;
-typedef Eigen::Matrix<float, 9, 1> Vec9f;
-typedef Eigen::Matrix<float, 10, 1> Vec10f;
+using Vec1f = Eigen::Matrix<float, 1, 1>;
+using Vec2f = Eigen::Matrix<float, 2, 1>;
+using Vec3f = Eigen::Matrix<float, 3, 1>;
+using Vec4f = Eigen::Matrix<float, 4, 1>;
+using Vec5f = Eigen::Matrix<float, 5, 1>;
+using Vec6f = Eigen::Matrix<float, 6, 1>;
+using Vec7f = Eigen::Matrix<float, 7, 1>;
+using Vec8f = Eigen::Matrix<float, 8, 1>;
+using Vec9f = Eigen::Matrix<float, 9, 1>;
+using Vec10f = Eigen::Matrix<float, 10, 1>;
+using Vec11f = Eigen::Matrix<float, 11, 1>;
 
-typedef Eigen::Matrix<double, 1, 1> Mat1;
-typedef Eigen::Matrix<double, 2, 2> Mat2;
-typedef Eigen::Matrix<double, 3, 3> Mat3;
-typedef Eigen::Matrix<double, 4, 4> Mat4;
-typedef Eigen::Matrix<double, 5, 5> Mat5;
-typedef Eigen::Matrix<double, 6, 6> Mat6;
-typedef Eigen::Matrix<double, 7, 7> Mat7;
-typedef Eigen::Matrix<double, 8, 8> Mat8;
-typedef Eigen::Matrix<double, 9, 9> Mat9;
-typedef Eigen::Matrix<double, 10, 10> Mat10;
+using Mat1 = Eigen::Matrix<double, 1, 1>;
+using Mat2 = Eigen::Matrix<double, 2, 2>;
+using Mat3 = Eigen::Matrix<double, 3, 3>;
+using Mat4 = Eigen::Matrix<double, 4, 4>;
+using Mat5 = Eigen::Matrix<double, 5, 5>;
+using Mat6 = Eigen::Matrix<double, 6, 6>;
+using Mat7 = Eigen::Matrix<double, 7, 7>;
+using Mat8 = Eigen::Matrix<double, 8, 8>;
+using Mat9 = Eigen::Matrix<double, 9, 9>;
+using Mat10 = Eigen::Matrix<double, 10, 10>;
 
-typedef Eigen::Matrix<float, 1, 1> Mat1f;
-typedef Eigen::Matrix<float, 2, 2> Mat2f;
-typedef Eigen::Matrix<float, 3, 3> Mat3f;
-typedef Eigen::Matrix<float, 4, 4> Mat4f;
-typedef Eigen::Matrix<float, 5, 5> Mat5f;
-typedef Eigen::Matrix<float, 6, 6> Mat6f;
-typedef Eigen::Matrix<float, 7, 7> Mat7f;
-typedef Eigen::Matrix<float, 8, 8> Mat8f;
-typedef Eigen::Matrix<float, 9, 9> Mat9f;
-typedef Eigen::Matrix<float, 10, 10> Mat10f;
+using Mat93 = Eigen::Matrix<double, 9, 3>;
+using Mat96 = Eigen::Matrix<double, 9, 6>;
+using Mat98 = Eigen::Matrix<double, 9, 8>;
+
+using MatRM93 = Eigen::Matrix<double, 9, 3, Eigen::RowMajor>;
+using MatRM96 = Eigen::Matrix<double, 9, 6, Eigen::RowMajor>;
+using MatRM98 = Eigen::Matrix<double, 9, 8, Eigen::RowMajor>;
+
+using Mat1f = Eigen::Matrix<float, 1, 1>;
+using Mat2f = Eigen::Matrix<float, 2, 2>;
+using Mat3f = Eigen::Matrix<float, 3, 3>;
+using Mat4f = Eigen::Matrix<float, 4, 4>;
+using Mat5f = Eigen::Matrix<float, 5, 5>;
+using Mat6f = Eigen::Matrix<float, 6, 6>;
+using Mat7f = Eigen::Matrix<float, 7, 7>;
+using Mat8f = Eigen::Matrix<float, 8, 8>;
+using Mat9f = Eigen::Matrix<float, 9, 9>;
+using Mat10f = Eigen::Matrix<float, 10, 10>;
 
 static const Eigen::Vector3d e_x(1.0, 0, 0);
 static const Eigen::Vector3d e_y(0, 1.0, 0);
@@ -83,5 +93,19 @@ inline Eigen::MatrixXd vstack(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b
     out << a, b;
     return out;
 }
+
+template <typename Derived>
+bool isNan(const Eigen::MatrixBase<Derived>& m)
+{
+    return (m.array() != m.array()).any();
+}
+
+template <typename Derived>
+bool isFinite(const Eigen::MatrixBase<Derived>& m)
+{
+    return (m.array() == m.array()).all();
+}
+
+const Vec3 GRAVITY = 9.80665 * Vec3::UnitZ();
 
 }  // namespace mc

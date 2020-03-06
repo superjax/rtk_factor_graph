@@ -107,6 +107,8 @@ class Quat
         return *this;
     }
 
+    void setRandom() { arr_.setRandom(); }
+
     Quat& operator=(const Quat& q)
     {
         arr_ = q.elements();
@@ -452,6 +454,8 @@ class Quat
     }
 
     Mat3 Ad() const { return R().transpose(); }
+
+    inline T norm() const { return arr_.norm(); }
 };
 
 // Specialized double-versions of rotation

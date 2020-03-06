@@ -41,19 +41,28 @@ template <typename Derived1, typename Derived2>
     return ::testing::AssertionSuccess();
 }
 
-#define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, m1, m2, tol);
-#define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE(v1, v2, 1e-8)
+#define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, (m1), (m2), tol);
+#define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE((v1), (v2), 1e-8)
 
 #define QUATERNION_EQUALS(q1, q2)                                                          \
     {                                                                                      \
         const double sign = (std::signbit((q1).w()) == std::signbit((q2).w())) ? 1. : -1.; \
         MATRIX_CLOSE((q1).arr_, sign*((q2).arr_), 1e-8)                                    \
     }
+#define QUAT_CLOSE(Q1, Q2, tol)                                 \
+    {                                                           \
+        EXPECT_LE(((Q1).inverse() * (Q2)).log().norm(), (tol)); \
+    }
 
 #define DQUAT_EQUALS(Q1, Q2)                         \
     {                                                \
         QUATERNION_EQUALS((Q1).real(), (Q2).real()); \
         QUATERNION_EQUALS((Q1).dual(), (Q2).dual()); \
+    }
+
+#define DQUAT_CLOSE(Q1, Q2, tol)                                \
+    {                                                           \
+        EXPECT_LE(((Q1).inverse() * (Q2)).log().norm(), (tol)); \
     }
 
 #define TRANSFORM_EQUALS(t1, t2)       \
@@ -83,4 +92,4 @@ template <typename Derived1, typename Derived2>
 #define EXPECT_OK(err) EXPECT_TRUE(err.ok())
 #define EXPECT_NOK(err) EXPECT_FALSE(err.ok())
 
-}
+}  // namespace mc

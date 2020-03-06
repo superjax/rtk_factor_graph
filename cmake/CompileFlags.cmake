@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wstrict-aliasing -Wformat=2 -Wini
     -Wdisabled-optimization -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo \
     -Wstrict-null-sentinel -Wstrict-overflow=1")
 # Extra features/enablements
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Set all warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
