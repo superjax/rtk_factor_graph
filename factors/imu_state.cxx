@@ -61,16 +61,6 @@ ImuState& ImuState::operator+=(const ImuErrorState& dstate)
 }
 
 ImuErrorState::ImuErrorState() : alpha(data()), beta(data() + 3), gamma(data() + 6) {}
-ImuErrorState::ImuErrorState(const ImuErrorState& other)
-    : Vec9(other), alpha(data()), beta(data() + 3), gamma(data() + 6)
-{
-}
-
-ImuErrorState& ImuErrorState::operator=(const ImuErrorState& other)
-{
-    Vec9::operator=(other);
-    return *this;
-}
 
 // x1 + exp(dx) = x2
 // x2 = x1 * exp(dx)

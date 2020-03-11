@@ -4,10 +4,10 @@
 #include <Eigen/Dense>
 
 #include <cmath>
-#include <iostream>
 
 #include "common/math/so3.h"
 #include "common/matrix_defs.h"
+#include "common/print.h"
 
 namespace mc {
 namespace math {
@@ -208,7 +208,7 @@ class Quat
         const T norm_v = v.norm();
 
         T th, e;
-        const Vec3 r = v / norm_v;
+        Vec3 r = v / norm_v;
         if (norm_v > (T)4e-6)
         {
             th = 2. * atan2(norm_v, w());
@@ -230,6 +230,11 @@ class Quat
             const T th2 = th * th;
             const T th4 = th2 * th2;
             e = 1. / 12. + th2 / 720. + th4 / 30240.;
+            if (norm_v == 0)
+            {
+                // There is no vector, just choose one
+                r = Vec3::Unit(0);
+            }
         }
 
         const Vec3 omg = th * r;
@@ -456,6 +461,29 @@ class Quat
     Mat3 Ad() const { return R().transpose(); }
 
     inline T norm() const { return arr_.norm(); }
+
+    Eigen::Matrix<double, 4, 3> dParamDGen() const
+    {
+        // clang-format off
+        Eigen::Matrix<double, 4, 3> dadq;
+        dadq << -x()/2.0, -y()/2.0, -z()/2.0,
+                 w()/2.0, -z()/2.0,  y()/2.0,
+                 z()/2.0,  w()/2.0, -x()/2.0,
+                -y()/2.0,  x()/2.0,  w()/2.0;
+        // clang-format on
+        return dadq;
+    }
+
+    Eigen::Matrix<double, 3, 4> dGenDParam() const
+    {
+        // clang-format off
+        Eigen::Matrix<double, 3, 4> dadq;
+        dadq << -x()*2.0,  w()*2.0,  z()*2.0, -y()*2.0,
+                -y()*2.0, -z()*2.0,  w()*2.0,  x()*2.0,
+                -z()*2.0,  y()*2.0, -x()*2.0,  w()*2.0;
+        // clang-format on
+        return dadq;
+    }
 };
 
 // Specialized double-versions of rotation

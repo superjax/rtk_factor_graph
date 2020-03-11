@@ -151,4 +151,28 @@ Eigen::MatrixXd right_jac3(const T& x, const Fun& fun, const Args&... args)
     return out;
 }
 
+// f(Rⁿ, ...) → Rⁿ
+// @returns ∂f/∂x, x ∈ Rⁿ
+template <typename T, typename Fun, typename... Args>
+Eigen::MatrixXd compute_jac(const T& x, const Fun& fun, const Args&... args)
+{
+    const double eps = 1e-8;
+    Eigen::MatrixXd out;
+    for (int i = 0; i < x.rows(); ++i)
+    {
+        const T xm = x - (T::Unit(i) * eps);
+        const T xp = x + (T::Unit(i) * eps);
+        const auto yp = fun(xp, args...);
+        const auto ym = fun(xm, args...);
+
+        if (out.rows() == 0 || out.cols() == 0)
+        {
+            out.resize(decltype(yp - yp)::RowsAtCompileTime, xp.rows());
+        }
+
+        out.col(i) = (yp - ym) / (2.0 * eps);
+    }
+    return out;
+}
+
 }  // namespace mc

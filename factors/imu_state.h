@@ -9,21 +9,19 @@ namespace factors {
 struct ImuErrorState : public Vec9
 {
     ImuErrorState();
-    ImuErrorState(const ImuErrorState& other);
 
     template <typename Derived>
     ImuErrorState(const Eigen::MatrixBase<Derived>& other)
         : Vec9(other), alpha(data()), beta(data() + 3), gamma(data() + 6)
     {
+        static_assert(Eigen::MatrixBase<Derived>::RowsAtCompileTime == 9);
     }
 
     Eigen::Map<Vec3> alpha;
     Eigen::Map<Vec3> beta;
     Eigen::Map<Vec3> gamma;
 
-    ImuErrorState& operator=(const ImuErrorState& other);
-    template <typename Derived>
-    ImuErrorState& operator=(const Eigen::MatrixBase<Derived>& other)
+    ImuErrorState& operator=(const Vec9& other)
     {
         Vec9::operator=(other);
         return *this;

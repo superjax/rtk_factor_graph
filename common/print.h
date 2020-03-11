@@ -20,16 +20,18 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
     return static_cast<uint8_t>(a) >= static_cast<uint8_t>(b);
 }
 
+#define LOGGING_LEVEL_DEBUG
+
 #if defined(LOGGING_LEVEL_DEBUG)
-#define LOGGING_LEVEL LoggingLevel::DEBUG;
+#define LOGGING_LEVEL LoggingLevel::DEBUG
 #elif defined(LOGGING_LEVEL_INFO)
-#define LOGGING_LEVEL LoggingLevel::INFO;
+#define LOGGING_LEVEL LoggingLevel::INFO
 #elif defined(LOGGING_LEVEL_WARN)
-#define LOGGING_LEVEL LoggingLevel::WARN;
+#define LOGGING_LEVEL LoggingLevel::WARN
 #elif defined(LOGGING_LEVEL_ERROR)
-#define LOGGING_LEVEL LoggingLevel::ERROR;
+#define LOGGING_LEVEL LoggingLevel::ERROR
 #elif defined(LOGGING_LEVEL_FATAL)
-#define LOGGING_LEVEL LoggingLevel::FATAL;
+#define LOGGING_LEVEL LoggingLevel::FATAL
 #else
 #define LOGGING_LEVEL LoggingLevel::INFO
 #endif
@@ -85,4 +87,4 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
         printMagenta("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
     }
 
-}
+}  // namespace mc

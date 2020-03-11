@@ -13,6 +13,7 @@ file(WRITE "${PROJECT_BINARY_DIR}/tmp/clean"
                              run_benchmarks\
                              run_tests\
                              client\
+                             factors\
                              common\
                              scratch\
                              third_party\

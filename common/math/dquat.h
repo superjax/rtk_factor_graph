@@ -311,6 +311,31 @@ class DQuat
     }
 
     SO3<T> R() const { return r_.R(); }
+
+    Eigen::Matrix<double, 8, 6> dParamDGen() const
+    {
+        // clang-format off
+        Eigen::Matrix<double, 8, 6> dadq;
+        dadq.block<4,3>(0,0) = real().dParamDGen();
+        dadq.block<4,3>(0,3).setZero();
+        dadq.block<4,3>(4,0) = dual().dParamDGen();
+        dadq.block<4,3>(4,3) = dadq.block<4,3>(0,0);
+
+        // clang-format on
+        return dadq;
+    }
+
+    Eigen::Matrix<double, 6, 8> dGenDParam() const
+    {
+        // clang-format off
+        Eigen::Matrix<double, 6, 8> dqda;
+        dqda.block<3,4>(0,0) = real().dGenDParam();
+        dqda.block<3,4>(0,4).setZero();
+        dqda.block<3,4>(3,0) = dual().dGenDParam();
+        dqda.block<3,4>(3,4) = dqda.block<3,4>(0,0);
+        // clang-format on
+        return dqda;
+    }
 };
 
 template <typename T>

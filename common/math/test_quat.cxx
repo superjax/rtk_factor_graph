@@ -431,5 +431,46 @@ TEST(Quat, SO3Equivalent)
     QUATERNION_EQUALS(Ra2c.q(), qa2c);
 }
 
+TEST(Quat, dGen_dParam)
+{
+    const Quat<double> Q1 = Quat<double>::Random();
+    const auto fun = [Q1](const Vec4& q) -> Vec3 {
+        return (Q1.inverse() * Quat<double>(q.data())).log();
+    };
+
+    const Quat<double> Q2 = Q1;
+
+    const Eigen::Matrix<double, 3, 4> jac_numerical = compute_jac(Vec4(Q2.arr_), fun);
+    const Eigen::Matrix<double, 3, 4> jac_analytical = Q1.dGenDParam();
+
+    MATRIX_CLOSE(jac_numerical, jac_analytical, 1e-6);
+}
+
+TEST(Quat, LocalParamExp)
+{
+    const Quat<double> Q = Quat<double>::Random();
+    const auto fun = [Q](const Vec3& delta) -> Vec4 { return (Q * Quat<double>::exp(delta)).arr_; };
+
+    const Vec3 delta = Vec3::Zero();
+
+    const Eigen::Matrix<double, 4, 3> jac_numerical = compute_jac(delta, fun);
+    const Eigen::Matrix<double, 4, 3> jac_analytical = Q.dParamDGen();
+
+    MATRIX_CLOSE(jac_numerical, jac_analytical, 1e-6);
+}
+
+TEST(Quat, dGenDParam_dParamDGen)
+{
+    const Quat<double> q = Quat<double>::Identity();
+
+    const Mat4 jac = q.dParamDGen() * q.dGenDParam();
+    Mat4 answer = Mat4::Zero();
+    answer.bottomRightCorner<3, 3>().setIdentity();
+    MATRIX_CLOSE(jac, answer, 1e-8);
+
+    const Mat3 jac2 = q.dGenDParam() * q.dParamDGen();
+    MATRIX_CLOSE(jac2, Mat3::Identity(), 1e-8);
+}
+
 }  // namespace math
 }  // namespace mc

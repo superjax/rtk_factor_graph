@@ -333,5 +333,35 @@ TEST(DQuat, ExpLogJacobians)
     }
 }
 
+TEST(DQuat, LocalParamExp)
+{
+    const DQuat<double> Q = DQuat<double>::Random();
+    const auto fun = [Q](const Vec6& delta) -> Vec8 {
+        return (Q * DQuat<double>::exp(delta)).arr_;
+    };
+
+    const Vec6 delta = Vec6::Zero();
+
+    const Eigen::Matrix<double, 8, 6> jac_numerical = compute_jac(delta, fun);
+    const Eigen::Matrix<double, 8, 6> jac_analytical = Q.dParamDGen();
+
+    MATRIX_CLOSE(jac_numerical, jac_analytical, 1e-6);
+}
+
+TEST(DQuat, LocalParamLog)
+{
+    const DQuat<double> Q1 = DQuat<double>::Random();
+    const auto fun = [Q1](const Vec8& q) -> Vec6 {
+        return (Q1.inverse() * DQuat<double>(q.data())).log();
+    };
+
+    const DQuat<double> Q2 = Q1;
+
+    const Eigen::Matrix<double, 6, 8> jac_numerical = compute_jac(Vec8(Q2.arr_), fun);
+    const Eigen::Matrix<double, 6, 8> jac_analytical = Q1.dGenDParam();
+
+    MATRIX_CLOSE(jac_numerical, jac_analytical, 1e-6);
+}
+
 }  // namespace math
 }  // namespace mc
