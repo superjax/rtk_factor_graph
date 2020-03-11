@@ -1,4 +1,5 @@
 #include "third_party/rtklib/rtklib_adapter.h"
+#include "common/utctime.h"
 
 namespace third_party {
 namespace rtklib {

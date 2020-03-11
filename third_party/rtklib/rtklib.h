@@ -101,5 +101,25 @@ extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts, dou
  *-----------------------------------------------------------------------------*/
 extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts, double *var);
 
+/* ionosphere model ------------------------------------------------------------
+ * compute ionospheric delay by broadcast ionosphere model (klobuchar model)
+ * args   : gtime_t t        I   time (gpst)
+ *          double *ion      I   iono model parameters {a0,a1,a2,a3,b0,b1,b2,b3}
+ *          double *pos      I   receiver position {lat,lon,h} (rad,m)
+ *          double *azel     I   azimuth/elevation angle {az,el} (rad)
+ * return : ionospheric delay (L1) (m)
+ *-----------------------------------------------------------------------------*/
+extern double ionmodel(gtime_t t, const double *ion, const double *pos, const double *azel);
+
+/* troposphere model -----------------------------------------------------------
+ * compute tropospheric delay by standard atmosphere and saastamoinen model
+ * args   : gtime_t time     I   time
+ *          double *pos      I   receiver position {lat,lon,h} (rad,m)
+ *          double *azel     I   azimuth/elevation angle {az,el} (rad)
+ *          double humi      I   relative humidity
+ * return : tropospheric delay (m)
+ *-----------------------------------------------------------------------------*/
+extern double tropmodel(gtime_t time, const double *pos, const double *azel, double humi);
+
 }  // namespace rtklib
 }  // namespace third_party

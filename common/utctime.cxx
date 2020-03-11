@@ -268,6 +268,11 @@ std::string UTCTime::str() const
     return ss.str();
 }
 
+double UTCTime::GpsTow() const
+{
+    return ((*this) - UTCTime::fromGPS(GpsWeek(), 0)).toSec();
+}
+
 std::ostream& operator<<(std::ostream& os, const UTCTime& t)
 {
     time_t time(t.sec);

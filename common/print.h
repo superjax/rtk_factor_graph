@@ -50,6 +50,8 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
 #define ANSI_COLOR_CYAN "\x1b[36m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
+#define INSPECT(x) std::cout << ANSI_COLOR_CYAN << #x ":" << x << ANSI_COLOR_RESET << std::endl
+
 #define printRed(fmt, ...) printf(ANSI_COLOR_RED fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
 #define printGreen(fmt, ...) printf(ANSI_COLOR_GREEN fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
 #define printYellow(fmt, ...) printf(ANSI_COLOR_YELLOW fmt ANSI_COLOR_RESET, ##__VA_ARGS__)

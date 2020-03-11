@@ -20,6 +20,8 @@ class SatelliteBase
     uint8_t gnssId() const { return gnss_id_; }
     uint8_t sat_num() const { return sat_; }
 
+    virtual int almanacSize() const = 0;
+
  private:
     uint8_t gnss_id_;  // GNSS system
     uint8_t sat_;      // Satellite ID (within GNSS system)

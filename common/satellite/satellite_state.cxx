@@ -1,11 +1,9 @@
 #include "common/satellite/satellite_state.h"
+#include "common/defs.h"
 #include "common/math/rk4.h"
 #include "common/print.h"
 
-static constexpr double GM_EARTH = 3.986005e14;         // Mass of the earth (kg)
-static constexpr double OMEGA_EARTH = 7.2921151467e-5;  // Angular Velocity of the earth (rad/s)
-static constexpr double C_LIGHT = 299792458.0;          // speed of light (m/s)
-static constexpr double MAXDTOE = 7200;                 // Maximum allowable age of ephemeris (s)
+static constexpr double MAXDTOE = 7200;  // Maximum allowable age of ephemeris (s)
 
 namespace mc {
 namespace satellite {

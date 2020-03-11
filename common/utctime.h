@@ -98,6 +98,7 @@ class UTCTime
 
     int week() const;
     int GpsWeek() const;
+    double GpsTow() const;
     int GlonassWeek() const;
     int GlonassDayOfWeek() const;
     //    int BeidouWeek();
