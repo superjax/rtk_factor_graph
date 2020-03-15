@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "common/assert.h"
+#include "common/check.h"
 #include "common/out.h"
 #include "common/print.h"
 #include "common/satellite/satellite_state.h"
@@ -35,8 +35,8 @@ class Satellite : public SatelliteBase
 
     Error addEph(const EphType& eph)
     {
-        ASSERT(eph.gnssID == gnssId(), "Mismatched satellite GNSS system");
-        ASSERT(eph.sat == sat_num(), "Mismatched satellite number");
+        check(eph.gnssID == gnssId(), "Mismatched satellite GNSS system");
+        check(eph.sat == sat_num(), "Mismatched satellite number");
 
         auto it = almanac_.begin();
         while (it != almanac_.end())
@@ -64,7 +64,7 @@ class Satellite : public SatelliteBase
 
     const EphType& findClosestEphemeris(const UTCTime& t) const
     {
-        ASSERT(almanac_.size() > 0, "Tried to get Ephemeris from an empty almanac");
+        check(almanac_.size() > 0, "Tried to get Ephemeris from an empty almanac");
         double dt = std::numeric_limits<double>::max();
         auto min_it = almanac_.rend();
         for (auto it = almanac_.rbegin(); it != almanac_.rend(); ++it)

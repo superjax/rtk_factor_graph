@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cstdio>
-#include <fstream>
-#include <iostream>
+#include <fmt/color.h>
+#include <fmt/core.h>
+
+#include <experimental/source_location>
 
 namespace mc {
 
@@ -20,73 +21,72 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
     return static_cast<uint8_t>(a) >= static_cast<uint8_t>(b);
 }
 
-#define LOGGING_LEVEL_DEBUG
+constexpr LoggingLevel LOGGING_LEVEL = LoggingLevel::DEBUG;
 
-#if defined(LOGGING_LEVEL_DEBUG)
-#define LOGGING_LEVEL LoggingLevel::DEBUG
-#elif defined(LOGGING_LEVEL_INFO)
-#define LOGGING_LEVEL LoggingLevel::INFO
-#elif defined(LOGGING_LEVEL_WARN)
-#define LOGGING_LEVEL LoggingLevel::WARN
-#elif defined(LOGGING_LEVEL_ERROR)
-#define LOGGING_LEVEL LoggingLevel::ERROR
-#elif defined(LOGGING_LEVEL_FATAL)
-#define LOGGING_LEVEL LoggingLevel::FATAL
-#else
-#define LOGGING_LEVEL LoggingLevel::INFO
-#endif
+template <typename Context = fmt::format_context, typename... Args>
+inline fmt::format_arg_store<Context, Args...> fmt(const Args&... args)
+{
+    return {args...};
+}
 
-#define print(level, fmt, ...)                                        \
-    if ((level) >= LOGGING_LEVEL)                                     \
-    {                                                                 \
-        printf("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void base_print(const std::string fmt,
+                const fmt::format_args& args,
+                const std::experimental::source_location& location =
+                    std::experimental::source_location::current());
 
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_GREEN "\x1b[32m"
-#define ANSI_COLOR_YELLOW "\x1b[33m"
-#define ANSI_COLOR_BLUE "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN "\x1b[36m"
-#define ANSI_COLOR_RESET "\x1b[0m"
+void dbg(const std::string fmt,
+         const fmt::format_args& args = fmt::format_args(),
+         const std::experimental::source_location& location =
+             std::experimental::source_location::current());
 
-#define INSPECT(x) std::cout << ANSI_COLOR_CYAN << #x ":" << x << ANSI_COLOR_RESET << std::endl
+void info(const std::string fmt,
+          const fmt::format_args& args = fmt::format_args(),
+          const std::experimental::source_location& location =
+              std::experimental::source_location::current());
 
-#define printRed(fmt, ...) printf(ANSI_COLOR_RED fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
-#define printGreen(fmt, ...) printf(ANSI_COLOR_GREEN fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
-#define printYellow(fmt, ...) printf(ANSI_COLOR_YELLOW fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
-#define printBlue(fmt, ...) printf(ANSI_COLOR_BLUE fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
-#define printMagenta(fmt, ...) printf(ANSI_COLOR_MAGENTA fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
-#define printCyan(fmt, ...) printf(ANSI_COLOR_CYAN fmt ANSI_COLOR_RESET, ##__VA_ARGS__)
+void warn(const std::string fmt,
+          const fmt::format_args& args = fmt::format_args(),
+          const std::experimental::source_location& location =
+              std::experimental::source_location::current());
 
-#define dbg(fmt, ...)                                                    \
-    if constexpr (LoggingLevel::DEBUG >= LOGGING_LEVEL)                  \
-    {                                                                    \
-        printCyan("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void error(const std::string fmt,
+           const fmt::format_args& args = fmt::format_args(),
+           const std::experimental::source_location& location =
+               std::experimental::source_location::current());
 
-#define info(fmt, ...)                                                \
-    if constexpr (LoggingLevel::INFO >= LOGGING_LEVEL)                \
-    {                                                                 \
-        printf("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void fatal(const std::string fmt,
+           const fmt::format_args& args = fmt::format_args(),
+           const std::experimental::source_location& location =
+               std::experimental::source_location::current());
 
-#define warn(fmt, ...)                                                     \
-    if constexpr (LoggingLevel::WARN >= LOGGING_LEVEL)                     \
-    {                                                                      \
-        printYellow("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void dbg(bool condition,
+         const std::string fmt,
+         const fmt::format_args& args = fmt::format_args(),
+         const std::experimental::source_location& location =
+             std::experimental::source_location::current());
 
-#define err(fmt, ...)                                                   \
-    if constexpr (LoggingLevel::ERROR >= LOGGING_LEVEL)                 \
-    {                                                                   \
-        printRed("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void info(bool condition,
+          const std::string fmt,
+          const fmt::format_args& args = fmt::format_args(),
+          const std::experimental::source_location& location =
+              std::experimental::source_location::current());
 
-#define fatal(fmt, ...)                                                     \
-    if constexpr (LoggingLevel::FATAL >= LOGGING_LEVEL)                     \
-    {                                                                       \
-        printMagenta("%s:%d " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    }
+void warn(bool condition,
+          const std::string fmt,
+          const fmt::format_args& args = fmt::format_args(),
+          const std::experimental::source_location& location =
+              std::experimental::source_location::current());
+
+void error(bool condition,
+           const std::string fmt,
+           const fmt::format_args& args = fmt::format_args(),
+           const std::experimental::source_location& location =
+               std::experimental::source_location::current());
+
+void fatal(bool condition,
+           const std::string fmt,
+           const fmt::format_args& args = fmt::format_args(),
+           const std::experimental::source_location& location =
+               std::experimental::source_location::current());
 
 }  // namespace mc

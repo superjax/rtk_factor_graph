@@ -32,6 +32,7 @@ static analysis:
       - build/ccache
       - build/eigen_ext-prefix
       - build/googletest-prefix
+      - build/fmt_ext-prefix
       - build/google_benchmark_ext-prefix
 
 coverage:
@@ -58,6 +59,7 @@ coverage:
       - build/ccache
       - build/eigen_ext-prefix
       - build/googletest-prefix
+      - build/fmt_ext-prefix
       - build/google_benchmark_ext-prefix
 
 benchmarks:
@@ -88,4 +90,5 @@ benchmarks:
       - build/ccache
       - build/eigen_ext-prefix
       - build/googletest-prefix
+      - build/fmt_ext-prefix
       - build/google_benchmark_ext-prefix

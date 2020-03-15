@@ -1,5 +1,5 @@
 #include "factors/imu_integrator.h"
-#include "common/assert.h"
+#include "common/check.h"
 #include "common/defs.h"
 #include "common/matrix_defs.h"
 
@@ -23,9 +23,9 @@ void ImuIntegrator::reset(const UTCTime& t)
 
 Error ImuIntegrator::computeEndJet(const math::Jet<double>& start, Out<math::Jet<double>> end) const
 {
-    ASSERT(std::abs(1.0 - state_.gamma.arr_.norm()) < 1e-8, "Itegrated rotation left manifold.");
-    ASSERT(std::abs(1.0 - start.x.real().norm()) < 1e-8, "start pose rotation left manifold.");
-    ASSERT(tf_ >= t0_, "Imu integration time going backwards.");
+    check(std::abs(1.0 - state_.gamma.arr_.norm()) < 1e-8, "Itegrated rotation left manifold.");
+    check(std::abs(1.0 - start.x.real().norm()) < 1e-8, "start pose rotation left manifold.");
+    check(tf_ >= t0_, "Imu integration time going backwards.");
 
     const auto& pose_i = start.x;
     const auto& vel_i = start.linear_vel;

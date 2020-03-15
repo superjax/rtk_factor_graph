@@ -6,7 +6,6 @@
 
 #include "common/math/quat.h"
 #include "common/matrix_defs.h"
-#include "common/print.h"
 
 namespace mc {
 namespace math {

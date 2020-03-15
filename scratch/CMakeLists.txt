@@ -4,5 +4,7 @@ add_subdirectory(benchmark)
 
 include_directories(..)
 include_directories(${EIGEN3_INCLUDE_DIRS})
+include_directories(${FMT_INCLUDE_DIRS})
 add_executable(test test.cxx)
 add_dependencies(test eigen_ext)
+target_link_libraries(test fmt)

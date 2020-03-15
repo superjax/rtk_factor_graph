@@ -9,3 +9,12 @@ add_gtest(test_out test_out.cxx)
 library(utctime utctime.cxx)
 add_gtest(test_utctime test_utctime.cxx)
 target_link_libraries(test_utctime utctime)
+
+library(print print.cxx)
+target_link_libraries(print fmt)
+target_include_directories(print PUBLIC ${FMT_INCLUDE_DIRS})
+add_gtest(test_print test_print.cxx)
+target_link_libraries(test_print print)
+
+library(check check.cxx)
+target_link_libraries(check print)

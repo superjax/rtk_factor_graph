@@ -1,5 +1,5 @@
 #include "factors/imu_functor.h"
-#include "common/assert.h"
+#include "common/check.h"
 #include "common/matrix_defs.h"
 
 namespace mc {
@@ -76,9 +76,9 @@ void ImuFunctor::dynamics(const ImuState& state,
 
 Error ImuFunctor::integrate(const meas::ImuSample& imu, const Mat6& imu_cov)
 {
-    ASSERT(isFinite(imu_cov), "NaN detected in covariance on propagation");
-    ASSERT(isFinite(imu.accel), "NaN detected in imu acceleration data");
-    ASSERT(isFinite(imu.gyro), "NaN detected in imu gyroscope data");
+    check(isFinite(imu_cov), "NaN detected in covariance on propagation");
+    check(isFinite(imu.accel), "NaN detected in imu acceleration data");
+    check(isFinite(imu.gyro), "NaN detected in imu gyroscope data");
 
     num_updates_++;
 
@@ -103,8 +103,8 @@ Error ImuFunctor::integrate(const meas::ImuSample& imu, const Mat6& imu_cov)
     covariance_ = A * covariance_ * A.transpose() + B * imu_cov * B.transpose();
     dstate_dbias_ = A * dstate_dbias_ + B;
 
-    ASSERT(isFinite(A), "NaN detected in state transition matrix on propagation");
-    ASSERT(isFinite(covariance_), "NaN detected in covariance on propagation");
+    check(isFinite(A), "NaN detected in state transition matrix on propagation");
+    check(isFinite(covariance_), "NaN detected in covariance on propagation");
 
     return Error::none();
 }
@@ -118,7 +118,7 @@ Error ImuFunctor::finished()
     }
     covariance_inv_sqrt_ = covariance_.inverse().llt().matrixL().transpose();
 
-    ASSERT(isFinite(covariance_inv_sqrt_), "Nan detected in IMU information matrix.");
+    check(isFinite(covariance_inv_sqrt_), "Nan detected in IMU information matrix.");
     return Error::none();
 }
 

@@ -4,6 +4,7 @@
 
 #include "common/math/jet.h"
 #include "common/numerical_jacobian.h"
+#include "common/print.h"
 #include "common/random.h"
 #include "common/test_helpers.h"
 #include "factors/imu_functor.h"
@@ -404,27 +405,34 @@ TEST_F(ImuFactorJacobian, dAdjustedState_dBias)
 template <typename Fun, typename... Args>
 Eigen::MatrixXd compute_jac_imu(const ImuState& x, const Fun& fun, const Args&... args)
 {
+    info("");
     const double eps = 1e-8;
     Eigen::MatrixXd out;
+    info("");
     for (int i = 0; i < ImuState::DOF; ++i)
     {
+        info("");
         const ImuState xp = x + (ImuErrorState::Unit(i) * eps);
         const ImuState xm = x + (ImuErrorState::Unit(i) * -eps);
         const Vec9 ym = fun(xm, args...);
         const Vec9 yp = fun(xp, args...);
 
+        info("");
         if (out.rows() == 0 || out.cols() == 0)
         {
-            out.resize(decltype(yp - yp)::RowsAtCompileTime, xp.rows());
+            out.resize(decltype(yp - yp)::RowsAtCompileTime, ImuState::DOF);
         }
 
+        info("");
         out.col(i) = (yp - ym) / (2.0 * eps);
     }
+    info("out.size {} × {}", fmt(out.rows(), out.cols()));
     return out;
 }
 
 TEST_F(ImuFactorJacobian, dRes_dAdjusted)
 {
+    info("");
     auto fun = [this](const ImuState& adjusted_state) {
         Vec9 residual;
         const Vec3 GRAVITY = Vec3::Unit(2) * 9.80665;
@@ -441,14 +449,17 @@ TEST_F(ImuFactorJacobian, dRes_dAdjusted)
         return residual;
     };
 
+    info("");
     ImuState adjusted_state;
     adjusted_state.setRandom();
 
+    info("");
     Mat3 log_jac;
     math::Quat<double> rot_error =
         (adjusted_state.gamma.inverse() * (start_pose.rotation().inverse() * end_pose.rotation()));
     rot_error.log(&log_jac);
 
+    info("");
     Mat9 J;
     J.block<3, 3>(0, 0) = -Mat3::Identity();
     J.block<3, 3>(3, 0).setZero();
@@ -462,7 +473,9 @@ TEST_F(ImuFactorJacobian, dRes_dAdjusted)
     J.block<3, 3>(3, 6) = -adjusted_state.gamma.R().transpose() * skew(end_vel);
     J.block<3, 3>(6, 6) = -(rot_error.Ad() * log_jac).transpose();
 
+    info("");
     const Mat9 JFD = compute_jac_imu(adjusted_state, fun);
+    info("");
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }

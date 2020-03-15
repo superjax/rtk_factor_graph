@@ -6,7 +6,6 @@
 #include "common/math/so3.h"
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
-#include "common/print.h"
 #include "common/test_helpers.h"
 
 namespace mc {

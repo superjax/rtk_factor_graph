@@ -21,7 +21,7 @@ Error eph2Sat(const UTCTime& t,
     const double dt = (t - eph.toe).toSec();
     if (fabs(dt) > MAXDTOE)
     {
-        err("Ephemeris dt = %f.  eph.toe = %s, t = %s", dt, eph.toe.str().c_str(), t.str().c_str());
+        error("Ephemeris dt = {}.  eph.toe = {}, t = {}", fmt(dt, eph.toe.str(), t.str()));
         return Error::create("Stale Ephemeris");
     }
 

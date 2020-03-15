@@ -8,7 +8,7 @@ set(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 function(add_gtest name)
     add_executable(${name} ${ARGV})
     target_link_libraries(${name} ${GTEST_LIBRARY} gtest_main)
-    add_dependencies(${name} eigen_ext)
+    add_dependencies(${name} eigen_ext fmt)
     target_include_directories(${name} PUBLIC
                                ${GTEST_INCLUDE_DIRS}
                                ${REPO_ROOT}

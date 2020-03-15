@@ -59,7 +59,7 @@ bool GPSEphemeris::parse(const uint8_t* buf, size_t size)
     // Ensure that the iode is the same across all frames (and for the clock)
     else if (iode1 != iode2 || iode1 != iode3 || iode != (iodc & 0xFF))
     {
-        dbg("mis-matched issue-of-data %d, %d, %d", iode1, iode2, iode3);
+        dbg("mis-matched issue-of-data {}, {}, {}", fmt(iode1, iode2, iode3));
         return false;
     }
 

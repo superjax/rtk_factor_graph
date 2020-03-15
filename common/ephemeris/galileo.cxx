@@ -43,7 +43,7 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
     // Check the even-odd page
     if (part1 != 0 || part2 != 1)
     {
-        dbg("GAL page even/odd error: sat=%2d", sat);
+        dbg("GAL page even/odd error: sat={}", fmt(sat));
         return false;
     }
 
@@ -63,7 +63,7 @@ bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)
     }
     if (utils::crc24(crc_buff, 25) != getBit<24>(buf + 16, 82))
     {
-        dbg("Galileo CRC Error: sat=%2d\n", sat);
+        dbg("Galileo CRC Error: sat={}", fmt(sat));
         return false;
     }
 
@@ -151,7 +151,7 @@ bool GalileoEphemeris::frame0(const uint8_t* buf)
     tow = getBit<20>(buf, 108);
     if (type != 0)
     {
-        dbg("Galileo word type 0 error : expected=0, got %d", type);
+        dbg("Galileo word type 0 error : expected=0, got {}", fmt(type));
         return false;
     }
     collected_subframes |= FRAME0;
@@ -168,7 +168,7 @@ bool GalileoEphemeris::frame1(const uint8_t* buf)
     sqrta = getBit<32>(buf, 94) * P2_19;
     if (type != 1)
     {
-        dbg("Galileo word type 1 error : expected=1, got %d", type);
+        dbg("Galileo word type 1 error : expected=1, got {}", fmt(type));
         return false;
     }
     collected_subframes |= FRAME1;
@@ -185,7 +185,7 @@ bool GalileoEphemeris::frame2(const uint8_t* buf)
     idot = getBit<14, Signed>(buf, 112) * P2_43 * M_PI;
     if (type != 2)
     {
-        dbg("Galileo word type 2 error : expected=2, got %d", type);
+        dbg("Galileo word type 2 error : expected=2, got {}", fmt(type));
         return false;
     }
     collected_subframes |= FRAME2;
@@ -204,7 +204,7 @@ bool GalileoEphemeris::frame3(const uint8_t* buf)
     crs = getBit<16, Signed>(buf, 104) * P2_5;
     if (type != 3)
     {
-        dbg("Galileo word type 3 error : expected=3, got %d", type);
+        dbg("Galileo word type 3 error : expected=3, got {}", fmt(type));
         return false;
     }
     collected_subframes |= FRAME3;
@@ -225,12 +225,12 @@ bool GalileoEphemeris::frame4(const uint8_t* buf)
 
     if (type != 4)
     {
-        dbg("Galileo word type 4 error : expected=4, got %d", type);
+        dbg("Galileo word type 4 error : expected=4, got {}", fmt(type));
         return false;
     }
     if (svid != sat)
     {
-        dbg("Galileo satellite id doesn't match: expected %d, got %d", sat, svid);
+        dbg("Galileo satellite id doesn't match: expected {}, got {}", fmt(sat, svid));
         return false;
     }
     collected_subframes |= FRAME4;
@@ -251,7 +251,7 @@ bool GalileoEphemeris::frame5(const uint8_t* buf)
 
     if (type != 5)
     {
-        dbg("Galileo word type 5 error : expected=5, got %d", type);
+        dbg("Galileo word type 5 error : expected=5, got {}", fmt(type));
         return false;
     }
     collected_subframes |= FRAME5;
