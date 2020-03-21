@@ -40,10 +40,16 @@ using Mat8 = Eigen::Matrix<double, 8, 8>;
 using Mat9 = Eigen::Matrix<double, 9, 9>;
 using Mat10 = Eigen::Matrix<double, 10, 10>;
 
+using Mat36 = Eigen::Matrix<double, 3, 6>;
+using Mat38 = Eigen::Matrix<double, 3, 8>;
 using Mat93 = Eigen::Matrix<double, 9, 3>;
 using Mat96 = Eigen::Matrix<double, 9, 6>;
 using Mat98 = Eigen::Matrix<double, 9, 8>;
 
+using MatRM3 = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
+using MatRM32 = Eigen::Matrix<double, 3, 2, Eigen::RowMajor>;
+using MatRM36 = Eigen::Matrix<double, 3, 6, Eigen::RowMajor>;
+using MatRM38 = Eigen::Matrix<double, 3, 8, Eigen::RowMajor>;
 using MatRM93 = Eigen::Matrix<double, 9, 3, Eigen::RowMajor>;
 using MatRM96 = Eigen::Matrix<double, 9, 6, Eigen::RowMajor>;
 using MatRM98 = Eigen::Matrix<double, 9, 8, Eigen::RowMajor>;

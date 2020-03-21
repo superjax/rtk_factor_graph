@@ -87,15 +87,15 @@ double UTCTime::toSec() const
 UTCTime UTCTime::operator+(double sec_) const
 {
     UTCTime out;
-    out.nsec = nsec + (uint64_t)(sec_ * E9) % E9;
-    out.sec = sec + std::floor(sec_);
+    out.nsec = nsec + (int64_t)(sec_ * E9) % E9;
+    out.sec = sec + (int64_t)sec_;
     out.wrapNsec();
     return out;
 }
 UTCTime& UTCTime::operator+=(double sec_)
 {
-    nsec = nsec + (uint64_t)(sec_ * E9) % E9;
-    sec = sec + std::floor(sec_);
+    nsec = nsec + (int64_t)(sec_ * E9) % E9;
+    sec = sec + (int64_t)sec_;
     wrapNsec();
     return *this;
 }
@@ -115,15 +115,15 @@ UTCTime& UTCTime::operator+=(int sec_)
 UTCTime UTCTime::operator-(double sec_) const
 {
     UTCTime out;
-    out.nsec = nsec - (uint64_t)(sec_ * E9) % E9;
-    out.sec = sec - std::floor(sec_);
+    out.nsec = nsec - (int64_t)(sec_ * E9) % E9;
+    out.sec = sec - (int64_t)sec_;
     out.wrapNsec();
     return out;
 }
 UTCTime& UTCTime::operator-=(double sec_)
 {
-    nsec = nsec - (uint64_t)(sec_ * E9) % E9;
-    sec = sec - std::floor(sec_);
+    nsec = nsec - (int64_t)(sec_ * E9) % E9;
+    sec = sec - (int64_t)sec_;
     wrapNsec();
     return *this;
 }
@@ -263,7 +263,7 @@ std::string UTCTime::str() const
 
     std::stringstream ss;
     ss << 1900 + date->tm_year << "/" << 1 + date->tm_mon << "/" << date->tm_mday << " "
-       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec;
+       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec << "." << nsec / 1'000'000;
 
     return ss.str();
 }
@@ -279,7 +279,7 @@ std::ostream& operator<<(std::ostream& os, const UTCTime& t)
     tm* date = gmtime(&time);
 
     os << 1900 + date->tm_year << "/" << 1 + date->tm_mon << "/" << date->tm_mday << " "
-       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec;
+       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec << "." << t.nsec / 1'000'000;
 
     return os;
 }

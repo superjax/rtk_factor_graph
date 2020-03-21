@@ -142,6 +142,9 @@ class DQuat
         return Q;
     }
 
+    inline Vec3 rota(const Vec3& v) const { return real().rota(v); }
+    inline Vec3 rotp(const Vec3& v) const { return real().rotp(v); }
+
     static DQuat exp(const Vec6& wv, Mat6* jac)
     {
         const auto w = wv.template head<3>();

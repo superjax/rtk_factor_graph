@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 
+#include "common/print.h"
 #include "common/utctime.h"
 
 namespace mc {
 
 TEST(Time, Now)
 {
-    std::cout << "now: " << UTCTime::now() << std::endl;
-    std::cout << "now: " << UTCTime::now().str() << std::endl;
+    info("now: {}", fmt(UTCTime::now()));
+    info("now: {}", fmt(UTCTime::now().str()));
 }
 
 TEST(Time, Wrap)

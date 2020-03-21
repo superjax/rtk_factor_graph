@@ -51,7 +51,7 @@ class UTCTime
         assert(nsec >= 0);
     }
 
-    constexpr UTCTime(const double _sec) : sec(std::floor(_sec)), nsec((int64_t)(_sec * E9) % E9) {}
+    constexpr UTCTime(const double _sec) : sec((int64_t)_sec), nsec((int64_t)(_sec * E9) % E9) {}
 
     UTCTime();
 

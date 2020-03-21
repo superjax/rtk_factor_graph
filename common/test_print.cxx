@@ -2,6 +2,8 @@
 
 #include "common/print.h"
 
+#include <fmt/format.h>
+
 namespace mc {
 
 TEST(Print, BasePrint)

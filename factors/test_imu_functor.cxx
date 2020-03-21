@@ -405,28 +405,22 @@ TEST_F(ImuFactorJacobian, dAdjustedState_dBias)
 template <typename Fun, typename... Args>
 Eigen::MatrixXd compute_jac_imu(const ImuState& x, const Fun& fun, const Args&... args)
 {
-    info("");
     const double eps = 1e-8;
     Eigen::MatrixXd out;
-    info("");
     for (int i = 0; i < ImuState::DOF; ++i)
     {
-        info("");
         const ImuState xp = x + (ImuErrorState::Unit(i) * eps);
         const ImuState xm = x + (ImuErrorState::Unit(i) * -eps);
         const Vec9 ym = fun(xm, args...);
         const Vec9 yp = fun(xp, args...);
 
-        info("");
         if (out.rows() == 0 || out.cols() == 0)
         {
             out.resize(decltype(yp - yp)::RowsAtCompileTime, ImuState::DOF);
         }
 
-        info("");
         out.col(i) = (yp - ym) / (2.0 * eps);
     }
-    info("out.size {} × {}", fmt(out.rows(), out.cols()));
     return out;
 }
 

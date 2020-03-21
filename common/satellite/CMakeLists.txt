@@ -1,7 +1,7 @@
 library(azel azel.cxx)
 target_link_libraries(azel wgs84)
 add_gtest(test_azel test_azel.cxx)
-target_link_libraries(test_azel azel)
+target_link_libraries(test_azel azel utctime)
 
 library(satellite_state satellite_state.cxx)
 target_link_libraries(satellite_state glonass utctime)

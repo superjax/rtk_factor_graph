@@ -2,7 +2,14 @@
 
 #include <fmt/color.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 
+#ifdef __clang_analyzer__
+#define __builtin_FILE() __FILE__
+#define __builtin_FUNCTION() __FUNCTION__
+#define __builtin_LINE() __LINE__
+#endif
 #include <experimental/source_location>
 
 namespace mc {

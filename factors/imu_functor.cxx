@@ -113,7 +113,7 @@ Error ImuFunctor::finished()
 {
     if (num_updates_ <= 2)
     {
-        info("less than two IMU measurements in integrator");
+        warn("less than two IMU measurements in integrator");
         covariance_ = covariance_ + Mat9::Identity() * 1e-15;
     }
     covariance_inv_sqrt_ = covariance_.inverse().llt().matrixL().transpose();
