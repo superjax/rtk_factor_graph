@@ -5,6 +5,7 @@
 
 #include <cmath>
 
+#include "common/defs.h"
 #include "common/math/so3.h"
 #include "common/matrix_defs.h"
 
@@ -150,6 +151,7 @@ class Quat
         }
     }
 
+    template <JacobianSide SIDE = JacobianSide::LEFT>
     static Quat exp(const Vec3& w, Mat3* jac)
     {
         const T th2 = w.squaredNorm();
@@ -176,7 +178,14 @@ class Quat
         Quat q(cos(th / 2.0), s * w(0), s * w(1), s * w(2));
         q.normalize();
 
-        *jac = a * Mat3::Identity() + b * skew(w) + c * w * w.transpose();
+        if constexpr (SIDE == JacobianSide::LEFT)
+        {
+            *jac = a * Mat3::Identity() + b * skew(w) + c * w * w.transpose();
+        }
+        else
+        {
+            *jac = a * Mat3::Identity() - b * skew(w) + c * w * w.transpose();
+        }
 
         return q;
     }
@@ -201,6 +210,7 @@ class Quat
         }
     }
 
+    template <JacobianSide SIDE = JacobianSide::LEFT>
     Vec3 log(Mat3* jac) const
     {
         const auto v = arr_.template block<3, 1>(1, 0);
@@ -240,7 +250,14 @@ class Quat
 
         const Mat3 sk_w = skew(omg);
         const Mat3 sk_w2 = sk_w * sk_w;
-        *jac << Mat3::Identity() - 1. / 2. * sk_w + e * sk_w2;
+        if constexpr (SIDE == JacobianSide::LEFT)
+        {
+            *jac << Mat3::Identity() - 1. / 2. * sk_w + e * sk_w2;
+        }
+        else
+        {
+            *jac << Mat3::Identity() + 1. / 2. * sk_w + e * sk_w2;
+        }
         return omg;
     }
 

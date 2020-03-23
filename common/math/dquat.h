@@ -4,6 +4,7 @@
 
 #include <Eigen/Core>
 
+#include "common/defs.h"
 #include "common/math/quat.h"
 #include "common/matrix_defs.h"
 
@@ -145,6 +146,7 @@ class DQuat
     inline Vec3 rota(const Vec3& v) const { return real().rota(v); }
     inline Vec3 rotp(const Vec3& v) const { return real().rotp(v); }
 
+    template <JacobianSide SIDE = JacobianSide::LEFT>
     static DQuat exp(const Vec6& wv, Mat6* jac)
     {
         const auto w = wv.template head<3>();
@@ -159,7 +161,7 @@ class DQuat
         T a, b, c;
         T C1, C2;
         Mat3 A;
-        Quat<T>::exp(w, &A);
+        Quat<T>::template exp<SIDE>(w, &A);
         if (th2 > (T)4e-6)
         {
             sinct = sin(th / 2.0) / th;
@@ -189,10 +191,18 @@ class DQuat
 
         const Mat3 B = w * v.transpose() + v * w.transpose();
         const Mat3 sk_w = skew(w);
-        const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
-        const Mat3 D = b * skew(v) + c * B + gm * C;
-
-        *jac << A, Mat3::Zero(), D, A;
+        if constexpr (SIDE == JacobianSide::LEFT)
+        {
+            const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
+            const Mat3 D = b * skew(v) + c * B + gm * C;
+            *jac << A, Mat3::Zero(), D, A;
+        }
+        else
+        {
+            const Mat3 C = (c - b) * Mat3::Identity() - C1 * sk_w + C2 * w * w.transpose();
+            const Mat3 D = -b * skew(v) + c * B + gm * C;
+            *jac << A, Mat3::Zero(), D, A;
+        }
 
         return Q;
     }
@@ -236,6 +246,7 @@ class DQuat
         return wv;
     }
 
+    template <JacobianSide SIDE = JacobianSide::LEFT>
     Vec6 log(Mat6* jac) const
     {
         const auto r = real().bar();
@@ -250,7 +261,7 @@ class DQuat
         auto w = wv.template head<3>();
         auto v = wv.template tail<3>();
         Mat3 Ainv;
-        w = r_.log(&Ainv);
+        w = r_.template log<SIDE>(&Ainv);
 
         const T th2 = w.squaredNorm();
         const T th = sqrt(th2);
@@ -293,10 +304,18 @@ class DQuat
         const T gm2 = v.dot(w);
         const Mat3 B = w * v.transpose() + v * w.transpose();
         const Mat3 sk_w = skew(w);
-        const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
-        const Mat3 D = b * skew(v) + c * B + gm2 * C;
-
-        *jac << Ainv, Mat3::Zero(), -Ainv * D * Ainv, Ainv;
+        if constexpr (SIDE == JacobianSide::LEFT)
+        {
+            const Mat3 C = (c - b) * Mat3::Identity() + C1 * sk_w + C2 * w * w.transpose();
+            const Mat3 D = b * skew(v) + c * B + gm2 * C;
+            *jac << Ainv, Mat3::Zero(), -Ainv * D * Ainv, Ainv;
+        }
+        else
+        {
+            const Mat3 C = (c - b) * Mat3::Identity() - C1 * sk_w + C2 * w * w.transpose();
+            const Mat3 D = -b * skew(v) + c * B + gm2 * C;
+            *jac << Ainv, Mat3::Zero(), -Ainv * D * Ainv, Ainv;
+        }
 
         return wv;
     }

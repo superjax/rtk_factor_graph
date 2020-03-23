@@ -22,6 +22,12 @@ struct GnssID
     };
 };
 
+enum class JacobianSide
+{
+    LEFT,
+    RIGHT
+};
+
 template <typename T>
 T sign(T in)
 {

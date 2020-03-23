@@ -376,26 +376,24 @@ TEST(Quat, ExpLogJacobians)
     Quat<double> R = Quat<double>::Random();
     Vec3 v = Vec3::Random();
 
-    Mat3 exp_left = left_jac3(v, exp);
-    Mat3 jac_exp;
-    Quat<double>::exp(v, &jac_exp);
+    Mat3 left_jac_exp;
+    Quat<double>::exp<JacobianSide::LEFT>(v, &left_jac_exp);
+    Mat3 right_jac_exp;
+    Quat<double>::exp<JacobianSide::RIGHT>(v, &right_jac_exp);
 
-    MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
+    MATRIX_CLOSE(left_jac_exp, left_jac3(v, exp), 1e-6);
+    MATRIX_CLOSE(right_jac_exp, right_jac3(v, exp), 1e-6);
 
-    Mat3 log_left = left_jac2(R, log);
-    Mat3 jac_log;
-    R.log(&jac_log);
+    Mat3 left_jac_log;
+    R.log<JacobianSide::LEFT>(&left_jac_log);
+    Mat3 right_jac_log;
+    R.log<JacobianSide::RIGHT>(&right_jac_log);
 
-    MATRIX_CLOSE(jac_log, log_left, 1e-6);
+    MATRIX_CLOSE(left_jac_log, left_jac2(R, log), 1e-6);
+    MATRIX_CLOSE(right_jac_log, right_jac2(R, log), 1e-6);
 
-    Mat3 exp_right = right_jac3(v, exp);
-    Quat<double>::exp(v, &jac_exp);
-
-    MATRIX_CLOSE(jac_exp.transpose(), exp_right, 1e-6);
-
-    Mat3 log_right = right_jac2(R, log);
-
-    MATRIX_CLOSE(jac_log.transpose(), log_right, 1e-6);
+    MATRIX_EQUALS(right_jac_log, left_jac_log.transpose());
+    MATRIX_EQUALS(right_jac_exp, left_jac_exp.transpose());
 }
 
 TEST(Quat, SO3Equivalent)

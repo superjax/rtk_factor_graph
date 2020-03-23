@@ -294,42 +294,21 @@ TEST(DQuat, ExpLogJacobians)
             T = DQuat<double>::exp(v);
         }
 
-        const Mat6 exp_left = left_jac3(v, exp);
-        Mat6 jac_exp;
-        T = DQuat<double>::exp(v, &jac_exp);
+        Mat6 left_jac_exp;
+        T = DQuat<double>::exp<JacobianSide::LEFT>(v, &left_jac_exp);
+        Mat6 right_jac_exp;
+        T = DQuat<double>::exp<JacobianSide::RIGHT>(v, &right_jac_exp);
 
-        MATRIX_CLOSE(jac_exp, exp_left, 1e-6);
+        MATRIX_CLOSE(right_jac_exp, right_jac3(v, exp), 1e-6);
+        MATRIX_CLOSE(left_jac_exp, left_jac3(v, exp), 1e-6);
 
-        Mat6 jac2_exp;
-        SE3<double> T_SE3 = SE3<double>::exp(v, &jac2_exp);
+        Mat6 left_jac_log;
+        T.log<JacobianSide::LEFT>(&left_jac_log);
+        Mat6 right_jac_log;
+        T.log<JacobianSide::RIGHT>(&right_jac_log);
 
-        const Mat6 log_left = left_jac2(T, log);
-        Mat6 jac_log;
-        T.log(&jac_log);
-
-        Mat6 jac2_log;
-        SE3<double> S(T.R(), -T.R().transpose() * T.translation());
-        S.log(&jac2_log);
-        SO3_EQUALS(T.R(), S.R());
-
-        MATRIX_CLOSE(jac_log, log_left, 1e-6);
-
-        Mat6 other_log;
-        T_SE3.inverse().log(&other_log);
-
-        const Mat6 exp_right = right_jac3(v, exp);
-        jac_exp.topLeftCorner<3, 3>().transposeInPlace();
-        jac_exp.bottomLeftCorner<3, 3>().transposeInPlace();
-        jac_exp.bottomRightCorner<3, 3>().transposeInPlace();
-
-        MATRIX_CLOSE(jac_exp, exp_right, 1e-6);
-
-        Mat6 log_right = right_jac2(T, log);
-        jac_log.topLeftCorner<3, 3>().transposeInPlace();
-        jac_log.bottomLeftCorner<3, 3>().transposeInPlace();
-        jac_log.bottomRightCorner<3, 3>().transposeInPlace();
-
-        MATRIX_CLOSE(jac_log, log_right, 1e-6);
+        MATRIX_CLOSE(left_jac_log, left_jac2(T, log), 1e-6);
+        MATRIX_CLOSE(right_jac_log, right_jac2(T, log), 1e-6);
     }
 }
 
