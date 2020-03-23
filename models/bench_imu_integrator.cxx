@@ -1,9 +1,9 @@
 #include <benchmark/benchmark.h>
 
-#include "factors/imu_integrator.h"
+#include "models/imu_integrator.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 static void dynamics(benchmark::State& state)
 {
@@ -72,5 +72,5 @@ static void computeEndJet(benchmark::State& state)
 }
 BENCHMARK(computeEndJet);
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

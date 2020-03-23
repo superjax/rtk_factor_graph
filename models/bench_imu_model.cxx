@@ -1,10 +1,10 @@
 #include <benchmark/benchmark.h>
 
 #include "common/matrix_defs.h"
-#include "factors/imu_functor.h"
+#include "models/imu_model.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 static void dynamics(benchmark::State& state)
 {
@@ -13,7 +13,7 @@ static void dynamics(benchmark::State& state)
     imu_state = imu_state + ImuErrorState::Random();
 
     ImuErrorState dstate;
-    ImuFunctor integrator(UTCTime(0, 0), Vec6::Zero());
+    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
 
     meas::ImuSample imu_sample;
     imu_sample.t = UTCTime::now();
@@ -36,7 +36,7 @@ static void integrate(benchmark::State& state)
     imu_state.setIdentity();
     imu_state = imu_state + ImuErrorState::Random();
 
-    ImuFunctor integrator(UTCTime(0, 0), Vec6::Zero());
+    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
     const Mat6 cov = Mat6::Identity();
 
     meas::ImuSample imu_sample;
@@ -58,7 +58,7 @@ static void computeEndJet(benchmark::State& state)
     imu_state.setIdentity();
     imu_state = imu_state + ImuErrorState::Random();
 
-    ImuFunctor integrator(UTCTime(0, 0), Vec6::Zero());
+    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
     const Mat6 cov = Mat6::Identity();
 
     meas::ImuSample imu_sample;
@@ -107,7 +107,7 @@ class Evaluate : public benchmark::Fixture
         bias = Vec6::Random();
     }
 
-    ImuFunctor integrator;
+    ImuModel integrator;
     math::DQuat<double> start_pose;
     math::DQuat<double> end_pose;
     Vec3 start_vel;
@@ -213,5 +213,5 @@ BENCHMARK_F(Evaluate, All)(benchmark::State& st)
     }
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

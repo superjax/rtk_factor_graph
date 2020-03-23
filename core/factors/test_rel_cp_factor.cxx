@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <iostream>
-
 #include "common/test_helpers.h"
 #include "core/factors/factors.h"
 

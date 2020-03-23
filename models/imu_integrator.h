@@ -9,10 +9,10 @@
 #include "common/measurements/imu.h"
 #include "common/out.h"
 #include "common/utctime.h"
-#include "factors/imu_state.h"
+#include "models/imu_state.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 class ImuIntegrator
 {

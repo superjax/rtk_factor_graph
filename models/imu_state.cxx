@@ -1,8 +1,8 @@
 
-#include "factors/imu_state.h"
+#include "models/imu_state.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 constexpr int ImuState::DOF;
 
@@ -77,5 +77,5 @@ ImuErrorState ImuState::operator-(const ImuState& other) const
     return out;
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

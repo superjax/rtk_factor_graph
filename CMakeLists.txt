@@ -28,7 +28,7 @@ build_guard()
 add_subdirectory(scratch)
 add_subdirectory(common)
 add_subdirectory(utils)
-add_subdirectory(factors)
+add_subdirectory(models)
 add_subdirectory(core)
 
 add_subdirectory(third_party)

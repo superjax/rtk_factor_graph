@@ -1,4 +1,4 @@
-#include "factors/prange_functor.h"
+#include "models/prange_model.h"
 #include "common/check.h"
 #include "common/defs.h"
 #include "common/matrix_defs.h"
@@ -6,24 +6,24 @@
 #include <limits>
 
 namespace mc {
-namespace factors {
+namespace models {
 
 using DQ = math::DQuat<double>;
 
 #define T transpose()
 
-PseudorangeFactor::PseudorangeFactor(const meas::GnssObservation& obs,
-                                     const satellite::SatelliteBase& sat,
-                                     const Vec3& rec_pos_ecef,
-                                     const Mat3& cov,
-                                     const DQ& T_e2r)
+PseudorangeModel::PseudorangeModel(const meas::GnssObservation& obs,
+                                   const satellite::SatelliteBase& sat,
+                                   const Vec3& rec_pos_ecef,
+                                   const Mat3& cov,
+                                   const DQ& T_e2r)
     : sat_(sat), obs_(obs), T_e2r_(T_e2r)
 {
     computeConstants(rec_pos_ecef);
     sqrt_inv_cov_ = cov.inverse().llt().matrixL().transpose();
 }
 
-void PseudorangeFactor::computeConstants(const Vec3& rec_pos_ecef)
+void PseudorangeModel::computeConstants(const Vec3& rec_pos_ecef)
 {
     check(sat_.almanacSize() > 0, "Cannot create factor without ephemeris");
 
@@ -44,7 +44,7 @@ void PseudorangeFactor::computeConstants(const Vec3& rec_pos_ecef)
     satellite::computeAtmCorrection(obs_.t, rec_pos_ecef, sat_state_, Out(atm_));
 }
 
-double PseudorangeFactor::computeSagnac(const Vec3& rec_pos_ecef)
+double PseudorangeModel::computeSagnac(const Vec3& rec_pos_ecef)
 {
     return OMEGA_EARTH *
            (sat_state_.pos.x() * rec_pos_ecef.y() - sat_state_.pos.y() * rec_pos_ecef.x()) /
@@ -61,6 +61,7 @@ struct PoseJacobian final : public MatRM36
 
     Mat38 by_elements(const DQ& Q) { return (*this) * Q.dGenDParam(); }
 };
+
 template <int N>
 struct VecJacobian final : public Eigen::Map<Eigen::Matrix<double, 3, N, Eigen::RowMajor>>
 {
@@ -70,9 +71,9 @@ struct VecJacobian final : public Eigen::Map<Eigen::Matrix<double, 3, N, Eigen::
     auto dsw() { return this->row(2); }
 };
 
-bool PseudorangeFactor::Evaluate(const double* const* parameters,
-                                 double* _residual,
-                                 double** jacobians) const
+bool PseudorangeModel::Evaluate(const double* const* parameters,
+                                double* _residual,
+                                double** jacobians) const
 {
     const DQ T_n2b(parameters[0]);
     Eigen::Map<const Vec3> velocity_b(parameters[1]);
@@ -181,5 +182,5 @@ bool PseudorangeFactor::Evaluate(const double* const* parameters,
     return true;
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

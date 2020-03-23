@@ -4,7 +4,7 @@
 #include "common/matrix_defs.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 struct ImuErrorState : public Vec9
 {

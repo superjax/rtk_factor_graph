@@ -1,0 +1,27 @@
+library(imu_state imu_state.cxx)
+add_gtest(test_imu_state test_imu_state.cxx)
+target_link_libraries(test_imu_state imu_state)
+
+library(imu_integrator imu_integrator.cxx)
+target_link_libraries(imu_integrator utctime imu_state check)
+add_gtest(test_imu_integrator test_imu_integrator.cxx)
+target_link_libraries(test_imu_integrator imu_integrator)
+add_benchmark(bench_imu_integrator SRCS bench_imu_integrator.cxx DEPS imu_integrator)
+
+library(imu_model imu_model.cxx)
+target_link_libraries(imu_model imu_integrator)
+add_gtest(test_imu_model test_imu_model.cxx)
+target_link_libraries(test_imu_model imu_model)
+add_benchmark(bench_imu_model SRCS bench_imu_model.cxx DEPS imu_model)
+
+library(prange_model prange_model.cxx)
+target_link_libraries(prange_model atm_correction satellite check)
+add_gtest(test_prange_model test_prange_model.cxx)
+target_link_libraries(test_prange_model prange_model sdr_adapter gps)
+add_benchmark(bench_prange_model SRCS bench_prange_model.cxx DEPS prange_model gps)
+
+library(gnss_dynamics_model gnss_dynamics_model.cxx)
+target_link_libraries(gnss_dynamics_model utctime check print)
+add_gtest(test_gnss_dynamics_model test_gnss_dynamics_model.cxx)
+target_link_libraries(test_gnss_dynamics_model gnss_dynamics_model)
+add_benchmark(bench_gnss_dynamics_model SRCS bench_gnss_dynamics_model.cxx DEPS gnss_dynamics_model)

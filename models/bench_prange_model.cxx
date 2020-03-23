@@ -3,10 +3,10 @@
 #include "common/ephemeris/gps.h"
 #include "common/matrix_defs.h"
 #include "common/satellite/satellite.h"
-#include "factors/prange_functor.h"
+#include "models/prange_model.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 using DQ = math::DQuat<double>;
 
@@ -81,7 +81,7 @@ class PrangeFactor : public benchmark::Fixture
 
 BENCHMARK_F(PrangeFactor, computeConstants)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     for (auto _ : st)
     {
         f.computeConstants(provo_ecef);
@@ -90,7 +90,7 @@ BENCHMARK_F(PrangeFactor, computeConstants)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_NoJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -103,7 +103,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_NoJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_PoseJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -118,7 +118,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_PoseJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_VelJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -133,7 +133,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_VelJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_ClkJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -149,7 +149,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_ClkJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_RefPoseJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -165,7 +165,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_RefPoseJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_SwitchJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -181,7 +181,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_SwitchJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_LeverArmJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -197,7 +197,7 @@ BENCHMARK_F(PrangeFactor, Evaluate_LeverArmJac)(benchmark::State& st)
 
 BENCHMARK_F(PrangeFactor, Evaluate_AllJac)(benchmark::State& st)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -215,5 +215,5 @@ BENCHMARK_F(PrangeFactor, Evaluate_AllJac)(benchmark::State& st)
     }
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

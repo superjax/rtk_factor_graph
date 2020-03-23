@@ -7,10 +7,10 @@
 #include "common/print.h"
 #include "common/random.h"
 #include "common/test_helpers.h"
-#include "factors/imu_functor.h"
+#include "models/imu_model.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 #define IMU_STATE_NEAR(x1, x2, tol)            \
     MATRIX_CLOSE((x1).alpha, (x2).alpha, tol); \
@@ -18,14 +18,14 @@ namespace factors {
     MATRIX_CLOSE((x1).beta, (x2).beta, tol);   \
     QUAT_CLOSE((x1).gamma, (x2).gamma, tol)
 
-TEST(ImuFunctor, integrateRandomImu)
+TEST(ImuModel, integrateRandomImu)
 {
     math::Jet<double> x1 = math::Jet<double>::Identity();
     math::Jet<double> x = x1;
     meas::ImuSample sample;
     sample.setZero();
 
-    ImuFunctor integrator(sample.t, Vec6::Zero());
+    ImuModel integrator(sample.t, Vec6::Zero());
     integrator.reset(sample.t);
 
     const Vec3 gravity(0, 0, 9.80665);
@@ -51,25 +51,25 @@ TEST(ImuFunctor, integrateRandomImu)
     integrator.computeEndJet(x1, Out(x2));
 
     QUATERNION_EQUALS(x.x.rotation(), x2.x.rotation());
-    // Numerical error from Euler's method in ImuFunctor::integrate
+    // Numerical error from Euler's method in ImuModel::integrate
     MATRIX_CLOSE(x.x.translation(), x2.x.translation(), 1e-3);
     MATRIX_CLOSE(x.linear_vel, x2.linear_vel, 1e-4);
     MATRIX_EQUALS(x.angular_vel, x2.angular_vel);
 }
 
-TEST(ImuFunctor, NoUpdatesFinished)
+TEST(ImuModel, NoUpdatesFinished)
 {
-    ImuFunctor integrator(UTCTime(0, 0), Vec6::Zero());
+    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
     const Error result = integrator.finished();
     EXPECT_TRUE(result.ok());
 }
 
-TEST(ImuFunctor, OneUpdateFinished)
+TEST(ImuModel, OneUpdateFinished)
 {
     meas::ImuSample sample;
     sample.setRandom();
 
-    ImuFunctor integrator(sample.t, Vec6::Zero());
+    ImuModel integrator(sample.t, Vec6::Zero());
     sample.t += 0.01;
     integrator.integrate(sample, 1e-3 * Mat6::Identity());
 
@@ -78,12 +78,12 @@ TEST(ImuFunctor, OneUpdateFinished)
     EXPECT_TRUE(isFinite(integrator.Xi()));
 }
 
-TEST(ImuFunctor, TwoUpdatesFinished)
+TEST(ImuModel, TwoUpdatesFinished)
 {
     meas::ImuSample sample;
     sample.setRandom();
 
-    ImuFunctor integrator(sample.t, Vec6::Zero());
+    ImuModel integrator(sample.t, Vec6::Zero());
     sample.t += 0.01;
     integrator.integrate(sample, 1e-3 * Mat6::Identity());
     sample.t += 0.01;
@@ -94,15 +94,15 @@ TEST(ImuFunctor, TwoUpdatesFinished)
     EXPECT_TRUE(isFinite(integrator.Xi()));
 }
 
-TEST(ImuFunctor, ErrorStateDynamics)
+TEST(ImuModel, ErrorStateDynamics)
 {
     const UTCTime t0(0, 0);
     const double Tmax = 0.01;
     static const double dt = 0.001;
 
     const Vec6 bias = Vec6::Zero();
-    ImuFunctor y(t0, bias);
-    ImuFunctor yhat(t0, bias);
+    ImuModel y(t0, bias);
+    ImuModel yhat(t0, bias);
     yhat.state() = y.state() + Vec9::Constant(0.01);
     ImuErrorState dy = y.state() - yhat.state();
 
@@ -158,17 +158,17 @@ TEST(ImuFactor, DynamicsJacobians)
         eta0.setZero();
         dy0.setZero();
 
-        ImuFunctor f(UTCTime(0, 0), b0);
+        ImuModel f(UTCTime(0, 0), b0);
         f.dynamics(y0, u0, Out(ydot), Out(A), Out(B));
 
         auto yfun = [&y0, &cov, &b0, &u0, &eta0](const ImuErrorState& dy) {
-            ImuFunctor functor(UTCTime(0, 0), b0);
+            ImuModel functor(UTCTime(0, 0), b0);
             ImuErrorState dydot;
             functor.errorStateDynamics(y0, dy, u0, eta0, Out(dydot));
             return dydot;
         };
         auto etafun = [&y0, &cov, &b0, &dy0, &u0](const Vec6& eta) {
-            ImuFunctor functor(0, b0);
+            ImuModel functor(0, b0);
             ImuErrorState dydot;
             functor.errorStateDynamics(y0, dy0, u0, eta, Out(dydot));
             return dydot;
@@ -203,7 +203,7 @@ TEST(ImuFactor, BiasJacobians)
     Mat96 JFD;
 
     b0.setZero();
-    ImuFunctor f(0, b0);
+    ImuModel f(0, b0);
     ImuState y0 = f.state();
     for (const auto sample : imu_samples)
     {
@@ -212,7 +212,7 @@ TEST(ImuFactor, BiasJacobians)
     const Mat96 J = f.biasJacobian();
 
     auto fun = [&cov, &imu_samples, &t, &y0](const Vec6& bias0) {
-        ImuFunctor functor(0, bias0);
+        ImuModel functor(0, bias0);
         for (const auto sample : imu_samples)
         {
             functor.integrate(sample, cov);
@@ -255,7 +255,7 @@ class ImuFactorJacobian : public ::testing::Test
         bias = Vec6::Random();
     }
 
-    ImuFunctor integrator;
+    ImuModel integrator;
     math::DQuat<double> start_pose;
     math::DQuat<double> end_pose;
     Vec3 start_vel;
@@ -493,5 +493,5 @@ TEST_F(ImuFactorJacobian, dRes_dBias)
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

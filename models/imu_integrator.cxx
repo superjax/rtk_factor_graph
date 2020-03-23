@@ -1,10 +1,10 @@
-#include "factors/imu_integrator.h"
+#include "models/imu_integrator.h"
 #include "common/check.h"
 #include "common/defs.h"
 #include "common/matrix_defs.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 ImuIntegrator::ImuIntegrator()
 {
@@ -78,5 +78,5 @@ Error ImuIntegrator::integrate(const meas::ImuSample& imu)
     return Error::none();
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

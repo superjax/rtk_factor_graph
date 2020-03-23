@@ -6,6 +6,7 @@
 file(WRITE "${PROJECT_BINARY_DIR}/tmp/clean"
      "#!/bin/bash\n\n rm -rf cmake_install.cmake\
                              coverage\
+                             core\
                              bench_results\
                              CMakeCache.txt\
                              CMakeFiles\
@@ -13,15 +14,18 @@ file(WRITE "${PROJECT_BINARY_DIR}/tmp/clean"
                              run_benchmarks\
                              run_tests\
                              client\
-                             factors\
+                             models\
                              common\
                              scratch\
                              third_party\
                              utils\
+                             gmon.out\
+                             all_tests.info\
+                             benchmark_list\
                              tmp")
 
 # Now, move the file into the build directory, and apply the right permisions.  You can't set the
-# permissions on a new file through CMAKE, so this hack of starting in the /tmp folder, then moving
+# permissions on a new file through CMAKE, so this hack of starting in the tmp folder, then moving
 # it into the build will work for now
 file(COPY "${PROJECT_BINARY_DIR}/tmp/clean"
     DESTINATION "${PROJECT_BINARY_DIR}"

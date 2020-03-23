@@ -1,15 +1,15 @@
-#include "factors/imu_functor.h"
+#include "models/imu_model.h"
 #include "common/check.h"
 #include "common/matrix_defs.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 using namespace Eigen;
 
 static const Vec3 GRAVITY = 9.80665 * Vec3::UnitZ();
 
-ImuFunctor::ImuFunctor(const UTCTime& t0, const Vec6& bias)
+ImuModel::ImuModel(const UTCTime& t0, const Vec6& bias)
 {
     t0_ = tf_ = t0;
 
@@ -20,11 +20,11 @@ ImuFunctor::ImuFunctor(const UTCTime& t0, const Vec6& bias)
     dstate_dbias_.setZero();
 }
 
-void ImuFunctor::errorStateDynamics(const ImuState& state,
-                                    const ImuErrorState& dstate,
-                                    const meas::ImuSample& imu,
-                                    const Vec6& input_noise,
-                                    Out<ImuErrorState> error_state_dot) const
+void ImuModel::errorStateDynamics(const ImuState& state,
+                                  const ImuErrorState& dstate,
+                                  const meas::ImuSample& imu,
+                                  const Vec6& input_noise,
+                                  Out<ImuErrorState> error_state_dot) const
 {
     error_state_dot->alpha = dstate.beta;
     error_state_dot->beta =
@@ -32,11 +32,11 @@ void ImuFunctor::errorStateDynamics(const ImuState& state,
     error_state_dot->gamma = -(imu.gyro - gyroBias()).cross(dstate.gamma) - input_noise.tail<3>();
 }
 
-void ImuFunctor::dynamics(const ImuState& state,
-                          const meas::ImuSample& imu,
-                          Out<ImuErrorState> state_dot,
-                          Out<Mat9> A,
-                          Out<Mat96> B) const
+void ImuModel::dynamics(const ImuState& state,
+                        const meas::ImuSample& imu,
+                        Out<ImuErrorState> state_dot,
+                        Out<Mat9> A,
+                        Out<Mat96> B) const
 {
     const Vec3 accel = imu.accel - accelBias();
     const Vec3 omega = imu.gyro - gyroBias();
@@ -74,7 +74,7 @@ void ImuFunctor::dynamics(const ImuState& state,
     B->block<3, 3>(GAMMA, OMEGA) = -Mat3::Identity();
 }
 
-Error ImuFunctor::integrate(const meas::ImuSample& imu, const Mat6& imu_cov)
+Error ImuModel::integrate(const meas::ImuSample& imu, const Mat6& imu_cov)
 {
     check(isFinite(imu_cov), "NaN detected in covariance on propagation");
     check(isFinite(imu.accel), "NaN detected in imu acceleration data");
@@ -109,7 +109,7 @@ Error ImuFunctor::integrate(const meas::ImuSample& imu, const Mat6& imu_cov)
     return Error::none();
 }
 
-Error ImuFunctor::finished()
+Error ImuModel::finished()
 {
     if (num_updates_ <= 2)
     {
@@ -143,7 +143,7 @@ struct PoseJacobian
     Map<Matrix<double, 9, 8, RowMajor>> mat;
 };
 
-bool ImuFunctor::Evaluate(const double* const* parameters, double* _res, double** _jac) const
+bool ImuModel::Evaluate(const double* const* parameters, double* _res, double** _jac) const
 {
     const math::DQuat<double> start_pose(parameters[0]);
     const math::DQuat<double> end_pose(parameters[1]);
@@ -254,5 +254,5 @@ bool ImuFunctor::Evaluate(const double* const* parameters, double* _res, double*
     return true;
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

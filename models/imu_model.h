@@ -1,16 +1,16 @@
 #pragma once
 
 #include "common/out.h"
-#include "factors/imu_integrator.h"
+#include "models/imu_integrator.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
-class ImuFunctor : public ImuIntegrator
+class ImuModel : public ImuIntegrator
 {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    ImuFunctor(const UTCTime& t0, const Vec6& bias);
+    ImuModel(const UTCTime& t0, const Vec6& bias);
 
     void errorStateDynamics(const ImuState& state,
                             const ImuErrorState& error_state,
@@ -47,5 +47,5 @@ class ImuFunctor : public ImuIntegrator
     Mat96 dstate_dbias_;
 };
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

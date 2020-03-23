@@ -5,14 +5,14 @@
 #include "common/numerical_jacobian.h"
 #include "common/satellite/satellite.h"
 #include "common/test_helpers.h"
-#include "factors/prange_functor.h"
+#include "models/prange_model.h"
 #include "utils/wgs84.h"
 
 #include "third_party/gps_sdr_sim/gps_sdr_sim.h"
 #include "third_party/gps_sdr_sim/sdr_adapter.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 using namespace third_party;
 
@@ -111,7 +111,7 @@ TEST_F(TestPrange, VsSdrSim)
     obs.pseudorange = sdr_range.range;
     obs.doppler = sdr_range.rate;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
 
@@ -135,7 +135,7 @@ TEST_F(TestPrange, Regression)
     clk.setZero();
     sw = 1.0;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
 
     Vec3 residuals;
     const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
@@ -156,7 +156,7 @@ TEST_F(TestPrange, PoseJacobian)
     clk = Vec2::Random();
     sw = 0.3521;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec8& _T_n2b) {
         const double* parameters[] = {_T_n2b.data(), vel_b.data(), clk.data(),
                                       T_r2n.data(),  &sw,          p_b2g.data()};
@@ -188,7 +188,7 @@ TEST_F(TestPrange, VelJacobian)
     clk = Vec2::Random();
     sw = 0.3521;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec3& _vel_b) {
         const double* parameters[] = {T_n2b.data(), _vel_b.data(), clk.data(),
                                       T_r2n.data(), &sw,           p_b2g.data()};
@@ -217,7 +217,7 @@ TEST_F(TestPrange, ClkJacobian)
     clk = Vec2::Random();
     sw = 0.3521;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec2& _clk) {
         const double* parameters[] = {T_n2b.data(), vel_b.data(), _clk.data(),
                                       T_r2n.data(), &sw,          p_b2g.data()};
@@ -240,7 +240,7 @@ TEST_F(TestPrange, ClkJacobian)
 
 TEST_F(TestPrange, Tr2nJacobian)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec8& _T_r2n) {
         const double* parameters[] = {T_n2b.data(),  vel_b.data(), clk.data(),
                                       _T_r2n.data(), &sw,          p_b2g.data()};
@@ -270,7 +270,7 @@ TEST_F(TestPrange, SwJacobian)
     clk = Vec2::Random();
     sw = 0.3521;
 
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec1& _sw) {
         const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
                                       T_r2n.data(), _sw.data(),   p_b2g.data()};
@@ -293,7 +293,7 @@ TEST_F(TestPrange, SwJacobian)
 
 TEST_F(TestPrange, LeverArmJacobian)
 {
-    PseudorangeFactor f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
+    PseudorangeModel f(obs, sat, provo_ecef, Mat3::Identity(), T_e2r);
     const auto func = [this, &f](const Vec3& _p_b2g) {
         const double* parameters[] = {T_n2b.data(), vel_b.data(), clk.data(),
                                       T_r2n.data(), &sw,          _p_b2g.data()};
@@ -314,5 +314,5 @@ TEST_F(TestPrange, LeverArmJacobian)
     MATRIX_CLOSE(num_jac, jac, 2e-4);
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

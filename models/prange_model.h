@@ -5,17 +5,17 @@
 #include "common/satellite/satellite.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
-class PseudorangeFactor
+class PseudorangeModel
 {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    PseudorangeFactor(const meas::GnssObservation& obs,
-                      const satellite::SatelliteBase& sat,
-                      const Vec3& rec_pos_ecef,
-                      const Mat3& cov,
-                      const math::DQuat<double>& T_e2r);
+    PseudorangeModel(const meas::GnssObservation& obs,
+                     const satellite::SatelliteBase& sat,
+                     const Vec3& rec_pos_ecef,
+                     const Mat3& cov,
+                     const math::DQuat<double>& T_e2r);
 
     bool Evaluate(const double* const* parameters, double* residual, double** jacobians) const;
 
@@ -33,5 +33,5 @@ class PseudorangeFactor
     const math::DQuat<double>& T_e2r_;
 };
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

@@ -2,10 +2,10 @@
 
 #include "common/math/jet.h"
 #include "common/test_helpers.h"
-#include "factors/imu_integrator.h"
+#include "models/imu_integrator.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 TEST(ImuIntegrator, Construct)
 {
@@ -169,5 +169,5 @@ TEST(ImuIntegrator, integrateRandomImu)
     MATRIX_EQUALS(x.angular_vel, x2.angular_vel);
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc

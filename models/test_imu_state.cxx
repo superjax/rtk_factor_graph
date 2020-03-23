@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "factors/imu_state.h"
+#include "models/imu_state.h"
 
 namespace mc {
-namespace factors {
+namespace models {
 
 TEST(ImuState, CopyConstructor)
 {
@@ -50,5 +50,5 @@ TEST(ImuErrorState, CopyConstructor)
     }
 }
 
-}  // namespace factors
+}  // namespace models
 }  // namespace mc
