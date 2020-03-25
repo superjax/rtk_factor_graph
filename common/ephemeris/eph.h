@@ -31,6 +31,7 @@ class EphBase
     uint8_t gnssID;  // GNSS system
     uint8_t sat;     // Satellite ID (within GNSS system)
     UTCTime toe;     // reference time ephemeris (UTC Time) [s]
+    
 
     bool operator<(const EphBase& other) const { return toe < other.toe; }
     bool operator>(const EphBase& other) const { return toe > other.toe; }
@@ -54,7 +55,7 @@ class EphBase
         }
     }
 
-    
+
 };
 
 class KeplerianEphemeris : public EphBase

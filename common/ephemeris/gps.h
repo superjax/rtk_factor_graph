@@ -8,6 +8,14 @@ namespace ephemeris {
 class GPSEphemeris : public KeplerianEphemeris
 {
  public:
+    static constexpr double FREQUENCY_L1 = 1.57542E9;  // L1 frequency (Hz)
+    static constexpr double FREQUENCY_L2 = 1.22760E9;  // L2 frequency (Hz)
+    static constexpr double FREQUENCY_L5 = 1.17645E9;  // L5 frequency (Hz)
+
+    static constexpr double LAMBDA_L1 = C_LIGHT / FREQUENCY_L1;  // L1 wavelength (m)
+    static constexpr double LAMBDA_L2 = C_LIGHT / FREQUENCY_L2;  // L2 wavelength (m)
+    static constexpr double LAMBDA_L5 = C_LIGHT / FREQUENCY_L5;  // L5 wavelength (m)
+
     explicit GPSEphemeris(int sat_id);
     uint8_t health;      // 6 bit health parameter; 0 if healthy; unhealth othersize [0=healthy]
     uint8_t alert_flag;  // 1 = URA may be worse than indicated [0,1]
@@ -22,6 +30,15 @@ class GPSEphemeris : public KeplerianEphemeris
     double tgd;                   // group delay [s]
 
     bool parse(const uint8_t* buf, size_t size);
+
+    enum
+    {
+        L1,
+        L2,
+        L5
+    };
+
+    double getWavelength(int frequency) const;
 
  private:
     bool frame1(const uint8_t* buf);

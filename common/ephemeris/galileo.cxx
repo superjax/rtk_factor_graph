@@ -1,4 +1,5 @@
 #include "common/ephemeris/galileo.h"
+#include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 #include "utils/crc.h"
@@ -6,10 +7,41 @@
 namespace mc {
 namespace ephemeris {
 
+constexpr double GalileoEphemeris::FREQUENCY_E1;
+constexpr double GalileoEphemeris::FREQUENCY_E5b;
+constexpr double GalileoEphemeris::FREQUENCY_E5a;
+constexpr double GalileoEphemeris::FREQUENCY_E5ab;
+constexpr double GalileoEphemeris::FREQUENCY_E6;
+
+constexpr double GalileoEphemeris::LAMBDA_E1;
+constexpr double GalileoEphemeris::LAMBDA_E5b;
+constexpr double GalileoEphemeris::LAMBDA_E5ab;
+constexpr double GalileoEphemeris::LAMBDA_E5a;
+constexpr double GalileoEphemeris::LAMBDA_E6;
+
 GalileoEphemeris::GalileoEphemeris(int sat_id)
 {
     gnssID = GnssID::Galileo;
     sat = sat_id;
+}
+
+double GalileoEphemeris::getWavelength(int frequency) const
+{
+    switch (frequency)
+    {
+    case E1:
+        return LAMBDA_E1;
+    case E5b:
+        return LAMBDA_E5b;
+    case E5ab:
+        return LAMBDA_E5ab;
+    case E5a:
+        return LAMBDA_E5a;
+    case E6:
+        return LAMBDA_E6;
+    }
+    check(false, "supplied invalid frequency slot for Galileo {}", fmt(frequency));
+    return -1;
 }
 
 bool GalileoEphemeris::parse(const uint8_t* msg, size_t size)

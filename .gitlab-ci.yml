@@ -5,8 +5,7 @@ stages:
   - build
   - test
 
-build:
-  stage: build
+.prepare_build: &prepare_build
   before_script:
     - mkdir -p build
     - cd build
@@ -14,103 +13,69 @@ build:
     - export CCACHE_DIR="$(pwd)/ccache"
     - ccache -M 500M
     - ccache -s
+
+.upload_ccache: &upload_cache
+  cache:
+    key: master_key
+    paths:
+      - build/ccache
+      - build/eigen_ext-prefix
+      - build/googletest-prefix
+      - build/fmt_ext-prefix
+      - build/google_benchmark_ext-prefix
+
+
+build:
+  stage: build
+  <<: *prepare_build
   script:
     - cmake .. -DCMAKE_BUILD_TYPE=Release
     - make -j $nproc
     - ccache -s
     - ../script/run_tests.sh
-  after_script:
-    - ccache -s
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
+  <<: *upload_cache
+
 
 static analysis:
   stage: test
   when: manual
-  before_script:
-    - mkdir -p build
-    - cd build
-    - mkdir -p ccache
-    - export CCACHE_DIR="$(pwd)/ccache"
-    - ccache -M 500M
-    - ccache -s
+  <<: *prepare_build
   script:
     - mkdir scan_results
     - scan-build -o scan_results cmake .. -DCMAKE_BUILD_TYPE=Release
     - scan-build -o scan_results make -j $nproc
     - ccache -s
-  after_script:
-    - ccache -s
   artifacts:
     paths:
       - build/scan_results
     expire_in: 1 week
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
+  <<: *upload_cache
 
 coverage:
   stage: test
-  when: manual
-  before_script:
-    - mkdir -p build
-    - cd build
-    - mkdir -p ccache
-    - export CCACHE_DIR="$(pwd)/ccache"
-    - ccache -M 500M
-    - ccache -s
+  only:
+    refs:
+      - master
+
   script:
     - ../script/run_coverage.sh
-  after_script:
-    - ccache -s
   artifacts:
     paths:
       - build/coverage
     expire_in: 1 week
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
+  <<: *upload_cache
 
 benchmarks:
   stage: test
-  when: manual
-  before_script:
-    - mkdir -p build
-    - cd build
-    - mkdir -p ccache
-    - export CCACHE_DIR="$(pwd)/ccache"
-    - ccache -M 500M
-    - ccache -s
+  only:
+    refs:
+      - master
+  <<: *prepare_build
   script:
     - cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_BENCHMARKS=ON
     - make -j $nproc
     - ./run_benchmarks
-  after_script:
-    - ccache -s
   artifacts:
     paths:
       - build/bench_results
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
+  <<: *upload_cache

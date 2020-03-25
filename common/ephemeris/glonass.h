@@ -31,6 +31,15 @@ class GlonassEphemeris : public EphBase
 
     bool parse(const uint8_t* buf, size_t size);
 
+    enum
+    {
+        L1,
+        L2,
+        L3
+    };
+
+    double getWavelength(int frequency) const;
+
  private:
     bool frame1(const uint8_t* buf);
     bool frame2(const uint8_t* buf);

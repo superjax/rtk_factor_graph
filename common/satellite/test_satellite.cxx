@@ -1,16 +1,17 @@
 #include <gtest/gtest.h>
+#include "common/ephemeris/gps.h"
 #include "common/satellite/satellite.h"
 #include "common/test_helpers.h"
 
 namespace mc {
 namespace satellite {
 
-using KepEph = ephemeris::KeplerianEphemeris;
+using GpsEph = ephemeris::GPSEphemeris;
 using GloEph = ephemeris::GlonassEphemeris;
 
 TEST(Satellite, CreateKeplerian)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
     EXPECT_EQ(sat.gnssId(), GnssID::GPS);
     EXPECT_EQ(sat.sat_num(), 0);
     EXPECT_EQ(sat.almanacSize(), 0);
@@ -18,9 +19,9 @@ TEST(Satellite, CreateKeplerian)
 
 TEST(Satellite, AddKeplerEph)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
 
-    KepEph eph;
+    GpsEph eph(0);
     eph.gnssID = GnssID::GPS;
     eph.sat = 0;
     eph.toe = UTCTime(101);
@@ -31,11 +32,11 @@ TEST(Satellite, AddKeplerEph)
 
 TEST(Satellite, AlmanacIsSorted)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
 
     for (int i = 0; i < 100; ++i)
     {
-        KepEph eph;
+        GpsEph eph(0);
         eph.gnssID = GnssID::GPS;
         eph.sat = 0;
         eph.toe = UTCTime(rand() % 10000);
@@ -52,11 +53,11 @@ TEST(Satellite, AlmanacIsSorted)
 
 TEST(Satellite, FindClosestEph)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
 
     for (int i = 0; i < 100; ++i)
     {
-        KepEph eph;
+        GpsEph eph(0);
         eph.gnssID = GnssID::GPS;
         eph.sat = 0;
         eph.toe = UTCTime(i * 10);
@@ -70,8 +71,8 @@ TEST(Satellite, FindClosestEph)
 
 TEST(Satellite, WrongGnssIDThrow)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
-    KepEph eph;
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
+    GpsEph eph(0);
     eph.gnssID = GnssID::Glonass;
     eph.sat = 0;
     eph.toe = UTCTime(0);
@@ -80,8 +81,8 @@ TEST(Satellite, WrongGnssIDThrow)
 
 TEST(Satellite, WrongSatNumThrow)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
-    KepEph eph;
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
+    GpsEph eph(0);
     eph.gnssID = GnssID::GPS;
     eph.sat = 1;
     eph.toe = UTCTime(0);
@@ -90,7 +91,7 @@ TEST(Satellite, WrongSatNumThrow)
 
 TEST(Satellite, InitWrongGnssID)
 {
-    EXPECT_DIE(Satellite<KepEph> sat(GnssID::Glonass, 0), "");
+    EXPECT_DIE(Satellite<GpsEph> sat(GnssID::Glonass, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::GPS, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Galileo, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Beidou, 0), "");
@@ -100,12 +101,12 @@ TEST(Satellite, InitWrongGnssID)
 
 TEST(Satellite, ReplaceDuplicate)
 {
-    Satellite<KepEph> sat(GnssID::GPS, 0);
+    Satellite<GpsEph> sat(GnssID::GPS, 0);
 
     UTCTime saved_time;
     for (int i = 0; i < 100; ++i)
     {
-        KepEph eph;
+        GpsEph eph(0);
         eph.gnssID = GnssID::GPS;
         eph.sat = 0;
         int random = rand() % 10000;
@@ -120,7 +121,7 @@ TEST(Satellite, ReplaceDuplicate)
     }
 
     const int size_before_insert = sat.almanacSize();
-    KepEph eph;
+    GpsEph eph(0);
     eph.gnssID = GnssID::GPS;
     eph.sat = 0;
     eph.toe = saved_time;
@@ -230,7 +231,7 @@ class KeplerSat : public ::testing::Test
     UTCTime t;
     void SetUp() override
     {
-        ephemeris::KeplerianEphemeris eph;
+        ephemeris::GPSEphemeris eph(1);
         const int week = 86400.00 / UTCTime::SEC_IN_WEEK;
         const int tow_sec = 86400.00 - (week * UTCTime::SEC_IN_WEEK);
         t = UTCTime::fromGPS(week, tow_sec * 1000);
@@ -264,7 +265,7 @@ class KeplerSat : public ::testing::Test
         sat.addEph(eph);
     }
 
-    Satellite<KepEph> sat;
+    Satellite<GpsEph> sat;
 };
 
 TEST_F(KeplerSat, checkPVT)

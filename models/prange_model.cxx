@@ -84,7 +84,6 @@ bool PseudorangeModel::Evaluate(const double* const* parameters,
     Eigen::Map<Vec3> res(_residual);
 
     const Vec3 vel_ecef = T_e2r_.rota(T_r2n.rota(T_n2b.rota(velocity_b)));
-    (void)vel_ecef;
     const Vec3 p_ecef = T_e2r_.rota(T_r2n.transforma(T_n2b.translation() + T_n2b.rota(p_b2g))) +
                         T_e2r_.translation();
     const Vec3 los_to_sat = sat_state_.pos - p_ecef;
@@ -113,8 +112,6 @@ bool PseudorangeModel::Evaluate(const double* const* parameters,
         const Mat3 R_e2r = T_e2r_.rotation().R();
         const Mat3 R_r2n = T_r2n.rotation().R();
         const Mat3 R_n2b = T_n2b.rotation().R();
-        (void)R_e2r;
-        (void)R_r2n;
 
         // res_by_T_n2b
         if (jacobians[0])
@@ -153,7 +150,6 @@ bool PseudorangeModel::Evaluate(const double* const* parameters,
             PoseJacobian jac;
             jac.drho_drot() =
                 sw_var * e.T * R_e2r.T * R_r2n.T * skew(T_n2b.translation() + T_n2b.rota(p_b2g));
-            // sw_var * e.T * R_e2r.T * skew(T_r2n.rotp(p_b2g));
             jac.drho_dpos() = sw_var * -e.T * R_E2n.T;
             jac.ddop_drot() = sw_var * e.T * R_E2n.T * skew(R_n2b.T * velocity_b);
             jac.ddop_dpos().setZero();

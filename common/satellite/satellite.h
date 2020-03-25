@@ -20,6 +20,7 @@ class SatelliteBase
     uint8_t gnssId() const { return gnss_id_; }
     uint8_t sat_num() const { return sat_; }
 
+    virtual double carrierWavelength(int freq) const = 0;
     virtual int almanacSize() const = 0;
 
  private:
@@ -91,6 +92,12 @@ class Satellite : public SatelliteBase
     Error getState(const UTCTime& t, Out<SatelliteState> sat_state) const
     {
         return eph2Sat(t, findClosestEphemeris(t), sat_state);
+    }
+
+    double carrierWavelength(int freq) const override
+    {
+        check(almanac_.size() > 0, "Tried to get Ephemeris from an empty almanac");
+        return almanac_.front().getWavelength(freq);
     }
 
  private:

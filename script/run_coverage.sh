@@ -67,9 +67,13 @@ function remove_files() {
 remove_files "/usr/**/*"
 remove_files "*/Eigen/**/*"
 remove_files "*/googletest/**/*"
+remove_files "*/google_benchmark_ext-prefix/**/*"
+remove_files "*/fmt_ext-prefix/**/*"
+remove_files "*/**/bench_*"
 remove_files "*/**/test_*"
 remove_files "*/**/third_party/**/*"
 
+lcov --list all_tests.info 
 
 genhtml --output-directory ./coverage --demangle-cpp \
     --num-spaces 2 --sort --title "GlobalAI Test Coverage" \

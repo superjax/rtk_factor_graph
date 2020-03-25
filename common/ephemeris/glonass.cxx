@@ -1,4 +1,5 @@
 #include "common/ephemeris/glonass.h"
+#include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 #include "utils/crc.h"
@@ -22,6 +23,21 @@ GlonassEphemeris::GlonassEphemeris(int sat_id)
 {
     gnssID = GnssID::Glonass;
     sat = sat_id;
+}
+
+double GlonassEphemeris::getWavelength(int frequency) const
+{
+    switch (frequency)
+    {
+    case L1:
+        return C_LIGHT / (FREQ1_GLO + DFRQ1_GLO * slot);
+    case L2:
+        return C_LIGHT / (FREQ2_GLO + DFRQ2_GLO * slot);
+    case L3:
+        return C_LIGHT / FREQ3_GLO;
+    }
+    check(false, "supplied invalid frequency slot for Glonass {}", fmt(frequency));
+    return -1;
 }
 
 bool GlonassEphemeris::parse(const uint8_t* msg, const size_t size)

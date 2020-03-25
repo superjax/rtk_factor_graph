@@ -12,6 +12,7 @@ struct GnssObservation
     UTCTime t;
     uint8_t gnss_id;
     uint8_t sat_num;
+    uint8_t freq;  // frequency slot (depends on constellation)
 
     double pseudorange;
     double doppler;
@@ -28,6 +29,7 @@ struct GnssObservation
         pseudorange = 25'000'000 + 10'000 * normal(gen);
         doppler = 1'000 * normal(gen);
         carrier_phase = pseudorange / 0.19 + normal(gen) * 1'000;
+        freq = 0;
     }
 
     inline void setZero()
@@ -38,6 +40,7 @@ struct GnssObservation
         pseudorange = 0;
         doppler = 0;
         carrier_phase = 0;
+        freq = 0;
     }
 };
 

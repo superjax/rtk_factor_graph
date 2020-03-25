@@ -1,14 +1,38 @@
 #include "common/ephemeris/gps.h"
+#include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
 
 namespace mc {
 namespace ephemeris {
 
+constexpr double GPSEphemeris::FREQUENCY_L1;
+constexpr double GPSEphemeris::FREQUENCY_L2;
+constexpr double GPSEphemeris::FREQUENCY_L5;
+
+constexpr double GPSEphemeris::LAMBDA_L1;
+constexpr double GPSEphemeris::LAMBDA_L2;
+constexpr double GPSEphemeris::LAMBDA_L5;
+
 GPSEphemeris::GPSEphemeris(int sat_id)
 {
     gnssID = GnssID::GPS;
     sat = sat_id;
+}
+
+double GPSEphemeris::getWavelength(int frequency) const
+{
+    switch (frequency)
+    {
+    case L1:
+        return LAMBDA_L1;
+    case L2:
+        return LAMBDA_L2;
+    case L5:
+        return LAMBDA_L5;
+    }
+    check(false, "supplied invalid frequency slot for GPS {}", fmt(frequency));
+    return -1;
 }
 
 bool GPSEphemeris::parse(const uint8_t* buf, size_t size)

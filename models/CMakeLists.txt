@@ -31,3 +31,15 @@ target_link_libraries(pose_error_model utctime check print)
 add_gtest(test_pose_error_model test_pose_error_model.cxx)
 target_link_libraries(test_pose_error_model pose_error_model)
 add_benchmark(bench_pose_error_model SRCS bench_pose_error_model.cxx DEPS pose_error_model)
+
+library(relative_carrier_phase_model relative_carrier_phase_model.cxx)
+target_link_libraries(relative_carrier_phase_model utctime check print)
+add_gtest(test_relative_carrier_phase_model test_relative_carrier_phase_model.cxx)
+target_link_libraries(test_relative_carrier_phase_model
+    relative_carrier_phase_model
+    wgs84
+    gps
+    satellite)
+add_benchmark(bench_relative_carrier_phase_model
+    SRCS bench_relative_carrier_phase_model.cxx
+    DEPS relative_carrier_phase_model wgs84 gps satellite)

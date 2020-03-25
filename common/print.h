@@ -36,6 +36,10 @@ inline fmt::format_arg_store<Context, Args...> fmt(const Args&... args)
     return {args...};
 }
 
+//clang-format off
+#define watch(x) dbg(#x "= {}", fmt(x))
+//clang-format on
+
 void base_print(const std::string fmt,
                 const fmt::format_args& args,
                 const std::experimental::source_location& location =

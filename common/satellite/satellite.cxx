@@ -9,16 +9,9 @@
 namespace mc {
 namespace satellite {
 
-using KepEph = ephemeris::KeplerianEphemeris;
 using GloEph = ephemeris::GlonassEphemeris;
 using GpsEph = ephemeris::GPSEphemeris;
 using GalEph = ephemeris::GalileoEphemeris;
-
-template <>
-Satellite<KepEph>::Satellite(uint8_t gnss_id, uint8_t sat_num) : SatelliteBase(gnss_id, sat_num)
-{
-    check(gnss_id != GnssID::Glonass, "Tried to initialize KeplerianEphemeris with glonass ID");
-}
 
 template <>
 Satellite<GpsEph>::Satellite(uint8_t gnss_id, uint8_t sat_num) : SatelliteBase(gnss_id, sat_num)
