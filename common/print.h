@@ -45,57 +45,57 @@ void base_print(const std::string fmt,
                 const std::experimental::source_location& location =
                     std::experimental::source_location::current());
 
-void dbg(const std::string fmt,
+void dbg(const std::string fmt = "",
          const fmt::format_args& args = fmt::format_args(),
          const std::experimental::source_location& location =
              std::experimental::source_location::current());
 
-void info(const std::string fmt,
+void info(const std::string fmt = "",
           const fmt::format_args& args = fmt::format_args(),
           const std::experimental::source_location& location =
               std::experimental::source_location::current());
 
-void warn(const std::string fmt,
+void warn(const std::string fmt = "",
           const fmt::format_args& args = fmt::format_args(),
           const std::experimental::source_location& location =
               std::experimental::source_location::current());
 
-void error(const std::string fmt,
+void error(const std::string fmt = "",
            const fmt::format_args& args = fmt::format_args(),
            const std::experimental::source_location& location =
                std::experimental::source_location::current());
 
-void fatal(const std::string fmt,
+void fatal(const std::string fmt = "",
            const fmt::format_args& args = fmt::format_args(),
            const std::experimental::source_location& location =
                std::experimental::source_location::current());
 
 void dbg(bool condition,
-         const std::string fmt,
+         const std::string fmt = "",
          const fmt::format_args& args = fmt::format_args(),
          const std::experimental::source_location& location =
              std::experimental::source_location::current());
 
 void info(bool condition,
-          const std::string fmt,
+          const std::string fmt = "",
           const fmt::format_args& args = fmt::format_args(),
           const std::experimental::source_location& location =
               std::experimental::source_location::current());
 
 void warn(bool condition,
-          const std::string fmt,
+          const std::string fmt = "",
           const fmt::format_args& args = fmt::format_args(),
           const std::experimental::source_location& location =
               std::experimental::source_location::current());
 
 void error(bool condition,
-           const std::string fmt,
+           const std::string fmt = "",
            const fmt::format_args& args = fmt::format_args(),
            const std::experimental::source_location& location =
                std::experimental::source_location::current());
 
 void fatal(bool condition,
-           const std::string fmt,
+           const std::string fmt = "",
            const fmt::format_args& args = fmt::format_args(),
            const std::experimental::source_location& location =
                std::experimental::source_location::current());

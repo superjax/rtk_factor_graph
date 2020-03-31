@@ -5,13 +5,13 @@
 namespace mc {
 
 void check(bool condition,
-           const std::string fmt,
+           const std::string fmt = "",
            const fmt::format_args& args = fmt::format_args(),
            const std::experimental::source_location& location =
                std::experimental::source_location::current());
 
 void weak_check(bool condition,
-                const std::string fmt,
+                const std::string fmt = "",
                 const fmt::format_args& args = fmt::format_args(),
                 const std::experimental::source_location& location =
                     std::experimental::source_location::current());

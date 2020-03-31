@@ -18,3 +18,13 @@ if (TEST_COVERAGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -coverage -fprofile-arcs")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs")
 endif()
+
+if (DISABLE_CHECK)
+    message("Disabling Checks")
+    add_definitions(-DDISABLE_CHECK)
+    endif()
+
+    if (BUILD_BENCHMARKS)
+    message("Disabling Checks")
+    add_definitions(-DDISABLE_CHECK)
+endif()
