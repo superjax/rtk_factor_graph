@@ -28,7 +28,11 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
     return static_cast<uint8_t>(a) >= static_cast<uint8_t>(b);
 }
 
-constexpr LoggingLevel LOGGING_LEVEL = LoggingLevel::DEBUG;
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LoggingLevel::DEBUG
+#endif
+
+constexpr LoggingLevel LOGGING_LEVEL = static_cast<LoggingLevel>(LOG_LEVEL);
 
 template <typename Context = fmt::format_context, typename... Args>
 inline fmt::format_arg_store<Context, Args...> fmt(const Args&... args)
