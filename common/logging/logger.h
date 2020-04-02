@@ -10,7 +10,6 @@
 #include "common/utctime.h"
 #include "utils/file.h"
 
-
 namespace mc {
 
 // Forward declaration for special serialize types
@@ -19,11 +18,19 @@ namespace ephemeris {
 class GPSEphemeris;
 class GlonassEphemeris;
 class GalileoEphemeris;
-}
+}  // namespace ephemeris
 namespace meas {
 class ImuSample;
 class GnssObservation;
-}
+}  // namespace meas
+namespace math {
+template <typename T>
+class Quat;
+template <typename T>
+class DQuat;
+template <typename T>
+class Jet;
+}  // namespace math
 
 namespace logging {
 
@@ -73,15 +80,17 @@ class Logger
         std::ofstream header_file(header_filename);
         const auto start_time = UTCTime::now();
 
-        header_file << "# Project Midnight Compass Header: v1.0\n";
-        header_file << "# time: " << start_time << "\n";
-        header_file << "file: " << filename_ << ",\n";
-        header_file << "time: { \n";
-        header_file << "  sec: " << start_time.sec << ",\n";
-        header_file << "  nsec: " << start_time.nsec << "\n";
+        header_file << "{\n";
+        header_file << "\"_comment\": \"Project Midnight Compass Header: v1.0\",\n";
+        header_file << "\"_start_time\": \"" << start_time << "\",\n";
+        header_file << "\"file\": \"" << filename_ << "\",\n";
+        header_file << "\"time\": { \n";
+        header_file << "  \"sec\": " << start_time.sec << ",\n";
+        header_file << "  \"nsec\": " << start_time.nsec << "\n";
         header_file << "},\n";
-        header_file << "format: {\n";
+        header_file << "\"format\": {\n";
         header_file << header;
+        header_file << "}\n";
         header_file << "}\n";
     }
 
@@ -114,6 +123,9 @@ class Logger
     void serialize(const ephemeris::GalileoEphemeris& eph);
     void serialize(const meas::ImuSample& imu);
     void serialize(const meas::GnssObservation& obs);
+    void serialize(const math::Quat<double>& q);
+    void serialize(const math::DQuat<double>& dq);
+    void serialize(const math::Jet<double>& x);
 
     std::string filename_ = "";
     std::ofstream file_;

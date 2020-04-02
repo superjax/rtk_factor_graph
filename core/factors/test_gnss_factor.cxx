@@ -34,12 +34,12 @@ TEST(GnssFactor, Access)
     EXPECT_EQ(vel.data(), factor.get<1>().getData());
     EXPECT_EQ(cb.data(), factor.get<2>().getData());
     EXPECT_EQ(ap.data(), factor.get<3>().getData());
-    DQUAT_EQUALS(pose.pose, factor.pose.pose);
+    DQUAT_EQ(pose.pose, factor.pose.pose);
     EXPECT_EQ(pose.t, factor.pose.t);
-    MATRIX_EQUALS(vel.vel, factor.vel.vel);
+    MAT_EQ(vel.vel, factor.vel.vel);
     EXPECT_EQ(vel.t, factor.vel.t);
-    MATRIX_EQUALS(cb.clk, factor.clock_bias.clk);
-    MATRIX_EQUALS(ap.p_b2g, factor.antenna_position.p_b2g);
+    MAT_EQ(cb.clk, factor.clock_bias.clk);
+    MAT_EQ(ap.p_b2g, factor.antenna_position.p_b2g);
 
     EXPECT_EQ(pose.pose.data(), factor.get<0>().getData());
     EXPECT_EQ(vel.data(), factor.get_base<1>()->data());
@@ -79,12 +79,12 @@ TEST(GnssFactor, Modify)
     pose.pose = pose.pose * DQ::exp(Vec6::Ones() * 0.1);
     pose.t += 10.0;
 
-    DQUAT_EQUALS(pose.pose, factor.pose.pose);
+    DQUAT_EQ(pose.pose, factor.pose.pose);
     EXPECT_EQ(pose.t, factor.pose.t);
-    MATRIX_EQUALS(vel.vel, factor.vel.vel);
+    MAT_EQ(vel.vel, factor.vel.vel);
     EXPECT_EQ(vel.t, factor.vel.t);
-    MATRIX_EQUALS(cb.clk, factor.clock_bias.clk);
-    MATRIX_EQUALS(ap.p_b2g, factor.antenna_position.p_b2g);
+    MAT_EQ(cb.clk, factor.clock_bias.clk);
+    MAT_EQ(ap.p_b2g, factor.antenna_position.p_b2g);
 }
 
 }  // namespace factors

@@ -2,7 +2,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
-
 #include <cmath>
 
 #include "common/defs.h"
@@ -61,6 +60,7 @@ class Quat
     Eigen::Map<Vec4> arr_;
 
     inline T& operator[](int i) { return arr_[i]; }
+    inline const T& operator[](int i) const { return arr_[i]; }
     inline T& w() { return arr_(0); }
     inline T& x() { return arr_(1); }
     inline T& y() { return arr_(2); }

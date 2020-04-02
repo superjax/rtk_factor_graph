@@ -3,23 +3,33 @@
 #include <fstream>
 #include <regex>
 
+#include "common/ephemeris/galileo.h"
+#include "common/ephemeris/glonass.h"
+#include "common/ephemeris/gps.h"
+#include "common/math/dquat.h"
+#include "common/math/jet.h"
+#include "common/math/quat.h"
+#include "common/measurements/gnss_observation.h"
+#include "common/measurements/imu.h"
+#include "common/utctime.h"
+
 namespace mc {
 namespace logging {
 
 std::string format(const UTCTime& time, const std::string& name, int pad)
 {
     std::stringstream ss;
-    ss << std::string(pad, ' ') << name << ": {\n";
+    ss << pad_format(pad, "{} {{\n", key(name));
     ss << logging::format(time.sec, "sec", pad + 2) << ",\n";
     ss << logging::format(time.nsec, "nsec", pad + 2) << "\n";
-    ss << std::string(pad, ' ') << "}";
+    ss << pad_format(pad, "}}");
     return ss.str();
 }
 
 std::string format(const ephemeris::GPSEphemeris& eph, const std::string& name, int pad)
 {
     std::stringstream ss;
-    ss << std::string(pad, ' ') << name << ": {\n";
+    ss << pad_format(pad, "{} {{\n", key(name));
     ss << format(eph.gnssID, "gnss_id", pad + 2) << ",\n";
     ss << format(eph.sat, "sat", pad + 2) << ",\n";
     ss << format(eph.toe, "toe", pad + 2) << ",\n";
@@ -61,13 +71,13 @@ std::string format(const ephemeris::GPSEphemeris& eph, const std::string& name, 
     ss << format(eph.iode2, "iode2", pad + 2) + ",\n";
     ss << format(eph.iode3, "iode3", pad + 2) + ",\n";
     ss << format(eph.collected_subframes, "collected_subframes", pad + 2) + "\n";
-    ss << std::string(pad, ' ') << "}";
+    ss << pad_format(pad, "}}");
     return ss.str();
 }
 std::string format(const ephemeris::GalileoEphemeris& eph, const std::string& name, int pad)
 {
     std::stringstream ss;
-    ss << std::string(pad, ' ') << name << ": {\n";
+    ss << pad_format(pad, "{} {{\n", key(name));
     // BaseEph Members
     ss << format(eph.gnssID, "gnss_id", pad + 2) << ",\n";
     ss << format(eph.sat, "sat", pad + 2) << ",\n";
@@ -111,15 +121,15 @@ std::string format(const ephemeris::GalileoEphemeris& eph, const std::string& na
     ss << format(eph.e1b_dvs, "e1b_dvs", pad + 2) + ",\n";
     ss << format(eph.collected_subframes, "collected_subframes", pad + 2) + ",\n";
     ss << format(eph.time_f, "time_f", pad + 2) + ",\n";
-    ss << format(eph.iod, "iod", 4, pad + 2) + ",\n";
-    ss << std::string(pad, ' ') << "}";
+    ss << format(eph.iod, "iod", 4, pad + 2) + "\n";
+    ss << pad_format(pad, "}}");
     return ss.str();
 }
 
 std::string format(const ephemeris::GlonassEphemeris& eph, const std::string& name, int pad)
 {
     std::stringstream ss;
-    ss << std::string(pad, ' ') << name << ": {\n";
+    ss << pad_format(pad, "{} {{\n", key(name));
     // BaseEph Members
     ss << format(eph.gnssID, "gnss_id", pad + 2) << ",\n";
     ss << format(eph.sat, "sat", pad + 2) << ",\n";
@@ -130,7 +140,6 @@ std::string format(const ephemeris::GlonassEphemeris& eph, const std::string& na
     ss << format(eph.svh, "svh", pad + 2) << ",\n";
     ss << format(eph.sva, "sva", pad + 2) << ",\n";
     ss << format(eph.age, "age", pad + 2) << ",\n";
-    ss << format(eph.toe, "toe", pad + 2) << ",\n";
     ss << format(eph.tof, "tof", pad + 2) << ",\n";
     ss << format(eph.pos, "pos", pad + 2) << ",\n";
     ss << format(eph.vel, "vel", pad + 2) << ",\n";
@@ -146,8 +155,8 @@ std::string format(const ephemeris::GlonassEphemeris& eph, const std::string& na
     ss << format(eph.tb_, "tb", pad + 2) << ",\n";
     ss << format(eph.NT_, "NT", pad + 2) << ",\n";
     ss << format(eph.N4_, "N4", pad + 2) << ",\n";
-    ss << format(eph.NA_, "NA", pad + 2) << ",\n";
-    ss << std::string(pad, ' ') << "}";
+    ss << format(eph.NA_, "NA", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
     return ss.str();
 }
 
@@ -171,6 +180,74 @@ Error getHeaderTime(const std::string& header_file, Out<UTCTime> t0)
         }
     }
     return Error::create("Unable to retrieve start time from header");
+}
+
+std::string format(const meas::ImuSample& imu, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(imu.t, "t", pad + 2) << ",\n";
+    ss << format(imu.accel, "accel", pad + 2) << ",\n";
+    ss << format(imu.gyro, "gyro", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+
+std::string format(const meas::GnssObservation& obs, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(obs.t, "t", pad + 2) << ",\n";
+    ss << format(obs.gnss_id, "gnss_id", pad + 2) << ",\n";
+    ss << format(obs.sat_num, "san_num", pad + 2) << ",\n";
+    ss << format(obs.freq, "freq", pad + 2) << ",\n";
+    ss << format(obs.pseudorange, "pseudorange", pad + 2) << ",\n";
+    ss << format(obs.doppler, "doppler", pad + 2) << ",\n";
+    ss << format(obs.carrier_phase, "carrier_phase", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+
+std::string format(const math::Quat<double>& q, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(q.w(), "w", pad + 2) << ",\n";
+    ss << format(q.x(), "x", pad + 2) << ",\n";
+    ss << format(q.y(), "y", pad + 2) << ",\n";
+    ss << format(q.z(), "z", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+
+std::string format(const math::DQuat<double>& dq, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(dq.real(), "rot", pad + 2) << ",\n";
+    ss << format(dq.translation(), "trans", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+
+std::string format(const math::DQuat<double>::TangentVector& dx, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(dx.angular(), "angular", pad + 2) << ",\n";
+    ss << format(dx.linear(), "linear", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+
+std::string format(const math::Jet<double>& x, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(x.x, "x", pad + 2) << ",\n";
+    ss << format(x.dx, "dx", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
 }
 
 }  // namespace logging

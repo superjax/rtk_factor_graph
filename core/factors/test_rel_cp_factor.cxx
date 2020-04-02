@@ -41,13 +41,13 @@ TEST(RelativeCarrierPhaseFactor, Access)
     EXPECT_EQ(sw1.data(), factor.get<5>().getData());
     EXPECT_EQ(sw2.data(), factor.get<6>().getData());
 
-    DQUAT_EQUALS(pose1.pose, factor.pose1.pose);
-    DQUAT_EQUALS(pose2.pose, factor.pose2.pose);
+    DQUAT_EQ(pose1.pose, factor.pose1.pose);
+    DQUAT_EQ(pose2.pose, factor.pose2.pose);
     EXPECT_EQ(pose1.t, factor.pose1.t);
     EXPECT_EQ(pose2.t, factor.pose2.t);
-    MATRIX_EQUALS(ap.p_b2g, factor.antenna_position.p_b2g);
-    MATRIX_EQUALS(clk1.clk, factor.clock_bias1.clk);
-    MATRIX_EQUALS(clk2.clk, factor.clock_bias2.clk);
+    MAT_EQ(ap.p_b2g, factor.antenna_position.p_b2g);
+    MAT_EQ(clk1.clk, factor.clock_bias1.clk);
+    MAT_EQ(clk2.clk, factor.clock_bias2.clk);
     EXPECT_EQ(sw1.sw, factor.switch1.sw);
     EXPECT_EQ(sw2.sw, factor.switch2.sw);
 
@@ -102,13 +102,13 @@ TEST(RelativeCarrierPhaseFactor, Modify)
     sw1.sw += 0.234;
     sw2.sw += 0.293;
 
-    DQUAT_EQUALS(pose1.pose, factor.pose1.pose);
-    DQUAT_EQUALS(pose2.pose, factor.pose2.pose);
+    DQUAT_EQ(pose1.pose, factor.pose1.pose);
+    DQUAT_EQ(pose2.pose, factor.pose2.pose);
     EXPECT_EQ(pose1.t, factor.pose1.t);
     EXPECT_EQ(pose2.t, factor.pose2.t);
-    MATRIX_EQUALS(ap.p_b2g, factor.antenna_position.p_b2g);
-    MATRIX_EQUALS(clk1.clk, factor.clock_bias1.clk);
-    MATRIX_EQUALS(clk2.clk, factor.clock_bias2.clk);
+    MAT_EQ(ap.p_b2g, factor.antenna_position.p_b2g);
+    MAT_EQ(clk1.clk, factor.clock_bias1.clk);
+    MAT_EQ(clk2.clk, factor.clock_bias2.clk);
     EXPECT_EQ(sw1.sw, factor.switch1.sw);
     EXPECT_EQ(sw2.sw, factor.switch2.sw);
 }

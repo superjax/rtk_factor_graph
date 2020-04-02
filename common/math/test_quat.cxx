@@ -1,8 +1,8 @@
+#include <gtest/gtest.h>
+
+#include <Eigen/Geometry>
 #include <iostream>
 #include <random>
-
-#include <gtest/gtest.h>
-#include <Eigen/Geometry>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "common/math/quat.h"
@@ -31,17 +31,17 @@ TEST(Quat, quat_rotation_direction)
               0.0000000, -0.70710678118654757, 0.70710678118654757;
     // clang-format on
     const Mat3 qR = q_x_45.R();
-    MATRIX_EQUALS(qR, R_true);
-    MATRIX_EQUALS(qR.transpose() * v, v_active_rotated);
-    MATRIX_EQUALS(R_true.transpose() * v, v_active_rotated);
+    MAT_EQ(qR, R_true);
+    MAT_EQ(qR.transpose() * v, v_active_rotated);
+    MAT_EQ(R_true.transpose() * v, v_active_rotated);
 
-    MATRIX_EQUALS(v_x_45, v_active_rotated);
+    MAT_EQ(v_x_45, v_active_rotated);
 
     const Vec3 v_passive_rotated(0, std::pow(0.5, 0.5), std::pow(0.5, 0.5));
     const Vec3 v_x_45_T = q_x_45.rotp(v);
-    MATRIX_EQUALS(v_x_45_T, v_passive_rotated);
-    MATRIX_EQUALS(qR * v, v_passive_rotated);
-    MATRIX_EQUALS(R_true * v, v_passive_rotated);
+    MAT_EQ(v_x_45_T, v_passive_rotated);
+    MAT_EQ(qR * v, v_passive_rotated);
+    MAT_EQ(R_true * v, v_passive_rotated);
 }
 
 TEST(Quat, quat_rot_invrot_R)
@@ -52,8 +52,8 @@ TEST(Quat, quat_rot_invrot_R)
         const Quat<double> q1 = Quat<double>::Random();
 
         // Check that rotations are inverses of each other
-        MATRIX_EQUALS(q1.rota(v), q1.R().transpose() * v);
-        MATRIX_EQUALS(q1.rotp(v), q1.R() * v);
+        MAT_EQ(q1.rota(v), q1.R().transpose() * v);
+        MAT_EQ(q1.rotp(v), q1.R() * v);
     }
 }
 
@@ -66,8 +66,8 @@ TEST(Quat, quat_rot_invrot_otimes)
         const Quat<double> v_pure = Quat<double>::make_pure(v);
 
         // Check that I can use otimes to rotate a vector
-        MATRIX_EQUALS(q1.rota(v), (q1 * v_pure * q1.inverse()).bar());
-        MATRIX_EQUALS(q1.rotp(v), (q1.inverse() * v_pure * q1).bar());
+        MAT_EQ(q1.rota(v), (q1 * v_pure * q1.inverse()).bar());
+        MAT_EQ(q1.rotp(v), (q1.inverse() * v_pure * q1).bar());
     }
 }
 
@@ -92,8 +92,8 @@ TEST(Quat, quat_from_two_unit_vectors)
 
         const Quat<double> q = Quat<double>::from_two_unit_vectors(v1, v2);
 
-        MATRIX_EQUALS(q.rotp(v1), v2);
-        MATRIX_EQUALS(q.rota(v2), v1);
+        MAT_EQ(q.rotp(v1), v2);
+        MAT_EQ(q.rota(v2), v1);
     }
 }
 
@@ -106,12 +106,12 @@ TEST(Quat, from_R)
         const SO3<double> R = q1.R();
         const Quat<double> qR = Quat<double>::from_R(R);
         v.setRandom();
-        MATRIX_EQUALS(qR.rota(v), R.transpose() * v);
-        MATRIX_EQUALS(q1.rota(v), R.transpose() * v);
-        MATRIX_EQUALS(qR.rotp(v), R * v);
-        MATRIX_EQUALS(q1.rotp(v), R * v);
+        MAT_EQ(qR.rota(v), R.transpose() * v);
+        MAT_EQ(q1.rota(v), R.transpose() * v);
+        MAT_EQ(qR.rotp(v), R * v);
+        MAT_EQ(q1.rotp(v), R * v);
         SO3_EQUALS(R, qR.R());
-        QUATERNION_EQUALS(qR, q1);
+        QUAT_EQ(qR, q1);
     }
 }
 
@@ -119,7 +119,7 @@ TEST(Quat, otimes)
 {
     const Quat<double> q1 = Quat<double>::Random();
     const Quat<double> qI = Quat<double>::Identity();
-    QUATERNION_EQUALS(q1 * q1.inverse(), qI);
+    QUAT_EQ(q1 * q1.inverse(), qI);
 }
 
 TEST(Quat, exp_log_axis_angle)
@@ -133,12 +133,12 @@ TEST(Quat, exp_log_axis_angle)
         const Quat<double> q_omega =
             Quat<double>::from_axis_angle(omega / omega.norm(), omega.norm());
         const Quat<double> q_omega_exp = Quat<double>::exp(omega);
-        QUATERNION_EQUALS(q_R_omega_exp, q_omega);
-        QUATERNION_EQUALS(q_omega_exp, q_omega);
+        QUAT_EQ(q_R_omega_exp, q_omega);
+        QUAT_EQ(q_omega_exp, q_omega);
 
         // Check that exp and log are inverses of each otherprint_error
-        MATRIX_EQUALS(Quat<double>::exp(omega).log(), omega);
-        QUATERNION_EQUALS(Quat<double>::exp(q_omega.log()), q_omega);
+        MAT_EQ(Quat<double>::exp(omega).log(), omega);
+        QUAT_EQ(Quat<double>::exp(q_omega.log()), q_omega);
     }
 }
 
@@ -149,11 +149,11 @@ TEST(Quat, inplace_and_mul)
         const Quat<double> q = Quat<double>::Random();
         Quat<double> q2 = Quat<double>::Random();
         Quat<double> q_copy = q.copy();
-        QUATERNION_EQUALS(q_copy, q);
+        QUAT_EQ(q_copy, q);
 
         q_copy = q.copy();
         q_copy *= q2;
-        QUATERNION_EQUALS(q_copy, q * q2);
+        QUAT_EQ(q_copy, q * q2);
     }
 }
 
@@ -172,7 +172,7 @@ TEST(Quat, euler)
         EXPECT_NEAR(pitch, q.pitch(), 1e-8);
         EXPECT_NEAR(yaw, q.yaw(), 1e-8);
         const Quat<double> q2 = Quat<double>::from_euler(q.roll(), q.pitch(), q.yaw());
-        QUATERNION_EQUALS(q, q2);
+        QUAT_EQ(q, q2);
     }
 }
 
@@ -186,7 +186,7 @@ TEST(Quat, euler_singularity)
 
     EXPECT_NEAR(pitch, q.pitch(), 1e-8);
     const Quat<double> q2 = Quat<double>::from_euler(q.roll(), q.pitch(), q.yaw());
-    QUATERNION_EQUALS(q, q2);
+    QUAT_EQ(q, q2);
 }
 
 TEST(Quat, passive_rotation_derivative)
@@ -256,7 +256,7 @@ TEST(Quat, log_close)
         const Vec3 delta = Vec3::Random() * 4e-6;
         const Quat<double> q2 = q * Quat<double>::exp(delta);
         const Vec3 delta_recovered = (q.inverse() * q2).log();
-        MATRIX_EQUALS(delta, delta_recovered);
+        MAT_EQ(delta, delta_recovered);
     }
 }
 
@@ -265,7 +265,7 @@ TEST(Quat, make_pure)
     const Vec3 v = Vec3::Random();
     const Quat<double> q_pure = Quat<double>::make_pure(v);
     const Vec4 expected(0, v(0), v(1), v(2));
-    MATRIX_EQUALS(expected, q_pure.elements());
+    MAT_EQ(expected, q_pure.elements());
 }
 
 TEST(Quat, check_dynamics)
@@ -305,8 +305,8 @@ TEST(Quat, AdjointIdentities)
     const Quat<double> q2 = Quat<double>::Random();
     const Vec3 v = Vec3::Random();
 
-    QUATERNION_EQUALS(q * Quat<double>::exp(v), Quat<double>::exp(q.Ad() * v) * q);
-    MATRIX_EQUALS((q * q2).Ad(), q.Ad() * q2.Ad());
+    QUAT_EQ(q * Quat<double>::exp(v), Quat<double>::exp(q.Ad() * v) * q);
+    MAT_EQ((q * q2).Ad(), q.Ad() * q2.Ad());
 }
 
 TEST(Quat, GroupJacobians)
@@ -392,8 +392,8 @@ TEST(Quat, ExpLogJacobians)
     MATRIX_CLOSE(left_jac_log, left_jac2(R, log), 1e-6);
     MATRIX_CLOSE(right_jac_log, right_jac2(R, log), 1e-6);
 
-    MATRIX_EQUALS(right_jac_log, left_jac_log.transpose());
-    MATRIX_EQUALS(right_jac_exp, left_jac_exp.transpose());
+    MAT_EQ(right_jac_log, left_jac_log.transpose());
+    MAT_EQ(right_jac_exp, left_jac_exp.transpose());
 }
 
 TEST(Quat, SO3Equivalent)
@@ -403,18 +403,18 @@ TEST(Quat, SO3Equivalent)
     Quat<double> q = Quat<double>::exp(w);
     SO3<double> R = SO3<double>::exp(w);
     SO3_EQUALS(q.R(), R.transpose());
-    QUATERNION_EQUALS(q, R.q().inverse());
+    QUAT_EQ(q, R.q().inverse());
 
     // Log same
-    MATRIX_EQUALS(R.log(), q.log());
-    MATRIX_EQUALS(R.log(), w);
+    MAT_EQ(R.log(), q.log());
+    MAT_EQ(R.log(), w);
 
     // rotate vector same
     q = Quat<double>::Random();
     R = q.R();
     const Vec3 v = Vec3::Random();
-    MATRIX_EQUALS(R * v, q.rotp(v));
-    MATRIX_EQUALS(R.transpose() * v, q.rota(v));
+    MAT_EQ(R * v, q.rotp(v));
+    MAT_EQ(R.transpose() * v, q.rota(v));
 
     // concanate correctly
     const Quat<double> qa2b = Quat<double>::Random();
@@ -426,7 +426,7 @@ TEST(Quat, SO3Equivalent)
     const Quat<double> qa2c = qa2b * qb2c;
 
     SO3_EQUALS(Ra2c, qa2c.R());
-    QUATERNION_EQUALS(Ra2c.q(), qa2c);
+    QUAT_EQ(Ra2c.q(), qa2c);
 }
 
 TEST(Quat, dGen_dParam)

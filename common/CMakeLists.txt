@@ -11,6 +11,11 @@ library(utctime utctime.cxx)
 add_gtest(test_utctime test_utctime.cxx)
 target_link_libraries(test_utctime utctime)
 
+library(quantized_time quantized_time.cxx)
+target_link_libraries(quantized_time utctime)
+add_gtest(test_quantized_time test_quantized_time.cxx)
+target_link_libraries(test_quantized_time quantized_time)
+
 library(print print.cxx)
 target_link_libraries(print fmt)
 add_gtest(test_print test_print.cxx)

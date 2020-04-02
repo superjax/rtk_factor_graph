@@ -10,6 +10,8 @@ stages:
     - mkdir -p build
     - cd build
     - mkdir -p ccache
+    - export CC=gcc
+    - export CXX=g++
     - export CCACHE_DIR="$(pwd)/ccache"
     - ccache -M 500M
     - ccache -s
@@ -23,6 +25,7 @@ stages:
       - build/googletest-prefix
       - build/fmt_ext-prefix
       - build/google_benchmark_ext-prefix
+      - build/async_comm_ext-prefix
 
 
 build:

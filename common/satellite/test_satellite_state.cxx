@@ -132,7 +132,7 @@ TEST_F(GlonassSatState, OrbitEquation)
     double var;
     rtklib::geph2pos(geph.toe, &geph, x_oracle.data(), &clk, &var);
 
-    MATRIX_EQUALS(x_oracle, x.head<3>());
+    MAT_EQ(x_oracle, x.head<3>());
 }
 
 TEST_F(GlonassSatState, VsRTKLIB)

@@ -1,6 +1,6 @@
-#include <random>
-
 #include <gtest/gtest.h>
+
+#include <random>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "common/math/se3.h"
@@ -33,8 +33,8 @@ TEST(SE3, known_passive_transform)
     const Vec3 p_a(1, 0, 0);
     const SE3<double> T_a2b(R_a2b, t_b);
     const Vec3 p_b(-sqrt(0.5), -sqrt(0.5), 0);
-    MATRIX_EQUALS(p_b, T_a2b * p_a);
-    MATRIX_EQUALS(p_b, T_a2b.transformp(p_a));
+    MAT_EQ(p_b, T_a2b * p_a);
+    MAT_EQ(p_b, T_a2b.transformp(p_a));
 }
 
 TEST(SE3, known_active_transform)
@@ -45,8 +45,8 @@ TEST(SE3, known_active_transform)
     const Vec3 p_a(1, 0, 0);
     const SE3<double> T_a2b(R_a2b, t_b);
     const Vec3 p_b(1 + sqrt(0.5), 1 + sqrt(0.5), 0);
-    MATRIX_EQUALS(p_b, T_a2b.transforma(p_a));
-    MATRIX_EQUALS(p_b, T_a2b.inverse() * p_a);
+    MAT_EQ(p_b, T_a2b.transforma(p_a));
+    MAT_EQ(p_b, T_a2b.inverse() * p_a);
 }
 
 TEST(SE3, inverse)
@@ -66,10 +66,10 @@ TEST(SE3, transform_vector)
     {
         const SE3<double> T1 = SE3<double>::Random();
         const Vec3 p = Vec3::Random();
-        MATRIX_EQUALS(T1.transformp(T1.inverse().transformp(p)), p);
-        MATRIX_EQUALS(T1.inverse().transformp(T1.transformp(p)), p);
-        MATRIX_EQUALS(T1.transforma(T1.inverse().transforma(p)), p);
-        MATRIX_EQUALS(T1.inverse().transforma(T1.transforma(p)), p);
+        MAT_EQ(T1.transformp(T1.inverse().transformp(p)), p);
+        MAT_EQ(T1.inverse().transformp(T1.transformp(p)), p);
+        MAT_EQ(T1.transforma(T1.inverse().transforma(p)), p);
+        MAT_EQ(T1.inverse().transforma(T1.transforma(p)), p);
     }
 }
 
@@ -129,7 +129,7 @@ TEST(SE3, boxplus_rules)
 
         SE3_EQUALS(T1 + zeros, T1);
         SE3_EQUALS(T1 + (T2 - T1), T2);
-        MATRIX_EQUALS((T1 + delta1) - T1, delta1);
+        MAT_EQ((T1 + delta1) - T1, delta1);
         // Ethan and Adam say this rule is bogus for SE3
         // EXPECT_LE(((T1 + delta1) - (T1 + delta2)).norm(), (delta1 - delta2).norm());
     }
@@ -158,7 +158,7 @@ TEST(SE3, AdjointIdentities)
     const Vec6 v = Vec6::Random();
 
     SE3_EQUALS(T * SE3<double>::exp(v), SE3<double>::exp(T.Ad() * v) * T);
-    MATRIX_EQUALS((T * T2).Ad(), T.Ad() * T2.Ad());
+    MAT_EQ((T * T2).Ad(), T.Ad() * T2.Ad());
 }
 
 TEST(SE3, GroupJacobians)

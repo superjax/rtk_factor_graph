@@ -24,13 +24,24 @@ class FactorGraph
 
         // Model weights
         Vec6 Xi_r2n_;
+
+        // Initial State
+        UTCTime t0_;
+        math::DQuat<double> x0_ = math::DQuat<double>::identity();
+        Vec3 vel0_ = Vec3::Zero();
+        Vec2 clk0_ = Vec2::Zero();
+        ImuBias imu_bias0_ = ImuBias::Zero();
+        Vec3 p_b2g0_ = Vec3::Zero();
+        math::DQuat<double> T_r2n0_ = math::DQuat<double>::identity();
+
+        // Constants
+        math::DQuat<double> T_e2r_ = math::DQuat<double>::identity();
     };
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    FactorGraph();
+    FactorGraph(const Options& options);
 
-    Error build();
-    Error solve();
+    const Node& lastNode() const { return nodes_.back(); }
 
  private:
     static constexpr int MAX_STATE_LEN = 25;
@@ -43,10 +54,7 @@ class FactorGraph
     math::DQuat<double> T_r2n_;
 
     // Allocate space for the functors
-
     Options options_;
-
-    std::unique_ptr<Solver> solver;
 };
 
 }  // namespace core

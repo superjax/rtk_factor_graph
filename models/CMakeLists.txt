@@ -2,16 +2,10 @@ library(imu_state imu_state.cxx)
 add_gtest(test_imu_state test_imu_state.cxx)
 target_link_libraries(test_imu_state imu_state)
 
-library(imu_integrator imu_integrator.cxx)
-target_link_libraries(imu_integrator utctime imu_state check)
-add_gtest(test_imu_integrator test_imu_integrator.cxx)
-target_link_libraries(test_imu_integrator imu_integrator)
-add_benchmark(bench_imu_integrator SRCS bench_imu_integrator.cxx DEPS imu_integrator)
-
 library(imu_model imu_model.cxx)
-target_link_libraries(imu_model imu_integrator)
+target_link_libraries(imu_model utctime imu_state check quantized_time)
 add_gtest(test_imu_model test_imu_model.cxx)
-target_link_libraries(test_imu_model imu_model)
+target_link_libraries(test_imu_model imu_model logger header)
 add_benchmark(bench_imu_model SRCS bench_imu_model.cxx DEPS imu_model)
 
 library(prange_model prange_model.cxx)

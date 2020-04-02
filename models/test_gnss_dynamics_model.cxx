@@ -50,7 +50,7 @@ TEST_F(TestGnssDynamics, HandComputed)
 
     EXPECT_TRUE(f.Evaluate(parameters, residuals.data(), nullptr));
 
-    MATRIX_EQUALS(residuals, Vec3(4, 24248, 0.001));
+    MAT_EQ(residuals, Vec3(4, 24248, 0.001));
 }
 
 TEST_F(TestGnssDynamics, Clk1Jacobian)

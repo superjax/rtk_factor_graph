@@ -27,7 +27,7 @@ TEST(PoseError, HandCrafted)
 
     EXPECT_TRUE(f.Evaluate(parameters, residuals.data(), nullptr));
 
-    MATRIX_EQUALS(residuals, perturbation);
+    MAT_EQ(residuals, perturbation);
 }
 
 TEST(PoseError, Jacobian)
@@ -56,8 +56,8 @@ TEST(PoseError, Jacobian)
 
     MatRM68 numerical_jac = compute_jac(Vec8(pose.arr_), fun);
 
-    MATRIX_EQUALS(numerical_jac * pose.dParamDGen(), jac * pose.dParamDGen());
-    MATRIX_EQUALS(residuals, perturbation);
+    MAT_EQ(numerical_jac * pose.dParamDGen(), jac * pose.dParamDGen());
+    MAT_EQ(residuals, perturbation);
 }
 
 }  // namespace models

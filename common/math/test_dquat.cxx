@@ -1,8 +1,8 @@
+#include <gtest/gtest.h>
+
+#include <Eigen/Geometry>
 #include <iostream>
 #include <random>
-
-#include <gtest/gtest.h>
-#include <Eigen/Geometry>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "common/math/dquat.h"
@@ -42,8 +42,8 @@ TEST(DQuat, FromQuatAndTranslation)
     const Quat<double> q = Quat<double>::from_axis_angle(Vec3(0, 0, 1), M_PI / 4.0);
     const Vec3 t(2, 1, 0);
     DQuat<double> Q(q, t);
-    QUATERNION_EQUALS(q, Q.r_);
-    QUATERNION_EQUALS(0.5 * (Quat<double>::make_pure(t) * q), Q.d_);
+    QUAT_EQ(q, Q.r_);
+    QUAT_EQ(0.5 * (Quat<double>::make_pure(t) * q), Q.d_);
 }
 
 TEST(DQuat, Concatenate)
@@ -58,7 +58,7 @@ TEST(DQuat, Concatenate)
 
     const DQuat<double> Q_a2c = Q_a2b * Q_b2c;
 
-    QUATERNION_EQUALS(Q_a2c.rotation(), Quat<double>::from_axis_angle(Vec3(0, 0, 1), -M_PI / 12.0));
+    QUAT_EQ(Q_a2c.rotation(), Quat<double>::from_axis_angle(Vec3(0, 0, 1), -M_PI / 12.0));
     MATRIX_CLOSE(Q_a2c.translation(), Vec3(3.414, 2.414, 0), 1e-3);
 }
 
@@ -69,7 +69,7 @@ TEST(DQuat, KnownPassiveTransform)
     const Vec3 p_a(1, 0, 0);
     const DQuat<double> Q_a2b(q_a2b, t_a);
     const Vec3 p_b(-sqrt(0.5), -sqrt(0.5), 0);
-    MATRIX_EQUALS(p_b, Q_a2b.transformp(p_a));
+    MAT_EQ(p_b, Q_a2b.transformp(p_a));
 }
 
 TEST(DQuat, KnownActiveTransform)
@@ -79,7 +79,7 @@ TEST(DQuat, KnownActiveTransform)
     const Vec3 p_a(1, 0, 0);
     const DQuat<double> Q_a2b(q_a2b, t_a);
     const Vec3 p_b(1 + sqrt(0.5), 1 + sqrt(0.5), 0);
-    MATRIX_EQUALS(p_b, Q_a2b.transforma(p_a));
+    MAT_EQ(p_b, Q_a2b.transforma(p_a));
 }
 
 TEST(DQuat, inverse)
@@ -89,7 +89,7 @@ TEST(DQuat, inverse)
         const DQuat<double> T1 = DQuat<double>::Random();
         const DQuat<double> T2 = T1.inverse();
         const DQuat<double> T3 = T1 * T2;
-        DQUAT_EQUALS(T3, DQuat<double>::identity());
+        DQUAT_EQ(T3, DQuat<double>::identity());
     }
 }
 
@@ -99,10 +99,10 @@ TEST(DQuat, transform_vector)
     {
         const DQuat<double> Q1 = DQuat<double>::Random();
         const Vec3 p = Vec3::Random();
-        MATRIX_EQUALS(Q1.transformp(Q1.inverse().transformp(p)), p);
-        MATRIX_EQUALS(Q1.inverse().transformp(Q1.transformp(p)), p);
-        MATRIX_EQUALS(Q1.transforma(Q1.inverse().transforma(p)), p);
-        MATRIX_EQUALS(Q1.inverse().transforma(Q1.transforma(p)), p);
+        MAT_EQ(Q1.transformp(Q1.inverse().transformp(p)), p);
+        MAT_EQ(Q1.inverse().transformp(Q1.transformp(p)), p);
+        MAT_EQ(Q1.transforma(Q1.inverse().transforma(p)), p);
+        MAT_EQ(Q1.inverse().transforma(Q1.transforma(p)), p);
     }
 }
 
@@ -209,8 +209,8 @@ TEST(DQuat, AdjointIdentities)
     const DQuat<double> q2 = DQuat<double>::Random();
     const Vec6 v = Vec6::Random();
 
-    DQUAT_EQUALS(q * DQuat<double>::exp(v), DQuat<double>::exp(q.Ad() * v) * q);
-    MATRIX_EQUALS((q * q2).Ad(), q.Ad() * q2.Ad());
+    DQUAT_EQ(q * DQuat<double>::exp(v), DQuat<double>::exp(q.Ad() * v) * q);
+    MAT_EQ((q * q2).Ad(), q.Ad() * q2.Ad());
 }
 
 TEST(DQuat, GroupJacobians)

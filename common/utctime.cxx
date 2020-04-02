@@ -1,5 +1,7 @@
 #include "common/utctime.h"
 
+#include "common/quantized_time.h"
+
 namespace mc {
 
 constexpr int64_t UTCTime::E9;
@@ -271,6 +273,15 @@ std::string UTCTime::str() const
 double UTCTime::GpsTow() const
 {
     return ((*this) - UTCTime::fromGPS(GpsWeek(), 0)).toSec();
+}
+
+QuantizedTime UTCTime::quantized(double resolution) const
+{
+    QuantizedTime out;
+    out.sec = sec;
+    out.nsec = nsec;
+    out.resolution_half = resolution / 2.0;
+    return out;
 }
 
 std::ostream& operator<<(std::ostream& os, const UTCTime& t)

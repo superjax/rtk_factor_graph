@@ -1,7 +1,7 @@
-#include <limits>
-
 #include <gtest/gtest.h>
+
 #include <Eigen/LU>
+#include <limits>
 
 #include "common/matrix_defs.h"
 #include "common/test_helpers.h"
@@ -53,8 +53,8 @@ TEST(Argsort, SortMatrix)
                                         -0.329554, -0.0452059,  0.566198,   0.904459,
                                          0.536459,   0.257742,   0.59688,    0.83239).finished();
     // clang-format on
-    MATRIX_EQUALS(row_sorted, row_sort_order.asPermutation() * A);
-    MATRIX_EQUALS(col_sorted, A * col_sort_order.asPermutation().transpose());
+    MAT_EQ(row_sorted, row_sort_order.asPermutation() * A);
+    MAT_EQ(col_sorted, A * col_sort_order.asPermutation().transpose());
 }
 
 TEST(MatrixTools, modf)
@@ -67,9 +67,9 @@ TEST(MatrixTools, modf)
     const Mat4 Amod2 = modf(A, &int_part);
 
     EXPECT_TRUE((Amod.array().abs() < 1.0).all());
-    MATRIX_EQUALS(Amod, Amod2);
-    MATRIX_EQUALS(Amod2 + int_part, A);
-    MATRIX_EQUALS(int_part.cast<int>(), int_part);
+    MAT_EQ(Amod, Amod2);
+    MAT_EQ(Amod2 + int_part, A);
+    MAT_EQ(int_part.cast<int>(), int_part);
 }
 
 TEST(Lambda, LTDL)
@@ -80,7 +80,7 @@ TEST(Lambda, LTDL)
     Vec5 D(5, 1);
     LTDL(Q, L, D);
 
-    MATRIX_EQUALS(Q, L.transpose() * D.asDiagonal() * L);
+    MAT_EQ(Q, L.transpose() * D.asDiagonal() * L);
 }
 
 TEST(Lambda, integerGaussTransformation)
@@ -113,8 +113,8 @@ TEST(Lambda, integerGaussTransformation)
             const Vec5 ahat = Zinv.transpose() * a;
 
             EXPECT_GT(abs(LZ(i, j)), 0.5);
-            MATRIX_EQUALS(Q, Qhat);
-            MATRIX_EQUALS(a_orig, ahat);
+            MAT_EQ(Q, Qhat);
+            MAT_EQ(a_orig, ahat);
         }
     }
 
@@ -180,7 +180,7 @@ TEST(Lambda, reduce)
     MATRIX_CLOSE(L, L_true, 1e-7);
     MATRIX_CLOSE(D, D_true, 1e-5);
     MATRIX_CLOSE(Z.cast<double>().transpose() * ahat, zhat_true, 1e-3);
-    MATRIX_EQUALS(Z, Z_true);
+    MAT_EQ(Z, Z_true);
 }
 
 TEST(Lambda, search)
@@ -209,7 +209,7 @@ TEST(Lambda, search)
     const Vector3d answer_sqrd_norms(0.2183311, 0.30727258, 0.59340968);
     // clang-format on
 
-    MATRIX_EQUALS(answer, z_fixed);
+    MAT_EQ(answer, z_fixed);
     MATRIX_CLOSE(answer_sqrd_norms, sqrd_norms, 1e-7);
 }
 
@@ -232,7 +232,7 @@ TEST(Lambda, lambda_small)
     const double oracle_ratio = 0.7105453351162826;
 
     EXPECT_NEAR(oracle_ratio, ratio, 1e-8);
-    MATRIX_EQUALS(oracle_a_fixed, a_fixed);
+    MAT_EQ(oracle_a_fixed, a_fixed);
 }
 
 TEST(Lambda, lambda_medium)
@@ -257,7 +257,7 @@ TEST(Lambda, lambda_medium)
     const double oracle_ratio = 0.8275167404788059;
 
     EXPECT_NEAR(oracle_ratio, ratio, 1e-8);
-    MATRIX_EQUALS(oracle_a_fixed, a_fixed);
+    MAT_EQ(oracle_a_fixed, a_fixed);
 }
 
 TEST(Lambda, lambda_big)
@@ -290,7 +290,7 @@ TEST(Lambda, lambda_big)
     const double oracle_ratio = 0.4746843941521999;
 
     EXPECT_NEAR(oracle_ratio, ratio, 1e-8);
-    MATRIX_EQUALS(oracle_a_fixed, a_fixed);
+    MAT_EQ(oracle_a_fixed, a_fixed);
 }
 
 }  // namespace solver

@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <cmath>
 
+#include "common/math/dquat.h"
+
 namespace mc {
 
 template <typename Derived1, typename Derived2>
@@ -41,33 +43,64 @@ template <typename Derived1, typename Derived2>
     return ::testing::AssertionSuccess();
 }
 
+::testing::AssertionResult dquatClose(const char* a_expr,
+                                      const char* b_expr,
+                                      const char* tol_expr,
+                                      const math::DQuat<double>& a,
+                                      const math::DQuat<double>& b,
+                                      const double tol)
+{
+    double sgn = sign(a.real().w() * b.real().w());
+    for (size_t i = 0; i < 8; ++i)
+    {
+        if (fabs(sgn * (a[i]) - b[i]) > tol)
+        {
+            return ::testing::AssertionFailure()
+                   << "element [" << i << "]"
+                   << " of " << a_expr << " and " << b_expr << " is not within " << tol_expr << "\n"
+                   << a_expr << ": " << a << "\n"
+                   << b_expr << ": " << b << "\n"
+                   << tol_expr << ": " << tol << "\n";
+        }
+    }
+    return ::testing::AssertionSuccess();
+}
+
+::testing::AssertionResult quatClose(const char* a_expr,
+                                     const char* b_expr,
+                                     const char* tol_expr,
+                                     const math::Quat<double>& a,
+                                     const math::Quat<double>& b,
+                                     const double tol)
+{
+    double sgn = sign(a.w() * b.w());
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (fabs(sgn * (a[i]) - b[i]) > tol)
+        {
+            return ::testing::AssertionFailure()
+                   << "element [" << i << "]"
+                   << " of " << a_expr << " and " << b_expr << " is not within " << tol_expr << "\n"
+                   << a_expr << ": " << a << "\n"
+                   << b_expr << ": " << b << "\n"
+                   << tol_expr << ": " << tol << "\n";
+        }
+    }
+    return ::testing::AssertionSuccess();
+}
+
 #define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, (m1), (m2), tol);
-#define MATRIX_EQUALS(v1, v2) MATRIX_CLOSE((v1), (v2), 1e-8)
+#define MAT_EQ(v1, v2) MATRIX_CLOSE((v1), (v2), 1e-8)
 
-#define QUATERNION_EQUALS(q1, q2)                                                          \
-    {                                                                                      \
-        const double sign = (std::signbit((q1).w()) == std::signbit((q2).w())) ? 1. : -1.; \
-        MATRIX_CLOSE((q1).arr_, sign*((q2).arr_), 1e-8)                                    \
-    }
-#define QUAT_CLOSE(Q1, Q2, tol)                                 \
-    {                                                           \
-        EXPECT_LE(((Q1).inverse() * (Q2)).log().norm(), (tol)); \
-    }
+#define QUAT_CLOSE(q1, q2, tol) EXPECT_PRED_FORMAT3(quatClose, (q1), (q2), (tol))
+#define QUAT_EQ(q1, q2) QUAT_CLOSE((q1), (q2), 1e-8)
 
-#define DQUAT_EQUALS(Q1, Q2)                         \
-    {                                                \
-        QUATERNION_EQUALS((Q1).real(), (Q2).real()); \
-        QUATERNION_EQUALS((Q1).dual(), (Q2).dual()); \
-    }
+#define DQUAT_CLOSE(Q1, Q2, tol) EXPECT_PRED_FORMAT3(dquatClose, (Q1), (Q2), (tol))
+#define DQUAT_EQ(Q1, Q2) DQUAT_CLOSE((Q1), (Q2), 1e-8)
 
-#define DQUAT_CLOSE(Q1, Q2, tol)                                \
-    {                                                           \
-        EXPECT_LE(((Q1).inverse() * (Q2)).log().norm(), (tol)); \
-    }
-
-#define TRANSFORM_EQUALS(t1, t2)       \
-    MATRIX_EQUALS((t1).t(), (t2).t()); \
-    QUATERNION_EQUALS((t1).q(), (t2).q())
+#define TRANSFORM_EQUALS(t1, t2) \
+    MAT_EQ((t1).t(), (t2).t());  \
+    QUAT_EQ((t1).q(), (t2).q())
 
 #define TRANSFORM_CLOSE(t1, t2, tol)                                                               \
     {                                                                                              \
@@ -76,10 +109,10 @@ template <typename Derived1, typename Derived2>
         MATRIX_CLOSE((t1).t_, (t2).t_, tol)                                                        \
     }
 
-#define SO3_EQUALS(r1, r2) MATRIX_EQUALS((r1).matrix(), (r2).matrix())
+#define SO3_EQUALS(r1, r2) MAT_EQ((r1).matrix(), (r2).matrix())
 #define SO3_CLOSE(r1, r2, tol) MATRIX_CLOSE((r1).matrix(), (r2).matrix(), tol)
 
-#define SE3_EQUALS(T1, T2) MATRIX_EQUALS((T1).matrix(), (T2).matrix())
+#define SE3_EQUALS(T1, T2) MAT_EQ((T1).matrix(), (T2).matrix())
 #define SE3_CLOSE(T1, T2, tol) MATRIX_CLOSE((T1).matrix(), (T2).matrix(), tol)
 
 //  Check if m1 == m2 or m1 == -m2 (sign is ambiguous)

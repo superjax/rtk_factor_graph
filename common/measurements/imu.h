@@ -12,6 +12,13 @@ struct ImuSample
     Vec3 accel;
     Vec3 gyro;
 
+    static ImuSample Zero()
+    {
+        ImuSample out;
+        out.setZero();
+        return out;
+    }
+
     void setZero()
     {
         accel.setZero();

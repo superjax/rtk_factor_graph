@@ -11,12 +11,13 @@ struct Node
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     static constexpr int MAX_SAT = 30;
+    Node() = default;
 
     UTCTime t;
     math::DQuat<double> T_n2b;
     Vec3 vel;
     Vec2 clk;
-    double sw[MAX_SAT];
+    std::array<double, MAX_SAT> sw;
 };
 
 }  // namespace core

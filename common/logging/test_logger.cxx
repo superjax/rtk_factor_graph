@@ -71,11 +71,11 @@ TEST(Logger, LogMatrices)
     Map<Matrix<int, 7, 2>> test_c(test.c);
     Map<Matrix<float, 12, 1>> test_d(test.d);
     Map<Matrix<double, 1, 4>> test_e(test.e);
-    MATRIX_EQUALS(a, test_a);
+    MAT_EQ(a, test_a);
     EXPECT_EQ(b, test.b);
-    MATRIX_EQUALS(c, test_c);
-    MATRIX_EQUALS(d, test_d);
-    MATRIX_EQUALS(e, test_e);
+    MAT_EQ(c, test_c);
+    MAT_EQ(d, test_d);
+    MAT_EQ(e, test_e);
     EXPECT_EQ(f, test.f);
     EXPECT_EQ(g, test.g);
 }
@@ -111,9 +111,9 @@ TEST(Logger, LogKindsOfMatrices)
     Map<Matrix<double, 3, 4>> test_a(test.a);
     Map<Matrix<double, 3, 5>> test_b(test.b);
     Map<Matrix<float, 5, 5>> test_c(test.c);
-    MATRIX_EQUALS(a, test_a);
-    MATRIX_EQUALS(b, test_b);
-    MATRIX_EQUALS(c, test_c);
+    MAT_EQ(a, test_a);
+    MAT_EQ(b, test_b);
+    MAT_EQ(c, test_c);
 }
 
 TEST(Logger, WithHeader)
@@ -172,9 +172,9 @@ TEST(Logger, CustomTypes)
     EXPECT_EQ(loaded.t.nsec, test.t.nsec);
     EXPECT_EQ(loaded.gps_eph.health, test.gps_eph.health);
     EXPECT_EQ(loaded.gal_eph.e1b_dvs, test.gal_eph.e1b_dvs);
-    MATRIX_EQUALS(loaded.glo_eph.pos, test.glo_eph.pos);
-    MATRIX_EQUALS(loaded.glo_eph.vel, test.glo_eph.vel);
-    MATRIX_EQUALS(loaded.glo_eph.acc, test.glo_eph.acc);
+    MAT_EQ(loaded.glo_eph.pos, test.glo_eph.pos);
+    MAT_EQ(loaded.glo_eph.vel, test.glo_eph.vel);
+    MAT_EQ(loaded.glo_eph.acc, test.glo_eph.acc);
 }
 
 }  // namespace logging

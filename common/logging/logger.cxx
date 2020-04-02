@@ -3,6 +3,9 @@
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"
 #include "common/ephemeris/gps.h"
+#include "common/math/dquat.h"
+#include "common/math/jet.h"
+#include "common/math/quat.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
 #include "common/utctime.h"
@@ -47,6 +50,21 @@ void Logger::serialize(const meas::ImuSample& imu)
 void Logger::serialize(const meas::GnssObservation& obs)
 {
     log(obs.t, obs.gnss_id, obs.sat_num, obs.freq, obs.pseudorange, obs.doppler, obs.carrier_phase);
+}
+
+void Logger::serialize(const math::Quat<double>& q)
+{
+    log(q.arr_);
+}
+
+void Logger::serialize(const math::DQuat<double>& dq)
+{
+    log(dq.real(), dq.translation());
+}
+
+void Logger::serialize(const math::Jet<double>& x)
+{
+    log(x.x, x.dx);
 }
 
 }  // namespace logging

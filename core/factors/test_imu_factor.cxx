@@ -41,15 +41,15 @@ TEST(ImuFactor, Access)
     EXPECT_EQ(vel2.data(), factor.get<3>().getData());
     EXPECT_EQ(bias.data(), factor.get<4>().getData());
 
-    DQUAT_EQUALS(pose1.pose, factor.pose1.pose);
+    DQUAT_EQ(pose1.pose, factor.pose1.pose);
     EXPECT_EQ(pose1.t, factor.pose1.t);
-    DQUAT_EQUALS(pose2.pose, factor.pose2.pose);
+    DQUAT_EQ(pose2.pose, factor.pose2.pose);
     EXPECT_EQ(pose2.t, factor.pose2.t);
-    MATRIX_EQUALS(vel1.vel, factor.vel1.vel);
+    MAT_EQ(vel1.vel, factor.vel1.vel);
     EXPECT_EQ(vel1.t, factor.vel1.t);
-    MATRIX_EQUALS(vel2.vel, factor.vel2.vel);
+    MAT_EQ(vel2.vel, factor.vel2.vel);
     EXPECT_EQ(vel2.t, factor.vel2.t);
-    MATRIX_EQUALS(bias.bias, factor.imu_bias.bias);
+    MAT_EQ(bias.bias, factor.imu_bias.bias);
 
     EXPECT_EQ(pose1.data(), factor.get_base<0>()->data());
     EXPECT_EQ(pose2.data(), factor.get_base<1>()->data());
@@ -91,12 +91,12 @@ TEST(ImuFactor, Access)
 //     pose.pose = pose.pose * DQ::exp(Vec6::Ones() * 0.1);
 //     pose.t += 10.0;
 
-//     DQUAT_EQUALS(pose.pose, factor.pose.pose);
+//     DQUAT_EQ(pose.pose, factor.pose.pose);
 //     EXPECT_EQ(pose.t, factor.pose.t);
-//     MATRIX_EQUALS(vel.vel, factor.vel.vel);
+//     MAT_EQ(vel.vel, factor.vel.vel);
 //     EXPECT_EQ(vel.t, factor.vel.t);
-//     MATRIX_EQUALS(cb.clk, factor.clock_bias.clk);
-//     MATRIX_EQUALS(ap.p_b2g, factor.antenna_position.p_b2g);
+//     MAT_EQ(cb.clk, factor.clock_bias.clk);
+//     MAT_EQ(ap.p_b2g, factor.antenna_position.p_b2g);
 // }
 
 }  // namespace factors

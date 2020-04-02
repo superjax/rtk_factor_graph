@@ -7,7 +7,8 @@ namespace core {
 
 TEST(FactorGraph, Compile)
 {
-    FactorGraph graph;
+    FactorGraph::Options options;
+    FactorGraph graph(options);
 }
 
 }  // namespace core

@@ -1,6 +1,6 @@
-#include <random>
-
 #include <gtest/gtest.h>
+
+#include <random>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "common/math/so3.h"
@@ -25,23 +25,23 @@ TEST(SO3, rotation_direction)
               0.0000000, 0.70710678118654757,  0.70710678118654757,
               0.0000000, -0.70710678118654757, 0.70710678118654757;
     // clang-format on
-    MATRIX_EQUALS(R_x_45.matrix(), R_true);
+    MAT_EQ(R_x_45.matrix(), R_true);
 
     const Vec3 v(0, 0, 1);
     const Vec3 v_active_rotated(0, -1.0 * std::pow(0.5, 0.5), std::pow(0.5, 0.5));
     const Vec3 v_x_45 = R_x_45.rota(v);
 
-    MATRIX_EQUALS(v_x_45, v_active_rotated);
-    MATRIX_EQUALS(R_x_45.transpose() * v, v_active_rotated);
-    MATRIX_EQUALS(R_true.transpose() * v, v_active_rotated);
-    MATRIX_EQUALS(v_x_45, v_active_rotated);
+    MAT_EQ(v_x_45, v_active_rotated);
+    MAT_EQ(R_x_45.transpose() * v, v_active_rotated);
+    MAT_EQ(R_true.transpose() * v, v_active_rotated);
+    MAT_EQ(v_x_45, v_active_rotated);
 
     const Vec3 v_passive_rotated(0, std::pow(0.5, 0.5), std::pow(0.5, 0.5));
     const Vec3 v_x_45_T = R_x_45.rotp(v);
 
-    MATRIX_EQUALS(v_x_45_T, v_passive_rotated);
-    MATRIX_EQUALS(R_x_45 * v, v_passive_rotated);
-    MATRIX_EQUALS(R_true * v, v_passive_rotated);
+    MAT_EQ(v_x_45_T, v_passive_rotated);
+    MAT_EQ(R_x_45 * v, v_passive_rotated);
+    MAT_EQ(R_true * v, v_passive_rotated);
 }
 
 TEST(SO3, from_two_unit_vectors)
@@ -63,8 +63,8 @@ TEST(SO3, from_two_unit_vectors)
         v1 /= v1.norm();
         v2 /= v2.norm();
         const SO3<double> R = SO3<double>::from_two_unit_vectors(v1, v2);
-        MATRIX_EQUALS(R.rotp(v1), v2);
-        MATRIX_EQUALS(R.rota(v2), v1);
+        MAT_EQ(R.rotp(v1), v2);
+        MAT_EQ(R.rota(v2), v1);
     }
 }
 
@@ -210,7 +210,7 @@ TEST(SO3, boxplus_rules)
 
         SO3_EQUALS(R1 + zeros, R1);
         SO3_EQUALS(R1 + (R2 - R1), R2);
-        MATRIX_EQUALS((R1 + delta1) - R1, delta1);
+        MAT_EQ((R1 + delta1) - R1, delta1);
         EXPECT_LE(((R1 + delta1) - (R1 + delta2)).norm(), (delta1 - delta2).norm());
     }
 }
@@ -238,7 +238,7 @@ TEST(SO3, AdjointIdentities)
     const Vec3 v = Vec3::Random();
 
     SO3_EQUALS(R * SO3<double>::exp(v), SO3<double>::exp(R.Ad() * v) * R);
-    MATRIX_EQUALS((R * R2).Ad(), R.Ad() * R2.Ad());
+    MAT_EQ((R * R2).Ad(), R.Ad() * R2.Ad());
 }
 
 TEST(SO3, GroupJacobians)

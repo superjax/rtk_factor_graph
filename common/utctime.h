@@ -10,6 +10,9 @@
 
 namespace mc {
 
+// forward declaration
+class QuantizedTime;
+
 class UTCTime
 {
  public:
@@ -101,6 +104,8 @@ class UTCTime
     double GpsTow() const;
     int GlonassWeek() const;
     int GlonassDayOfWeek() const;
+
+    QuantizedTime quantized(double resolution) const;
     //    int BeidouWeek();
 };  // namespace mc
 
