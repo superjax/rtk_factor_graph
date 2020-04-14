@@ -41,9 +41,9 @@ TEST(ImuModel, integrateRandomImu)
         sample.t += dt;
         sample.gyro = omega;
         sample.accel = accel;
-        x.x = x.x * math::DQuat<double>::exp(vstack(omega * dt, x.linear_vel * dt));
-        x.linear_vel += dt * (accel + x.x.rotation().rotp(gravity));
-        x.angular_vel = omega;
+        x.x = x.x * math::DQuat<double>::exp(vstack(omega * dt, x.dx.linear() * dt));
+        x.dx.linear() += dt * (accel + x.x.rotation().rotp(gravity));
+        x.dx.angular() = omega;
         integrator.integrate(sample, Mat6::Identity());
     }
 
@@ -53,8 +53,8 @@ TEST(ImuModel, integrateRandomImu)
     QUATERNION_EQUALS(x.x.rotation(), x2.x.rotation());
     // Numerical error from Euler's method in ImuModel::integrate
     MATRIX_CLOSE(x.x.translation(), x2.x.translation(), 1e-3);
-    MATRIX_CLOSE(x.linear_vel, x2.linear_vel, 1e-4);
-    MATRIX_EQUALS(x.angular_vel, x2.angular_vel);
+    MATRIX_CLOSE(x.dx.linear(), x2.dx.linear(), 1e-4);
+    MATRIX_EQUALS(x.dx.angular(), x2.dx.angular());
 }
 
 TEST(ImuModel, NoUpdatesFinished)

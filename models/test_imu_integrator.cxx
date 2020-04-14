@@ -42,8 +42,8 @@ TEST(ImuIntegrator, integrateZeroImu)
     QUATERNION_EQUALS(x2.x.real(), x.x.real());
     // Numerical error from Euler's method in ImuIntegrator::integrate
     MATRIX_CLOSE(x2.x.dual().arr_, x.x.dual().arr_, 1e-3);
-    MATRIX_EQUALS(x.linear_vel, Vec3::Zero());
-    MATRIX_EQUALS(x.angular_vel, Vec3::Zero());
+    MATRIX_EQUALS(x.dx.linear(), Vec3::Zero());
+    MATRIX_EQUALS(x.dx.angular(), Vec3::Zero());
 }
 
 TEST(ImuIntegrator, integrateZeroAccel)
@@ -75,8 +75,8 @@ TEST(ImuIntegrator, integrateZeroAccel)
     QUATERNION_EQUALS(x2.x.rotation(), q);
     // Numerical error from Euler's method in ImuIntegrator::integrate
     MATRIX_CLOSE(x2.x.translation(), Vec3::Zero(), 1e-3);
-    MATRIX_EQUALS(x2.linear_vel, Vec3::Zero());
-    MATRIX_EQUALS(x2.angular_vel, omega);
+    MATRIX_EQUALS(x2.dx.linear(), Vec3::Zero());
+    MATRIX_EQUALS(x2.dx.angular(), omega);
 }
 
 TEST(ImuIntegrator, integrateZeroTime)
@@ -94,8 +94,8 @@ TEST(ImuIntegrator, integrateZeroTime)
     integrator.computeEndJet(x, Out(x2));
 
     DQUAT_EQUALS(x2.x, x.x);
-    MATRIX_EQUALS(x2.linear_vel, x.linear_vel);
-    MATRIX_EQUALS(x2.angular_vel, x.angular_vel);
+    MATRIX_EQUALS(x2.dx.linear(), x.dx.linear());
+    MATRIX_EQUALS(x2.dx.angular(), x.dx.angular());
 }
 
 TEST(ImuIntegrator, integrateZeroGyro)
@@ -126,8 +126,8 @@ TEST(ImuIntegrator, integrateZeroGyro)
     // Numerical error from Euler's method in ImuIntegrator::integrate
     const double t = integrator.dt();
     MATRIX_CLOSE(x2.x.translation(), 0.5 * (accel + gravity) * t * t, 1e-3);
-    MATRIX_EQUALS(x2.linear_vel, (accel + gravity) * t);
-    MATRIX_EQUALS(x2.angular_vel, Vec3::Zero());
+    MATRIX_EQUALS(x2.dx.linear(), (accel + gravity) * t);
+    MATRIX_EQUALS(x2.dx.angular(), Vec3::Zero());
 }
 
 TEST(ImuIntegrator, integrateRandomImu)
@@ -153,9 +153,9 @@ TEST(ImuIntegrator, integrateRandomImu)
         sample.t += dt;
         sample.gyro = omega;
         sample.accel = accel;
-        x.x = x.x * math::DQuat<double>::exp(vstack(omega * dt, x.linear_vel * dt));
-        x.linear_vel += dt * (accel + x.x.rotation().rotp(gravity));
-        x.angular_vel = omega;
+        x.x = x.x * math::DQuat<double>::exp(vstack(omega * dt, x.dx.linear() * dt));
+        x.dx.linear() += dt * (accel + x.x.rotation().rotp(gravity));
+        x.dx.angular() = omega;
         integrator.integrate(sample);
     }
 
@@ -165,8 +165,8 @@ TEST(ImuIntegrator, integrateRandomImu)
     QUATERNION_EQUALS(x.x.rotation(), x2.x.rotation());
     // Numerical error from Euler's method in ImuIntegrator::integrate
     MATRIX_CLOSE(x.x.translation(), x2.x.translation(), 1e-3);
-    MATRIX_CLOSE(x.linear_vel, x2.linear_vel, 1e-4);
-    MATRIX_EQUALS(x.angular_vel, x2.angular_vel);
+    MATRIX_CLOSE(x.dx.linear(), x2.dx.linear(), 1e-4);
+    MATRIX_EQUALS(x.dx.angular(), x2.dx.angular());
 }
 
 }  // namespace models

@@ -1,4 +1,5 @@
 #include "models/imu_integrator.h"
+
 #include "common/check.h"
 #include "common/defs.h"
 #include "common/matrix_defs.h"
@@ -28,7 +29,7 @@ Error ImuIntegrator::computeEndJet(const math::Jet<double>& start, Out<math::Jet
     check(tf_ >= t0_, "Imu integration time going backwards.");
 
     const auto& pose_i = start.x;
-    const auto& vel_i = start.linear_vel;
+    const auto& vel_i = start.dx.linear();
 
     if (tf_ == t0_)
     {
@@ -44,8 +45,9 @@ Error ImuIntegrator::computeEndJet(const math::Jet<double>& start, Out<math::Jet
                                0.5 * GRAVITY * dt * dt;
     const math::Quat<double> rot_j = pose_i.rotation() * state_.gamma;
     end->x = math::DQuat<double>(rot_j, translation_j);
-    end->linear_vel = state_.gamma.rotp(vel_i + pose_i.rotation().rotp(GRAVITY) * dt + state_.beta);
-    end->angular_vel = prev_imu_.gyro - gyroBias();
+    end->dx.linear() =
+        state_.gamma.rotp(vel_i + pose_i.rotation().rotp(GRAVITY) * dt + state_.beta);
+    end->dx.angular() = prev_imu_.gyro - gyroBias();
 
     return Error::none();
 }

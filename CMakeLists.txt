@@ -30,5 +30,6 @@ add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(models)
 add_subdirectory(core)
+add_subdirectory(sim)
 
 add_subdirectory(third_party)

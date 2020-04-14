@@ -3,7 +3,12 @@
 #include "core/factor_graph.h"
 
 namespace mc {
+namespace core {
 
-TEST(Error, FactorGraphTest) {}
+TEST(FactorGraph, Compile)
+{
+    FactorGraph graph;
+}
 
+}  // namespace core
 }  // namespace mc

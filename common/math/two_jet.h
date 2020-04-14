@@ -7,25 +7,28 @@ namespace mc {
 namespace math {
 
 template <typename T>
-struct Jet
+struct TwoJet
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     DQuat<T> x;
     typename DQuat<T>::TangentVector dx;
+    typename DQuat<T>::TangentVector d2x;
 
-    static Jet Random()
+    static TwoJet Random()
     {
-        Jet out;
+        TwoJet out;
         out.x = math::DQuat<T>::Random();
         out.dx.setRandom();
+        out.d2x.setRandom();
         return out;
     }
 
-    static Jet Identity()
+    static TwoJet Identity()
     {
-        Jet out;
+        TwoJet out;
         out.x = math::DQuat<T>::identity();
         out.dx.setZero();
+        out.d2x.setZero();
         return out;
     }
 };

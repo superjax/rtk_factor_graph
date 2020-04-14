@@ -1,8 +1,7 @@
 #pragma once
 
-#include <iostream>
-
 #include <Eigen/Core>
+#include <iostream>
 
 #include "common/defs.h"
 #include "common/math/quat.h"
@@ -25,6 +24,20 @@ class DQuat
     T buf_[8];
 
  public:
+    struct TangentVector : public Vec6
+    {
+        Eigen::VectorBlock<Vec6, 3> angular() { return this->template head<3>(); }
+        Eigen::VectorBlock<Vec6, 3> linear() { return this->template tail<3>(); }
+        const Eigen::VectorBlock<const Vec6, 3> angular() const { return this->template head<3>(); }
+        const Eigen::VectorBlock<const Vec6, 3> linear() const { return this->template tail<3>(); }
+
+        TangentVector& operator=(const Vec6& other)
+        {
+            Vec6::operator=(other);
+            return *this;
+        }
+    };
+
     static constexpr int DOF = 6;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Eigen::Map<Vec8> arr_;
