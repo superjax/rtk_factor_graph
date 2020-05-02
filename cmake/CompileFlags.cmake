@@ -1,12 +1,12 @@
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --std=c++17")
 
 
 # C++ strict compilation
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wstrict-aliasing -Wformat=2 -Winit-self \
     -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Wunreachable-code -Wcast-align -Wcast-qual \
     -Wdisabled-optimization -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo \
-    -Wstrict-null-sentinel -Wstrict-overflow=1")
+    -Wstrict-null-sentinel -Wstrict-overflow=1 -Wno-address-of-packed-member")
 # Extra features/enablements
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
@@ -22,10 +22,14 @@ endif()
 if (DISABLE_CHECK)
     message("Disabling Checks")
     add_definitions(-DDISABLE_CHECK)
-    endif()
+endif()
 
-    if (BUILD_BENCHMARKS)
+if (BUILD_BENCHMARKS)
     message("Disabling Checks")
     add_definitions(-DDISABLE_CHECK)
     add_definitions(-DLOG_LEVEL=10)
+endif()
+
+if (LOG_LEVEL)
+    add_definitions(-DLOG_LEVEL=${LOG_LEVEL})
 endif()

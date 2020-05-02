@@ -31,7 +31,6 @@ class EphBase
     uint8_t gnssID;  // GNSS system
     uint8_t sat;     // Satellite ID (within GNSS system)
     UTCTime toe;     // reference time ephemeris (UTC Time) [s]
-    
 
     bool operator<(const EphBase& other) const { return toe < other.toe; }
     bool operator>(const EphBase& other) const { return toe > other.toe; }
@@ -54,8 +53,6 @@ class EphBase
             return "Unknown";
         }
     }
-
-
 };
 
 class KeplerianEphemeris : public EphBase
@@ -82,13 +79,11 @@ class KeplerianEphemeris : public EphBase
     double w;         // argument of perigee [rad]
     double omegadot;  // rate of right ascension [rad/s]
     double idot;      // rate of inclination angle [rad/s]
-    double cuc;  // amplitude of the cosine harmonic correction term to the argument of latitude
-                 // [rad]
+    double cuc;  // amplitude of the cosine harmonic correction term to the arg of latitude [rad]
     double cus;  // amplitude of the sine harmonic correction term to the argument of latitude [rad]
     double crc;  // amplitude of the cosine harmonic correction term to the orbit radius [m]
     double crs;  // amplitude of the sine harmonic correction term to the orbit radius [m]
-    double cic;  // amplitude of the cosine harmonic correction term to the angle of inclination
-                 // [rad]
+    double cic;  // amplitude of the cosine harmonic correction term to angle of inclination [rad]
     double cis;  // amplitude of the sine harmonic correction term to the angle of inclination [rad]
 };
 

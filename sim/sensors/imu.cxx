@@ -25,8 +25,8 @@ bool ImuSim::sample(const UTCTime& t, const math::TwoJet<double>& x, Out<meas::I
         accel_bias_ += randomNormal<Vec3>() * options_.accel_noise_stdev * dt;
         gyro_bias_ += randomNormal<Vec3>() * options_.gyro_noise_stdev * dt;
 
-        imu->accel =
-            x.d2x.linear() + accel_bias_ + randomNormal<Vec3>() * options_.accel_noise_stdev;
+        imu->accel = x.d2x.linear() + accel_bias_ +
+                     randomNormal<Vec3>() * options_.accel_noise_stdev + x.x.rotp(GRAVITY);
         imu->gyro = x.dx.angular() + gyro_bias_ + randomNormal<Vec3>() * options_.gyro_noise_stdev;
         imu->t = t;
         return true;

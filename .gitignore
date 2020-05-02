@@ -1,6 +1,7 @@
 build/
+data/
 .vscode/
 gmon.out
-*__pycache__/
+__pycache__/
 python.env
 *.swp

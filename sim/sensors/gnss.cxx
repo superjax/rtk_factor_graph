@@ -5,6 +5,7 @@
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"
 #include "common/ephemeris/gps.h"
+#include "common/logging/log_reader.h"
 #include "common/random.h"
 #include "common/satellite/atm_correction.h"
 
@@ -19,37 +20,7 @@ GnssSim::GnssSim(const Options& options, const UTCTime& t0) : options_(options)
     clock_bias_ << options_.clock_init_stdev_, options_.clock_walk_stdev_;
     clock_bias_ = clock_bias_.cwiseProduct(randomNormal<Vec2>());
 
-    for (auto p : options_.ephemeris_files_)
-    {
-        std::ifstream f(p.second, std::ios::in | std::ios::binary);
-        switch (p.first)
-        {
-        case GnssID::GPS:
-        {
-            ephemeris::GPSEphemeris eph(0);
-            f.read(reinterpret_cast<char*>(&eph), sizeof(eph));
-            dynamic_cast<satellite::Satellite<ephemeris::GPSEphemeris>*>(
-                get_sat(eph.gnssID, eph.sat))
-                ->addEph(eph);
-        }
-        case GnssID::Galileo:
-        {
-            ephemeris::GalileoEphemeris eph(0);
-            f.read(reinterpret_cast<char*>(&eph), sizeof(eph));
-            dynamic_cast<satellite::Satellite<ephemeris::GalileoEphemeris>*>(
-                get_sat(eph.gnssID, eph.sat))
-                ->addEph(eph);
-        }
-        case GnssID::Glonass:
-        {
-            ephemeris::GlonassEphemeris eph(0);
-            f.read(reinterpret_cast<char*>(&eph), sizeof(eph));
-            dynamic_cast<satellite::Satellite<ephemeris::GlonassEphemeris>*>(
-                get_sat(eph.gnssID, eph.sat))
-                ->addEph(eph);
-        }
-        }
-    }
+    load();
 
     // initialize the carrier phase offset
     carrier_phase_offsets_.resize(satellites_.size());
@@ -59,25 +30,73 @@ GnssSim::GnssSim(const Options& options, const UTCTime& t0) : options_(options)
     }
 }
 
-satellite::SatelliteBase* GnssSim::get_sat(int gnss_id, int sat_id)
+template <typename T>
+void readEph(const std::string& file, Out<std::map<int, satellite::Satellite<T>>> sats)
 {
-    for (auto* sat : satellites_)
+    mc::logging::LogReader log_reader;
+    const auto result = log_reader.open(file);
+    if (!result.ok())
     {
-        if (sat->gnssId() == gnss_id && sat->sat_num() == sat_id)
+        return;
+    }
+
+    while (true)
+    {
+        T new_eph(0);
+        log_reader.read(new_eph);
+        if (log_reader.done())
         {
-            return sat;
+            break;
+        }
+
+        if (sats->find(new_eph.sat) == sats->end())
+        {
+            sats->emplace(new_eph.sat, satellite::Satellite<T>(new_eph.gnssID, new_eph.sat));
+        }
+        sats->at(new_eph.sat).addEph(new_eph);
+
+        fmt::print("Type: {}, sat: {}, TOE: {}\n", new_eph.Type(), new_eph.sat, new_eph.toe);
+    }
+}
+
+template <typename T>
+void getSatPointers(const std::map<int, satellite::Satellite<T>>& sat_map,
+                    Out<std::vector<const satellite::SatelliteBase*>> base_ptrs)
+{
+    for (const auto& sat : sat_map)
+    {
+        base_ptrs->push_back(dynamic_cast<const satellite::SatelliteBase*>(&(sat.second)));
+    }
+}
+
+void GnssSim::load()
+{
+    for (const auto& eph_file : options_.ephemeris_files_)
+    {
+        mc::logging::LogReader log_reader;
+        const auto result = log_reader.open(eph_file.second);
+        if (!result.ok())
+        {
+            continue;
+        }
+        switch (eph_file.first)
+        {
+        case GnssID::GPS:
+            readEph(eph_file.second, Out(gps_));
+            getSatPointers(gps_, Out(satellites_));
+            break;
+        case GnssID::Galileo:
+            readEph(eph_file.second, Out(gal_));
+            getSatPointers(gal_, Out(satellites_));
+            break;
+        case GnssID::Glonass:
+            readEph(eph_file.second, Out(glo_));
+            getSatPointers(glo_, Out(satellites_));
+            break;
+        default:
+            warn("Unhandled ephemeris type {}", fmt(eph_file.first));
         }
     }
-    switch (gnss_id)
-    {
-    case GnssID::GPS:
-        return new satellite::Satellite<ephemeris::GPSEphemeris>(gnss_id, sat_id);
-    case GnssID::Galileo:
-        return new satellite::Satellite<ephemeris::GalileoEphemeris>(gnss_id, sat_id);
-    case GnssID::Glonass:
-        return new satellite::Satellite<ephemeris::GlonassEphemeris>(gnss_id, sat_id);
-    }
-    return nullptr;
 }
 
 bool GnssSim::sample(const UTCTime& t,
@@ -133,7 +152,7 @@ double computeSagnac(const satellite::SatelliteState& sat_state, const Vec3& rec
 }
 
 void GnssSim::range(const UTCTime& t,
-                    satellite::SatelliteBase* sat,
+                    const satellite::SatelliteBase* sat,
                     const Vec3& p_ecef,
                     const Vec3& vel_ecef,
                     Out<double> pseudorange,

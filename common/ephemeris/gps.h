@@ -40,7 +40,6 @@ class GPSEphemeris : public KeplerianEphemeris
 
     double getWavelength(int frequency) const;
 
- private:
     bool frame1(const uint8_t* buf);
     bool frame2(const uint8_t* buf);
     bool frame3(const uint8_t* buf);
@@ -56,6 +55,8 @@ class GPSEphemeris : public KeplerianEphemeris
         FRAME3 = 0x04,
     };
     uint8_t collected_subframes = 0x00;
+
+    
 };
 
 }  // namespace ephemeris

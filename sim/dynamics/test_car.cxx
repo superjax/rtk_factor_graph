@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "common/logger.h"
+#include "common/logging/logger.h"
 #include "common/random.h"
 #include "sim/dynamics/car.h"
 
@@ -11,23 +11,22 @@ namespace dynamics {
 TEST(SimCar, Random)
 {
     SimCar::Options options;
-    UTCTime t(0);
+    options.t0 = UTCTime(0);
 
-    SimCar car(t, options);
+    SimCar car(options);
 
-    Logger log("/tmp/mc/SimCar.Random.log");
+    logging::Logger log("/tmp/mc/SimCar.Random.log");
 
     const double dt = 0.001;
     const double noise = 0.1;
     Vec2 u = Vec2::Constant(0.1);
 
-    while (t < UTCTime(1.0))
+    while (car.t() < UTCTime(1.0))
     {
-        t += dt;
-        car.step(t, u);
+        car.step(car.t() + dt, u);
 
-        log.log(t.toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx, car.x.d2x, u,
-                Vec2::Zero(), Vec3::Constant(NAN));
+        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+                car.x.d2x, u, Vec2::Zero(), Vec3::Constant(NAN));
         u += dt * randomNormal<Vec2>() * noise;
     }
 }
@@ -39,25 +38,23 @@ TEST(SimCar, Controller)
     options.heading_controller_gains.kd = 1.0;
     options.velocity_controller_gains.kp = 10.0;
     options.velocity_controller_gains.kd = 1.0;
+    options.t0 = UTCTime(0);
 
-    UTCTime t(0);
+    SimCar car(options);
 
-    SimCar car(t, options);
-
-    Logger log("/tmp/mc/SimCar.Controller.log");
+    logging::Logger log("/tmp/mc/SimCar.Controller.log");
 
     const double dt = 0.001;
     const double noise = 0.01;
     Vec2 vw = Vec2(1, 0);
 
-    while (t < UTCTime(1.0))
+    while (car.t() < UTCTime(1.0))
     {
-        t += dt;
-        const Vec2 u = car.controller(t, vw) + dt * randomNormal<Vec2>() * noise;
-        car.step(t, u);
+        const Vec2 u = car.controller(car.t() + dt, vw) + dt * randomNormal<Vec2>() * noise;
+        car.step(car.t() + dt, u);
 
-        log.log(t.toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx, car.x.d2x, u,
-                vw, Vec3::Constant(NAN));
+        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+                car.x.d2x, u, vw, Vec3::Constant(NAN));
     }
 }
 
@@ -68,10 +65,9 @@ TEST(SimCar, Waypoints)
     options.heading_controller_gains.kd = 1.0;
     options.velocity_controller_gains.kp = 10.0;
     options.velocity_controller_gains.kd = 1.0;
+    options.t0 = UTCTime(0);
 
-    UTCTime t(0);
-
-    SimCar car(t, options);
+    SimCar car(options);
 
     SimCar::WaypointFollower::Options wp;
     wp.waypoints.push_back(Vec3(10, 10, 0));
@@ -80,20 +76,19 @@ TEST(SimCar, Waypoints)
     wp.waypoints.push_back(Vec3(-00, -20, 0));
     SimCar::WaypointFollower follower(wp);
 
-    Logger log("/tmp/mc/SimCar.Waypoints.log");
+    logging::Logger log("/tmp/mc/SimCar.Waypoints.log");
 
     const double dt = 0.001;
     const double noise = 0.01;
 
-    while (t < UTCTime(60.0))
+    while (car.t() < UTCTime(60.0))
     {
-        t += dt;
         const Vec2 vw = follower.follow(car.x.x);
-        const Vec2 u = car.controller(t, vw) + dt * randomNormal<Vec2>() * noise;
-        car.step(t, u);
+        const Vec2 u = car.controller(car.t() + dt, vw) + dt * randomNormal<Vec2>() * noise;
+        car.step(car.t() + dt, u);
 
-        log.log(t.toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx, car.x.d2x, u,
-                vw, follower.current_waypoint());
+        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+                car.x.d2x, u, vw, follower.current_waypoint());
     }
 }
 

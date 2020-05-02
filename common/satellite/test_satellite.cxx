@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include "common/ephemeris/gps.h"
 #include "common/satellite/satellite.h"
 #include "common/test_helpers.h"
@@ -76,7 +77,9 @@ TEST(Satellite, WrongGnssIDThrow)
     eph.gnssID = GnssID::Glonass;
     eph.sat = 0;
     eph.toe = UTCTime(0);
+#ifndef DISABLE_CHECK
     EXPECT_DIE(sat.addEph(std::move(eph)), "");
+#endif
 }
 
 TEST(Satellite, WrongSatNumThrow)
@@ -86,17 +89,21 @@ TEST(Satellite, WrongSatNumThrow)
     eph.gnssID = GnssID::GPS;
     eph.sat = 1;
     eph.toe = UTCTime(0);
+#ifndef DISABLE_CHECK
     EXPECT_DIE(sat.addEph(std::move(eph)), "");
+#endif
 }
 
 TEST(Satellite, InitWrongGnssID)
 {
+#ifndef DISABLE_CHECK
     EXPECT_DIE(Satellite<GpsEph> sat(GnssID::Glonass, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::GPS, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Galileo, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Beidou, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Qzss, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::SBAS, 0), "");
+#endif
 }
 
 TEST(Satellite, ReplaceDuplicate)

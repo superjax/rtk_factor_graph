@@ -15,11 +15,11 @@ class ImuSim
  public:
     struct Options
     {
-        double update_rate_hz;
-        double accel_noise_stdev;
-        double accel_walk_stdev;
-        double gyro_noise_stdev;
-        double gyro_walk_stdev;
+        double update_rate_hz = 250;
+        double accel_noise_stdev = 0.05;
+        double accel_walk_stdev = 0.001;
+        double gyro_noise_stdev = 0.02;
+        double gyro_walk_stdev = 0.005;
     };
 
     ImuSim(const Options& options, const UTCTime& t0);

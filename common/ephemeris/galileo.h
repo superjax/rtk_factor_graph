@@ -44,7 +44,6 @@ class GalileoEphemeris : public KeplerianEphemeris
     uint8_t e5b_dvs;
     uint8_t e1b_dvs;
 
- private:
     bool frame0(const uint8_t* buf);
     bool frame1(const uint8_t* buf);
     bool frame2(const uint8_t* buf);

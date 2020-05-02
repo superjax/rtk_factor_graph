@@ -3,5 +3,6 @@ option(TEST_COVERAGE
       OFF)
 
 option(BUILD_BENCHMARKS "Build Benchmarks" OFF)
+option(BUILD_PARSERS "Build Parsers" OFF)
 
 option(DISABLE_CHECK "Disables Check" OFF)

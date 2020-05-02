@@ -22,6 +22,9 @@ file(WRITE "${PROJECT_BINARY_DIR}/tmp/clean"
                              gmon.out\
                              all_tests.info\
                              benchmark_list\
+                             tools\
+                             parsers\
+                             sim\
                              tmp")
 
 # Now, move the file into the build directory, and apply the right permisions.  You can't set the

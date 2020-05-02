@@ -1,13 +1,14 @@
 #include "sim/dynamics/car.h"
 
+#include "common/check.h"
 #include "common/print.h"
 
 namespace mc {
 namespace sim {
 namespace dynamics {
 
-SimCar::SimCar(const UTCTime& t, const SimCar::Options& options)
-    : Dynamics(t, options),
+SimCar::SimCar(const SimCar::Options& options)
+    : Dynamics(options.t0, options),
       options_(options),
       heading_pid_(options.heading_controller_gains),
       velocity_pid_(options.velocity_controller_gains)
@@ -47,6 +48,7 @@ Vec2 SimCar::controller(const UTCTime& t, const Vec2& vw)
 SimCar::WaypointFollower::WaypointFollower(const SimCar::WaypointFollower::Options& options)
     : options_(options)
 {
+    check(!options_.waypoints.empty(), "Waypoints cannot be empty");
 }
 
 Vec2 SimCar::WaypointFollower::follow(const math::DQuat<double>& current_state)

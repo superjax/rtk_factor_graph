@@ -166,5 +166,4 @@ Derived modf(const Derived& x)
 
     return x - floored;
 }
-
 }  // namespace mc

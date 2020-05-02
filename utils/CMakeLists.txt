@@ -4,5 +4,7 @@ library(wgs84 wgs84.cxx)
 library(file file.h)
 target_link_libraries(file stdc++fs)
 
+library(progress_bar progress_bar.cxx)
+
 add_gtest(test_wgs84 test_wgs84.cxx)
 target_link_libraries(test_wgs84 wgs84 print)

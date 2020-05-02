@@ -1,14 +1,10 @@
 add_subdirectory(math)
 add_subdirectory(satellite)
+add_subdirectory(logging)
 add_subdirectory(ephemeris)
 
 add_gtest(test_error test_error.cxx)
 add_gtest(test_out test_out.cxx)
-
-library(logger logger.h)
-target_link_libraries(logger file)
-add_gtest(test_logger test_logger.cxx)
-target_link_libraries(test_logger logger)
 
 
 library(utctime utctime.cxx)

@@ -8,9 +8,9 @@ namespace ephemeris {
 
 class GlonassEphemeris : public EphBase
 {
+ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
- public:
     GlonassEphemeris();
     explicit GlonassEphemeris(int sat_id);
     static constexpr double FREQ1_GLO = 1.60200e9;   // GLONASS G1 base frequency (Hz)
@@ -40,7 +40,6 @@ class GlonassEphemeris : public EphBase
 
     double getWavelength(int frequency) const;
 
- private:
     bool frame1(const uint8_t* buf);
     bool frame2(const uint8_t* buf);
     bool frame3(const uint8_t* buf);

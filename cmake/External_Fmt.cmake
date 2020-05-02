@@ -7,7 +7,8 @@ ExternalProject_Add(
   LOG_DOWNLOAD ON
   LOG_CONFIGURE ON
   LOG_BUILD ON
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFMT_DOC=OFF -DFMT_INSTALL=OFF -DFMT_TEST=OFF)
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFMT_DOC=OFF -DFMT_INSTALL=OFF -DFMT_TEST=OFF
+)
 
 ExternalProject_Get_Property(fmt_ext binary_dir)
 ExternalProject_Get_Property(fmt_ext source_dir)

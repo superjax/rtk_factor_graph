@@ -15,6 +15,7 @@ struct SimCar final : public Dynamics
 {
     struct Options final : public Dynamics::Options
     {
+        UTCTime t0;
         double wheel_radius = 0.1;
         double axle_width = 1.3;
         double track = 2.0;
@@ -42,7 +43,7 @@ struct SimCar final : public Dynamics
         int current_waypoint_;
     };
 
-    SimCar(const UTCTime& t, const Options& options);
+    SimCar(const Options& options);
 
     void compute_wrench(const math::TwoJet<double>& x,
                         const Eigen::VectorXd& u,
