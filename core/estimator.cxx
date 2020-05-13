@@ -12,5 +12,10 @@ void Estimator::currentState(Out<UTCTime> t, Out<math::DQuat<double>> pose, Out<
 
 void Estimator::imuCb(const meas::ImuSample& imu) {}
 
+void ephCb(const ephemeris::GPSEphemeris& eph) {}
+
+void ephCb(const ephemeris::GlonassEphemeris& eph) {}
+void ephCb(const ephemeris::GalileoEphemeris& eph) {}
+
 }  // namespace core
 }  // namespace mc

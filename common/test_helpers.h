@@ -131,4 +131,10 @@ template <typename Derived1, typename Derived2>
 #define EXPECT_DIE(...) EXPECT_DEATH(__VA_ARGS__)
 #endif
 
+#ifdef DISABLE_CHECK
+#define EXPECT_CHECK_FAIL(...)
+#else
+#define EXPECT_CHECK_FAIL(...) EXPECT_DEATH(__VA_ARGS__)
+#endif
+
 }  // namespace mc

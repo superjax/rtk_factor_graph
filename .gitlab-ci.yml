@@ -52,7 +52,7 @@ static analysis:
   artifacts:
     paths:
       - build/scan_results
-    expire_in: 1 week
+    expire_in: 1000 yrs
   <<: *upload_cache
 
 coverage:
@@ -67,7 +67,7 @@ coverage:
   artifacts:
     paths:
       - build/coverage
-    expire_in: 1 week
+    expire_in: 1000 yrs
   <<: *upload_cache
 
 benchmarks:

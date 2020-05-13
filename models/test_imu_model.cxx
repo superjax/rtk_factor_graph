@@ -86,7 +86,7 @@ TEST(ImuModel, NoUpdatesFinished)
     sample.setZero();
     const Vec6 R = Vec6::Ones();
     ImuModel integrator(sample, Vec6::Zero(), R);
-    EXPECT_DEATH(integrator.finished(), "");
+    EXPECT_CHECK_FAIL(integrator.finished(), "");
 }
 
 TEST(ImuModel, OneUpdateFinished)

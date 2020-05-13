@@ -6,6 +6,7 @@
 #include "common/ephemeris/gps.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
+#include "common/satellite/satellite.h"
 #include "core/factor_graph.h"
 #include "core/solver/solver.h"
 #include "core/states/antenna_position.h"
@@ -39,13 +40,14 @@ class Estimator
     // Sensor Inputs
     void imuCb(const meas::ImuSample& imu);
     // void obsCb(const std::vector<meas::GnssObservation>& obs);
-    // void ephCb(const ephemeris::GPSEphemeris& eph);
-    // void ephCb(const ephemeris::GlonassEphemeris& eph);
-    // void ephCb(const ephemeris::GalileoEphemeris& eph);
+    void ephCb(const ephemeris::GPSEphemeris& eph);
+    void ephCb(const ephemeris::GlonassEphemeris& eph);
+    void ephCb(const ephemeris::GalileoEphemeris& eph);
 
  private:
     Options options_;
     FactorGraph graph_;
+
     // Solver solver_;
 };
 

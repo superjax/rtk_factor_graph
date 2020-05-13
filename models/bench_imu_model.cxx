@@ -13,12 +13,12 @@ static void dynamics(benchmark::State& state)
     imu_state = imu_state + ImuErrorState::Random();
 
     ImuErrorState dstate;
-    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
 
     meas::ImuSample imu_sample;
     imu_sample.t = UTCTime::now();
     imu_sample.accel = Vec3::Random();
     imu_sample.gyro = Vec3::Random();
+    ImuModel integrator(imu_sample, Vec6::Zero(), Vec6::Ones());
 
     Mat9 A;
     Mat96 B;
@@ -36,17 +36,15 @@ static void integrate(benchmark::State& state)
     imu_state.setIdentity();
     imu_state = imu_state + ImuErrorState::Random();
 
-    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
-    const Mat6 cov = Mat6::Identity();
-
     meas::ImuSample imu_sample;
     imu_sample.t = UTCTime::now();
     imu_sample.accel = Vec3::Random();
     imu_sample.gyro = Vec3::Random();
+    ImuModel integrator(imu_sample, Vec6::Zero(), Vec6::Ones());
 
     for (auto _ : state)
     {
-        integrator.integrate(imu_sample, cov);
+        integrator.integrate(imu_sample);
         imu_sample.t += 0.001;
     }
 }
@@ -58,22 +56,21 @@ static void computeEndJet(benchmark::State& state)
     imu_state.setIdentity();
     imu_state = imu_state + ImuErrorState::Random();
 
-    ImuModel integrator(UTCTime(0, 0), Vec6::Zero());
-    const Mat6 cov = Mat6::Identity();
-
     meas::ImuSample imu_sample;
     imu_sample.t = UTCTime::now();
     imu_sample.accel = Vec3::Random();
     imu_sample.gyro = Vec3::Random();
+    ImuModel integrator(imu_sample, Vec6::Zero(), Vec6::Ones());
 
-    integrator.reset(imu_sample.t - 0.1);
-    integrator.integrate(imu_sample, cov);
+    integrator.integrate(imu_sample);
 
-    const math::Jet<double> start = math::Jet<double>::Random();
-    math::Jet<double> end;
+    const math::DQuat<double> start = math::DQuat<double>::Random();
+    const Vec3 v_start;
+    math::DQuat<double> end;
+    Vec3 v_end;
     for (auto _ : state)
     {
-        integrator.computeEndJet(start, Out(end));
+        integrator.computeEndState(start, v_start, Out(end), Out(v_end));
     }
 }
 BENCHMARK(computeEndJet);
@@ -81,7 +78,7 @@ BENCHMARK(computeEndJet);
 class Evaluate : public benchmark::Fixture
 {
  public:
-    Evaluate() : integrator(UTCTime(0, 0), Vec6::Zero())
+    Evaluate() : integrator(meas::ImuSample::Zero(), Vec6::Zero(), Vec6::Ones())
     {
         const Vec3 gravity(0, 0, 9.80665);
         meas::ImuSample sample;
@@ -97,7 +94,7 @@ class Evaluate : public benchmark::Fixture
             sample.t += dt;
             sample.gyro = omega;
             sample.accel = accel;
-            integrator.integrate(sample, Mat6::Identity());
+            integrator.integrate(sample);
         }
 
         start_pose = math::DQuat<double>::Random();

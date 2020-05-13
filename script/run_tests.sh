@@ -45,7 +45,7 @@ done
 if [ $EXIT_CODE -eq 0 ]; then
   echo_bgreen "All tests passed!"
 else
-  echo "There were failed tests"
+  echo_bred "There were failed tests"
 fi
 
 exit $EXIT_CODE

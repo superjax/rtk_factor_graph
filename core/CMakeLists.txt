@@ -14,3 +14,8 @@ library(estimator estimator.cxx)
 target_link_libraries(estimator factor_graph)
 add_gtest(test_estimator test_estimator.cxx)
 target_link_libraries(test_estimator estimator)
+
+library(sat_manager sat_manager.cxx)
+target_link_libraries(sat_manager satellite)
+add_gtest(test_sat_manager test_sat_manager.cxx)
+target_link_libraries(test_sat_manager sat_manager)

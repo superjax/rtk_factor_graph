@@ -20,7 +20,7 @@ fi
 BUILD_DIR=$PWD
 ROOT=$PWD/..
 
-# Adding BRANCH_COVERAGE MAKES THINGS SUPER SLOW
+# Adding BRANCH_COVERAGE makes things super slow
 BRANCH_COVERAGE=$BRANCH_COVERAGE
 
 rm -r coverage
@@ -31,7 +31,7 @@ rm all_tests.info
 # Rebuild all tests with coverage
 ./clean
 rm CMakeCache.txt
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTEST_COVERAGE=ON
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DTEST_COVERAGE=ON
 make -j4 -l4
 
 while read p; do
@@ -73,7 +73,7 @@ remove_files "*/**/bench_*"
 remove_files "*/**/test_*"
 remove_files "*/**/third_party/**/*"
 
-lcov --list all_tests.info 
+lcov --list all_tests.info
 
 genhtml --output-directory ./coverage --demangle-cpp \
     --num-spaces 2 --sort --title "GlobalAI Test Coverage" \
