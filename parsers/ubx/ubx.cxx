@@ -65,7 +65,6 @@ bool Ubx::getVersion()
 
     if (got_ver_)
     {
-        dbg("Got version {}", fmt(major_version_));
         return true;
     }
     else
@@ -87,7 +86,6 @@ bool Ubx::waitForResponse()
     }
     if (got_ack_)
     {
-        dbg("Got Response");
         return true;
     }
     else if (got_nack_ || dt_ms >= TIMEOUT_MS)
@@ -129,7 +127,6 @@ void Ubx::disableNmea()
 {
     if (major_version_ <= 23)
     {
-        dbg("Disabling NMEA messages with old protocol");
         using CF = CFG_PRT_t;
         memset(&out_message_, 0, sizeof(CF));
         out_message_.CFG_PRT.port_id = CF::PORT_USB | CF::PORT_UART1;
@@ -141,7 +138,6 @@ void Ubx::disableNmea()
     }
     else
     {
-        dbg("Disabling NMEA messages with new protocol");
         using CV = CFG_VALSET_t;
         configure(CV::VERSION_0, CV::RAM, 0, CV::USB_INPROT_NMEA, 1);
         configure(CV::VERSION_0, CV::RAM, 0, CV::USB_OUTPROT_NMEA, 1);
@@ -152,7 +148,6 @@ void Ubx::setDynamicMode()
 {
     if (major_version_ <= 23)
     {
-        dbg("Setting dynamic mode with old protocol");
         memset(&out_message_, 0, sizeof(CFG_NAV5_t));
         out_message_.CFG_NAV5.mask = CFG_NAV5_t::MASK_DYN;
         out_message_.CFG_NAV5.dyn_model = CFG_NAV5_t::DYNMODE_AIRBORNE_4G;
@@ -160,7 +155,6 @@ void Ubx::setDynamicMode()
     }
     else
     {
-        dbg("Setting dynamic mode with new protocol");
         using CV = CFG_VALSET_t;
         configure(CV::VERSION_0, CV::RAM, CV::DYNMODE_AIRBORNE_1G, CV::DYNMODEL, 1);
     }
@@ -171,7 +165,6 @@ void Ubx::setNavRate(uint8_t period_ms)
     info("Setting nav rate to {}", fmt(period_ms));
     if (major_version_ <= 23)
     {
-        dbg("Using old protocol");
         memset(&out_message_, 0, sizeof(CFG_RATE_t));
         out_message_.CFG_RATE.measRate = period_ms;
         out_message_.CFG_RATE.navRate = 1;
@@ -180,7 +173,6 @@ void Ubx::setNavRate(uint8_t period_ms)
     }
     else
     {
-        dbg("Using new protocol");
         using CV = CFG_VALSET_t;
         configure(CV::VERSION_0, CV::RAM, period_ms, CV::RATE_MEAS, 1);
         configure(CV::VERSION_0, CV::RAM, 1, CV::RATE_NAV, 1);
@@ -190,9 +182,7 @@ void Ubx::setNavRate(uint8_t period_ms)
 
 void Ubx::enableMessage(uint8_t msg_cls, uint8_t msg_id, uint8_t rate)
 {
-    dbg("Requesting {:#x}:{:#x} message with period={} ", fmt(msg_cls, msg_id, rate));
     // if (major_version_ <= 23)
-    dbg("Using old protocol");
     memset(&out_message_, 0, sizeof(CFG_MSG_t));
     out_message_.CFG_MSG.class_id = msg_cls;
     out_message_.CFG_MSG.msg_id = msg_id;
@@ -323,14 +313,9 @@ bool Ubx::decodeMessage()
         {
         case ACK_ACK:
             got_ack_ = true;
-            dbg("ACK_ACK");
             break;
         case ACK_NACK:
             got_nack_ = true;
-            dbg("ACK_NACK");
-            break;
-        default:
-            dbg("ACK {x}", fmt(message_type_));
             break;
         }
         break;
@@ -338,62 +323,11 @@ bool Ubx::decodeMessage()
         switch (message_type_)
         {
         case MON_VER:
-            dbg("MON_VER");
             versionCb();
             break;
-        case MON_COMMS:
-            dbg("MON_COMMS");
-            break;
-        case MON_TXBUF:
-            dbg("MON_TXBUF");
-            break;
         }
         break;
-    case CLASS_RXM:
-        switch (message_type_)
-        {
-        case RXM_RAWX:
-            dbg("RXM_RAWX");
-            break;
-        case RXM_SFRBX:
-            dbg("RXM_SFRBX");
-            break;
-        }
-        break;
-    case CLASS_NAV:
-        switch (message_type_)
-        {
-        case NAV_PVT:
-            dbg("NAV_PVT ");
-            break;
-        case NAV_RELPOSNED:
-            dbg("NAV_RELPOSNED ");
-            break;
-        case NAV_POSECEF:
-            dbg("NAV_POSECEF");
-            break;
-        case NAV_VELECEF:
-            dbg("NAV_VELECEF");
-            break;
-        default:
-            dbg("NAV_ unknown ({x}) ", fmt(message_type_));
-        }
-        break;
-    case CLASS_CFG:  // only needed for getting data
-        switch (message_type_)
-        {
-        case CFG_VALGET:
-        {
-            dbg("CFG_VALGET = {}", fmt(in_message_.CFG_VALGET.cfg_data));
-            break;
-        }
-        default:
-            dbg("CFG_ unknown: {x}", fmt(message_type_));
-        }
-        break;
-
     default:
-        dbg("Unknown ({x}-{x})", fmt(message_class_, message_type_));
         break;
     }
 
@@ -496,8 +430,8 @@ void Ubx::versionCb()
         }
     }
 
-    fmt::print("Connected:");
-    fmt::print("Module: {}", module_name_);
+    fmt::print("Connected. ");
+    fmt::print("Module: {} ", module_name_);
     fmt::print("Protocol Version: {}.{}\n", major_version_, minor_version_);
     got_ver_ = true;
 }

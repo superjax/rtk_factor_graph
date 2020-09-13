@@ -18,6 +18,7 @@ DATATYPES = {
     9: np.uint8,
 }
 
+
 def make_dtype(format):
     if "cols" in format.keys():
         return (DATATYPES[format["type"]], (format["rows"], format["cols"]))
@@ -27,12 +28,13 @@ def make_dtype(format):
         return DATATYPES[format["type"]]
 
     if (len(format) == 1):
-        return(make_dtype(next(iter(format.values()))))
+        return (make_dtype(next(iter(format.values()))))
 
     dtype = []
     for item in format.items():
         dtype.append((item[0], make_dtype(item[1])))
     return dtype
+
 
 def load_header(hdr_path):
     with open(hdr_path) as header_file:
@@ -44,7 +46,7 @@ def load_header(hdr_path):
 
     return dtype
 
- 
+
 def load(file_path, normalize_time=True):
     root_path = os.path.splitext(file_path)[0]
     log_path = root_path + ".log"
@@ -54,10 +56,14 @@ def load(file_path, normalize_time=True):
     dtype = load_header(hdr_path)
     data = np.fromfile(log_path, dtype=dtype)
 
-    if normalize_time:
+    if normalize_time and 't' in data.dtype.fields:
         print("normalizing_time")
         data = numpy.lib.recfunctions.rename_fields(data, {"t": "stamp"})
-        data = numpy.lib.recfunctions.append_fields(data, 't', data=data['stamp']['sec'].astype(np.float64) + data['stamp']['nsec'].astype(np.float64)/1e9)
+        data = numpy.lib.recfunctions.append_fields(
+            data,
+            't',
+            data=data['stamp']['sec'].astype(np.float64) +
+            data['stamp']['nsec'].astype(np.float64) / 1e9)
 
     return data
 

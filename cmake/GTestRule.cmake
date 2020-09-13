@@ -19,3 +19,4 @@ function(add_gtest name)
     add_custom_command(TARGET ${name} POST_BUILD
                        COMMAND ${CMAKE_COMMAND} -E echo $<TARGET_FILE:${name}> >> ${PROJECT_BINARY_DIR}/test_list)
 endfunction()
+

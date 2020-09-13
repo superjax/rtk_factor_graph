@@ -10,3 +10,4 @@ library(logger logger.cxx)
 target_link_libraries(logger file print gps galileo glonass utctime)
 add_gtest(test_logger test_logger.cxx)
 target_link_libraries(test_logger logger header)
+

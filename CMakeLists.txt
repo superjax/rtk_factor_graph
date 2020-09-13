@@ -23,6 +23,7 @@ include(cmake/External_AsyncComm.cmake)
 # include(cmake/External_Ceres.cmake)
 include(cmake/GTestRule.cmake)
 include(cmake/BuildGuard.cmake)
+include(cmake/PyRule.cmake)
 
 build_guard()
 

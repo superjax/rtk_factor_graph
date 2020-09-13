@@ -29,7 +29,7 @@ inline constexpr bool operator>=(LoggingLevel a, LoggingLevel b)
 }
 
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LoggingLevel::DEBUG
+#define LOG_LEVEL LoggingLevel::INFO
 #endif
 
 constexpr LoggingLevel LOGGING_LEVEL = static_cast<LoggingLevel>(LOG_LEVEL);
