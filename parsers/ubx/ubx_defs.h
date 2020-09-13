@@ -878,7 +878,7 @@ typedef struct
         X1 trk_stat;  // Tracking status bitfield
         U1 reserved;
     };
-    RawxMeas meas[30];
+    RawxMeas meas[60];
 
     enum
     {

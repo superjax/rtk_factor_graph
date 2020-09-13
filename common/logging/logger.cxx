@@ -6,6 +6,7 @@
 #include "common/math/dquat.h"
 #include "common/math/jet.h"
 #include "common/math/quat.h"
+#include "common/math/two_jet.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
 #include "common/utctime.h"
@@ -65,6 +66,11 @@ void Logger::serialize(const math::DQuat<double>& dq)
 void Logger::serialize(const math::Jet<double>& x)
 {
     log(x.x, x.dx);
+}
+
+void Logger::serialize(const math::TwoJet<double>& x)
+{
+    log(x.x, x.dx, x.d2x);
 }
 
 }  // namespace logging

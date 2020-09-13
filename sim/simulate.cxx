@@ -95,16 +95,16 @@ int main(int argc, char** argv)
     namespace fs = std::experimental::filesystem;
     for (const auto& entry : fs::directory_iterator(fs::path(eph_directory)))
     {
-        const std::string name = fs::path(entry).stem();
-        if (name.compare("gps") == 0)
+        const std::string name = fs::path(entry).filename();
+        if (name.compare("gps.log") == 0)
         {
             options.gnss_options.ephemeris_files_[GnssID::GPS] = fs::path(entry).string();
         }
-        if (name.compare("galileo") == 0 || name.compare("gal") == 0)
+        if (name.compare("galileo.log") == 0 || name.compare("gal.log") == 0)
         {
             options.gnss_options.ephemeris_files_[GnssID::Galileo] = fs::path(entry).string();
         }
-        if (name.compare("glonass") == 0 || name.compare("glo") == 0)
+        if (name.compare("glonass.log") == 0 || name.compare("glo.log") == 0)
         {
             options.gnss_options.ephemeris_files_[GnssID::Glonass] = fs::path(entry).string();
         }
@@ -126,8 +126,12 @@ int main(int argc, char** argv)
     mc::UTCTime t_end = t0 + tmax;
 
     mc::logging::Logger truth_log(output_dir + "/truth.log");
+    truth_log.addHeader(mc::logging::makeHeader({"t", "x"}, double(0.0), math::TwoJet<double>()));
     mc::logging::Logger obs_log(output_dir + "/obs.log");
+    obs_log.addHeader(
+        mc::logging::makeHeader({"t", "x"}, double(0.0), mc::meas::GnssObservation()));
     mc::logging::Logger imu_log(output_dir + "/imu.log");
+    imu_log.addHeader(mc::logging::makeHeader({"t", "x"}, double(0.0), mc::meas::ImuSample()));
 
     const auto obs_cb = [&](const std::vector<mc::meas::GnssObservation>& obs) {
         const double rel_t = (sim.t() - t0).toSec();

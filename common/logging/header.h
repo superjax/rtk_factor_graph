@@ -29,6 +29,8 @@ namespace math {
 template <typename T>
 class Quat;
 template <typename T>
+class TwoJet;
+template <typename T>
 class DQuat;
 template <typename T>
 class Jet;
@@ -132,6 +134,7 @@ std::string format(const meas::GnssObservation& obs, const std::string& name, in
 std::string format(const math::Quat<double>& q, const std::string& name, int pad = 0);
 std::string format(const math::DQuat<double>& dq, const std::string& name, int pad = 0);
 std::string format(const math::Jet<double>& dq, const std::string& name, int pad = 0);
+std::string format(const math::TwoJet<double>& dq, const std::string& name, int pad = 0);
 
 template <typename... Args, size_t... I>
 std::string __make_header_impl(const std::array<std::string, sizeof...(Args)>& names,

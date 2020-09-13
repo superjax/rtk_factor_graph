@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+
 #include "common/defs.h"
 #include "common/utctime.h"
 
@@ -12,11 +13,11 @@ struct GnssObservation
     UTCTime t;
     uint8_t gnss_id;
     uint8_t sat_num;
-    uint8_t freq;  // frequency slot (depends on constellation)
+    double freq;  // frequency (Hz)
 
-    double pseudorange;
-    double doppler;
-    double carrier_phase;
+    double pseudorange;    // (m)
+    double doppler;        // (m/s)
+    double carrier_phase;  // (cycles)
 
     inline void setRandom()
     {

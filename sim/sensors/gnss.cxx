@@ -97,6 +97,7 @@ void GnssSim::load()
             warn("Unhandled ephemeris type {}", fmt(eph_file.first));
         }
     }
+    check(satellites_.size() > 0ul, "Unable to find any satellites in ephemeris data");
 }
 
 bool GnssSim::sample(const UTCTime& t,

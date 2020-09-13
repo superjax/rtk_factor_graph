@@ -40,8 +40,6 @@ def load_header(hdr_path):
     with open(hdr_path) as header_file:
         data = json.loads(header_file.read())
 
-    print("Log Start time {}".format(data["_start_time"]))
-
     dtype = np.dtype(make_dtype(data["format"]))
 
     return dtype

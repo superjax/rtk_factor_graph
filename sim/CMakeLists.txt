@@ -4,9 +4,9 @@ add_subdirectory(controllers)
 
 library(sim sim.cxx)
 target_link_libraries(sim car gnss imu)
-add_gtest(test_sim test_sim.cxx)
-target_link_libraries(test_sim sim)
 
 
 executable(simulate simulate.cxx)
 target_link_libraries(simulate sim header logger progress_bar)
+
+py_executable(plot_sim plot_sim.py)

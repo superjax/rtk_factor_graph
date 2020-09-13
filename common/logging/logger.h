@@ -30,6 +30,8 @@ template <typename T>
 class DQuat;
 template <typename T>
 class Jet;
+template <typename T>
+class TwoJet;
 }  // namespace math
 
 namespace logging {
@@ -126,6 +128,7 @@ class Logger
     void serialize(const math::Quat<double>& q);
     void serialize(const math::DQuat<double>& dq);
     void serialize(const math::Jet<double>& x);
+    void serialize(const math::TwoJet<double>& x);
 
     std::string filename_ = "";
     std::ofstream file_;

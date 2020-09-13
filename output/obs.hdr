@@ -1,0 +1,42 @@
+{
+"_comment": "Project Midnight Compass Header: v1.0",
+"_start_time": "2020/9/13 8:9:3.559",
+"file": "../output/obs.log",
+"time": { 
+  "sec": 1599984543,
+  "nsec": 559714356
+},
+"format": {
+  "t": {
+    "type": 0
+  },
+  "x": {
+    "t": {
+      "sec": {
+        "type": 2
+      },
+      "nsec": {
+        "type": 2
+      }
+    },
+    "gnss_id": {
+      "type": 9
+    },
+    "sat_num": {
+      "type": 9
+    },
+    "freq": {
+      "type": 9
+    },
+    "pseudorange": {
+      "type": 0
+    },
+    "doppler": {
+      "type": 0
+    },
+    "carrier_phase": {
+      "type": 0
+    }
+  }
+}
+}

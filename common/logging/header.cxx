@@ -9,9 +9,12 @@
 #include "common/math/dquat.h"
 #include "common/math/jet.h"
 #include "common/math/quat.h"
+#include "common/math/two_jet.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
 #include "common/utctime.h"
+#include "utils/split_string.h"
+#include "utils/strip_string.h"
 
 namespace mc {
 namespace logging {
@@ -162,24 +165,41 @@ std::string format(const ephemeris::GlonassEphemeris& eph, const std::string& na
 
 Error getHeaderTime(const std::string& header_file, Out<UTCTime> t0)
 {
-    std::regex e(R"(\ntime:\s*\{\s*sec:\s*(\d*),\s*nsec:\s(\d*)\s*\})");
     std::ifstream t(header_file);
-    std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-    std::smatch match;
-    while (std::regex_search(str, match, e))
+    std::string file_contents((std::istreambuf_iterator<char>(t)),
+                              std::istreambuf_iterator<char>());
+
+    const std::vector<std::string> lines = split_string(file_contents, '\n');
+    auto it = lines.begin();
+    while (it != lines.end() && it->find("\"time\":") == std::string::npos)
     {
-        if (match.size() < 3)
+        ++it;
+    };
+    if (it == lines.end())
+    {
+        return Error::create("Unable to retrieve start time from header");
+    }
+    else
+    {
+        ++it;
+        if (it->find("\"sec\":") == std::string::npos)
         {
+            error("could not match sec field in log stamp");
             return Error::create("Unable to retrieve start time from header");
         }
         else
         {
-            t0->sec = std::stol(match[1].str());
-            t0->nsec = std::stol(match[2].str());
-            return Error::none();
+            std::string stripped = strip_string((*it), {' ', ',', 's', 'e', 'c', ':', '"'});
+            t0->sec = std::atoi(stripped.c_str());
+        }
+        ++it;
+        if (it->find("\"nsec\":") == std::string::npos)
+        {
+            std::string stripped = strip_string((*it), {' ', ',', 'n', 's', 'e', 'c', ':', '"'});
+            t0->nsec = std::atoi(stripped.c_str());
         }
     }
-    return Error::create("Unable to retrieve start time from header");
+    return Error::none();
 }
 
 std::string format(const meas::ImuSample& imu, const std::string& name, int pad)
@@ -199,7 +219,7 @@ std::string format(const meas::GnssObservation& obs, const std::string& name, in
     ss << pad_format(pad, "{} {{\n", key(name));
     ss << format(obs.t, "t", pad + 2) << ",\n";
     ss << format(obs.gnss_id, "gnss_id", pad + 2) << ",\n";
-    ss << format(obs.sat_num, "san_num", pad + 2) << ",\n";
+    ss << format(obs.sat_num, "sat_num", pad + 2) << ",\n";
     ss << format(obs.freq, "freq", pad + 2) << ",\n";
     ss << format(obs.pseudorange, "pseudorange", pad + 2) << ",\n";
     ss << format(obs.doppler, "doppler", pad + 2) << ",\n";
@@ -246,6 +266,16 @@ std::string format(const math::Jet<double>& x, const std::string& name, int pad)
     ss << pad_format(pad, "{} {{\n", key(name));
     ss << format(x.x, "x", pad + 2) << ",\n";
     ss << format(x.dx, "dx", pad + 2) << "\n";
+    ss << pad_format(pad, "}}");
+    return ss.str();
+}
+std::string format(const math::TwoJet<double>& x, const std::string& name, int pad)
+{
+    std::stringstream ss;
+    ss << pad_format(pad, "{} {{\n", key(name));
+    ss << format(x.x, "x", pad + 2) << ",\n";
+    ss << format(x.dx, "dx", pad + 2) << ",\n";
+    ss << format(x.d2x, "d2x", pad + 2) << "\n";
     ss << pad_format(pad, "}}");
     return ss.str();
 }
