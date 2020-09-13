@@ -12,9 +12,4 @@ add_custom_command(OUTPUT plot_test_car_script
     OUTPUT ${PROJECT_BINARY_DIR}/plot_test_car3
 )
 
-add_custom_target(plot_test_car2 ALL
-    DEPENDS plot_test_car_script
-    SOURCES plot_test_car.py
-)
-
 py_executable(plot_test_car plot_test_car.py)
