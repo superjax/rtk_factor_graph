@@ -8,8 +8,9 @@
 namespace mc {
 namespace meas {
 
-struct GnssObservation
+class GnssObservation
 {
+ public:
     UTCTime t;
     uint8_t gnss_id;
     uint8_t sat_num;
@@ -18,6 +19,13 @@ struct GnssObservation
     double pseudorange;    // (m)
     double doppler;        // (m/s)
     double carrier_phase;  // (cycles)
+
+    static GnssObservation Random()
+    {
+        GnssObservation out;
+        out.setRandom();
+        return out;
+    }
 
     inline void setRandom()
     {

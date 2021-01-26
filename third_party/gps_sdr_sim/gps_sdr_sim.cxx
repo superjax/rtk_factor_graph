@@ -1,8 +1,9 @@
 #include "third_party/gps_sdr_sim/gps_sdr_sim.h"
-#include "common/print.h"
 
 #include <cmath>
 #include <cstdlib>
+
+#include "common/print.h"
 
 namespace third_party {
 namespace gps_sdr_sim {

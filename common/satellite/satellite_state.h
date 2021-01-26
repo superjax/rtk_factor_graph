@@ -15,7 +15,7 @@ namespace satellite {
 struct SatelliteState
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    UTCTime t;
+    UTCTime t = INVALID_TIME;
     Vec3 pos;
     Vec3 vel;
     Vec2 clk;

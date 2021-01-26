@@ -5,7 +5,7 @@
 namespace mc {
 namespace ephemeris {
 
-class GPSEphemeris : public KeplerianEphemeris
+class GPSEphemeris final : public KeplerianEphemeris
 {
  public:
     static constexpr double FREQUENCY_L1 = 1.57542E9;  // L1 frequency (Hz)
@@ -16,6 +16,7 @@ class GPSEphemeris : public KeplerianEphemeris
     static constexpr double LAMBDA_L2 = C_LIGHT / FREQUENCY_L2;  // L2 wavelength (m)
     static constexpr double LAMBDA_L5 = C_LIGHT / FREQUENCY_L5;  // L5 wavelength (m)
 
+    GPSEphemeris() = default;
     explicit GPSEphemeris(int sat_id);
     uint8_t health;      // 6 bit health parameter; 0 if healthy; unhealth othersize [0=healthy]
     uint8_t alert_flag;  // 1 = URA may be worse than indicated [0,1]
@@ -56,7 +57,8 @@ class GPSEphemeris : public KeplerianEphemeris
     };
     uint8_t collected_subframes = 0x00;
 
-    
+    void setRandom();
+    static GPSEphemeris Random();
 };
 
 }  // namespace ephemeris

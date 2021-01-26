@@ -1,4 +1,5 @@
 #include "common/ephemeris/glonass.h"
+
 #include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
@@ -216,5 +217,30 @@ bool GlonassEphemeris::convertTime()
 
     return (got(FRAME1) && got(FRAME2));
 }
+
+void GlonassEphemeris::setRandom()
+{
+    this->EphBase::setRandom();
+    iode = rand();
+    slot = rand();
+    svh = rand();
+    sva = rand();
+    age = rand();
+    tof = UTCTime::Random();
+    pos.setRandom();
+    vel.setRandom();
+    acc.setRandom();
+    taun = rand();
+    gamn = rand();
+    dtaun = rand();
+}
+
+GlonassEphemeris GlonassEphemeris::Random()
+{
+    GlonassEphemeris out;
+    out.setRandom();
+    return out;
+}
+
 }  // namespace ephemeris
 }  // namespace mc

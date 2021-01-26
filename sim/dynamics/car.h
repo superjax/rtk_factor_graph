@@ -27,7 +27,11 @@ struct SimCar final : public Dynamics
     {
         struct Options
         {
-            std::vector<Vec3> waypoints;
+            std::vector<Vec3> waypoints = {{0, 0, 0},
+                                           {100, 100, 0},
+                                           {-100, 100, 0},
+                                           {-100, -100, 0},
+                                           {100, -100, 0}};
             double close_enough_threshold = 0.5;
             double max_speed = 10.0;
             double max_omega = 1.0;

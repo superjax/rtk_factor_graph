@@ -1,4 +1,5 @@
 #include "common/ephemeris/gps.h"
+
 #include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
@@ -182,5 +183,26 @@ bool GPSEphemeris::frame3(const uint8_t* buf)
 
     return true;
 }
+
+void GPSEphemeris::setRandom()
+{
+    this->KeplerianEphemeris::setRandom();
+    health = rand();
+    alert_flag = rand();
+    anti_spoof = rand();
+    code_on_L2 = rand();
+    ura = rand();
+    L2_P_data_flag = rand();
+    fit_interval_flag = rand();
+    tgd = rand();
+}
+
+GPSEphemeris GPSEphemeris::Random()
+{
+    GPSEphemeris out(0);
+    out.setRandom();
+    return out;
+}
+
 }  // namespace ephemeris
 }  // namespace mc

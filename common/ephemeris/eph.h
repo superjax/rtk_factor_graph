@@ -53,6 +53,20 @@ class EphBase
             return "Unknown";
         }
     }
+
+    void setRandom()
+    {
+        gnssID = rand();
+        sat = rand();
+        toe = UTCTime::Random();
+    }
+
+    static EphBase Random()
+    {
+        EphBase out;
+        out.setRandom();
+        return out;
+    }
 };
 
 class KeplerianEphemeris : public EphBase
@@ -85,6 +99,45 @@ class KeplerianEphemeris : public EphBase
     double crs;  // amplitude of the sine harmonic correction term to the orbit radius [m]
     double cic;  // amplitude of the cosine harmonic correction term to angle of inclination [rad]
     double cis;  // amplitude of the sine harmonic correction term to the angle of inclination [rad]
+
+    void setRandom()
+    {
+        this->EphBase::setRandom();
+        toc = UTCTime::Random();
+
+        tow = rand();
+        iodc = rand();
+        iode = rand();
+        week = rand();
+        toes = rand();
+        tocs = rand();
+
+        af2 = rand();
+        af1 = rand();
+        af0 = rand();
+        m0 = rand();
+        delta_n = rand();
+        ecc = rand();
+        sqrta = rand();
+        omega0 = rand();
+        i0 = rand();
+        w = rand();
+        omegadot = rand();
+        idot = rand();
+        cuc = rand();
+        cus = rand();
+        crc = rand();
+        crs = rand();
+        cic = rand();
+        cis = rand();
+    }
+
+    static KeplerianEphemeris Random()
+    {
+        KeplerianEphemeris out;
+        out.setRandom();
+        return out;
+    }
 };
 
 }  // namespace ephemeris

@@ -26,7 +26,7 @@ template <typename Derived1, typename Derived2>
     {
         for (typename Derived1::Index col = 0; col < b.cols(); ++col)
         {
-            if (fabs(a(row, col) - b(row, col)) > tol)
+            if (std::abs(a(row, col) - b(row, col)) > tol)
             {
                 return ::testing::AssertionFailure()
                        << "element (" << row << "," << col << ") of " << a_expr << " and " << b_expr
@@ -35,7 +35,7 @@ template <typename Derived1, typename Derived2>
                        << a << "\n"
                        << b_expr << ": \n"
                        << b << "\n"
-                       << "error: " << fabs(a(row, col) - b(row, col)) << "\n"
+                       << "error: " << std::abs(a(row, col) - b(row, col)) << "\n"
                        << "tol: " << tol;
             }
         }
@@ -53,7 +53,7 @@ template <typename Derived1, typename Derived2>
     double sgn = sign(a.real().w() * b.real().w());
     for (size_t i = 0; i < 8; ++i)
     {
-        if (fabs(sgn * (a[i]) - b[i]) > tol)
+        if (std::abs(sgn * (a[i]) - b[i]) > tol)
         {
             return ::testing::AssertionFailure()
                    << "element [" << i << "]"
@@ -76,7 +76,7 @@ template <typename Derived1, typename Derived2>
     double sgn = sign(a.w() * b.w());
     for (size_t i = 0; i < 4; ++i)
     {
-        if (fabs(sgn * (a[i]) - b[i]) > tol)
+        if (std::abs(sgn * (a[i]) - b[i]) > tol)
         {
             return ::testing::AssertionFailure()
                    << "element [" << i << "]"
@@ -125,7 +125,7 @@ template <typename Derived1, typename Derived2>
 #define EXPECT_OK(err) EXPECT_TRUE(err.ok())
 #define EXPECT_NOK(err) EXPECT_FALSE(err.ok())
 
-#ifdef DISABLE_ASSERT
+#if defined(DISABLE_ASSERT) || defined(DISABLE_CHECK)
 #define EXPECT_DIE(...)
 #else
 #define EXPECT_DIE(...) EXPECT_DEATH(__VA_ARGS__)
@@ -136,5 +136,4 @@ template <typename Derived1, typename Derived2>
 #else
 #define EXPECT_CHECK_FAIL(...) EXPECT_DEATH(__VA_ARGS__)
 #endif
-
 }  // namespace mc

@@ -5,7 +5,7 @@ add_subdirectory(ephemeris)
 
 add_gtest(test_error test_error.cxx)
 add_gtest(test_out test_out.cxx)
-
+target_link_libraries(test_out check)
 
 library(utctime utctime.cxx)
 add_gtest(test_utctime test_utctime.cxx)

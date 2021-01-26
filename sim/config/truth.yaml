@@ -1,0 +1,19 @@
+input_noise: 0
+max_speed: 20
+max_omega: 0.5
+
+prange_stdev: 0
+cphase_stdev: 0
+doppler_stdev: 0
+multipath_prob: 0
+lol_probability: 0
+clock_walk_stdev: 0
+clock_init_stdev: 0
+
+accel_noise_stdev: 0
+accel_walk_stdev: 0
+gyro_noise_stdev: 0
+gyro_walk_stdev: 0
+
+eph_log: "../logs/20210126_093513"
+output_dir: "../logs/simulate/"

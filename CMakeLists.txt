@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-project(globalai)
 
+# set(CMAKE_C_COMPILER "clang") set(CMAKE_CXX_COMPILER "clang++")
+
+# set(CMAKE_C_COMPILER "gcc") set(CMAKE_CXX_COMPILER "g++")
+
+project(globalai)
 
 # Project-Wide Settings
 include(cmake/Options.cmake)
@@ -18,12 +22,14 @@ include(cmake/External_GTest.cmake)
 include(cmake/External_Benchmark.cmake)
 include(cmake/External_Fmt.cmake)
 include(cmake/External_AsyncComm.cmake)
-# include(cmake/External_GFlags.cmake)
-# include(cmake/External_GLog.cmake)
-# include(cmake/External_Ceres.cmake)
+include(cmake/External_GFlags.cmake)
+include(cmake/External_GLog.cmake)
+include(cmake/External_Ceres.cmake)
+include(cmake/External_Yaml.cmake)
 include(cmake/GTestRule.cmake)
 include(cmake/BuildGuard.cmake)
 include(cmake/PyRule.cmake)
+include(cmake/CapnpRule.cmake)
 
 build_guard()
 

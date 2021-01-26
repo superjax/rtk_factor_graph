@@ -31,6 +31,13 @@ class DQuat
         const Eigen::VectorBlock<const Vec6, 3> angular() const { return this->template head<3>(); }
         const Eigen::VectorBlock<const Vec6, 3> linear() const { return this->template tail<3>(); }
 
+        static TangentVector Random()
+        {
+            TangentVector out;
+            out.setRandom();
+            return out;
+        }
+
         TangentVector& operator=(const Vec6& other)
         {
             Vec6::operator=(other);
@@ -101,6 +108,8 @@ class DQuat
         arr_ = in;
         return *this;
     }
+
+    bool operator==(const DQuat& other) const { return (arr_ == other.arr_); }
 
     DQuat otimes(const DQuat& q) const
     {

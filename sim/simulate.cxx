@@ -4,10 +4,11 @@
 #include <streambuf>
 #include <string>
 
-#include "common/logging/header.h"
-#include "common/logging/logger.h"
+#include "common/logging/log_reader.h"
+#include "common/logging/log_writer.h"
 #include "sim/sim.h"
 #include "third_party/argparse/argparse.hpp"
+#include "utils/config.h"
 #include "utils/file.h"
 #include "utils/progress_bar.h"
 #include "utils/wgs84.h"
@@ -21,130 +22,80 @@ void inthand(int signum)
     stop = true;
 }
 
-std::vector<Vec3> default_waypoints = {{0, 0, 0},
-                                       {100, 100, 0},
-                                       {-100, 100, 0},
-                                       {-100, -100, 0},
-                                       {100, -100, 0}};
+UTCTime get_start_time(const std::string& log_file)
+{
+    logging::LogReader log_reader(log_file);
+    return log_reader.startTime();
+}
 
 int main(int argc, char** argv)
 {
     ArgumentParser parser("Run a Simulation Experiment");
     sim::Sim::Options options;
-    parser.add_argument("--input_noise").help("/s").set(options.input_noise);
-    parser.add_argument("--max_speed").help("m/s").set(options.wp_options.max_speed);
-    parser.add_argument("--max_omega").help("rad/s").set(options.wp_options.max_omega);
 
-    // clang-format off
+    std::string config_file = "";
     double dt = 0.01;
     double tmax = 300.0;
     std::string output_dir;
     std::string eph_directory;
-    std::vector<double> ref_lla{deg2Rad(40.246184), -deg2Rad(111.647769), 1387.998309};
-    std::vector<double> p_b2g{0, 0, 0};
-    parser.add_argument("--eph_directory").help("location of gps.log, galileo.log, and/or glonass.log").required()
-                .action([&](const std::string& value){eph_directory = value;});
-    parser.add_argument("--gnss_update_rate").help("Hz").set(options.gnss_options.update_rate_hz_);
-    parser.add_argument("--prange_stdev").help("m").set(options.gnss_options.pseudorange_stdev_);
-    parser.add_argument("--cphase_stdev").help("cycles").set(options.gnss_options.carrier_phase_stdev_);
-    parser.add_argument("--doppler_stdev").help("m/s").set(options.gnss_options.doppler_stdev_);
-    parser.add_argument("--multipath_prob").help("[0-1]").set(options.gnss_options.multipath_probability_);
-    parser.add_argument("--lol_probability").help("[0-1]").set(options.gnss_options.loss_of_lock_probability_);
-    parser.add_argument("--clock_walk_stdev").help("nsec").set(options.gnss_options.clock_walk_stdev_);
-    parser.add_argument("--clock_init_stdev").help("nsec/s").set(options.gnss_options.clock_init_stdev_);
-    parser.add_argument("--ref_lla").help("rad, rad, m")
-                .default_value(ref_lla).nargs(3).action([](const std::string& value) { return std::stod(value); });
-    parser.add_argument("--p_b2g").help("position of GNSS receiver wrt body frame (m)")
-                .default_value(p_b2g).nargs(3).action([](const std::string& value) { return std::stod(value); });
+    Vec3 ref_lla{deg2Rad(40.246184), -deg2Rad(111.647769), 1387.998309};
 
-    parser.add_argument("--update_rate").help("Hz").set(options.imu_options.update_rate_hz);
-    parser.add_argument("--accel_noise_stdev").help("m/s²").set(options.imu_options.accel_noise_stdev);
-    parser.add_argument("--accel_walk_stdev").help("m/s³").set(options.imu_options.accel_walk_stdev);
-    parser.add_argument("--gyro_noise_stdev").help("rad/s").set(options.imu_options.gyro_noise_stdev);
-    parser.add_argument("--gyro_walk_stdev").help("rad/s²").set(options.imu_options.gyro_walk_stdev);
+    parser.add_argument("--config_file")
+        .help("config file to read (yaml)")
+        .action([&](const std::string& value) { config_file = value; })
+        .required();
+    parser.parse_args(argc, argv);
 
-    parser.add_argument("--dt").help("simuation step size (s)").set(dt);
-    parser.add_argument("--tmax").help("max simulation length (s)").set(tmax);
-    parser.add_argument("--output_dir").help("output directory for simulation logs").required()
-                .action([&](const std::string& value) {output_dir = value;});
-    // clang-format on
+    mc::utils::Config cfg(config_file);
 
-    try
-    {
-        parser.parse_args(argc, argv);
-    }
-    catch (const std::runtime_error& err)
-    {
-        std::cout << err.what() << std::endl;
-        std::cout << parser;
-        exit(EXIT_FAILURE);
-    }
+    cfg.get("dt", make_out(dt));
+    cfg.get("tmax", make_out(tmax));
+    cfg.get("eph_log", make_out(options.gnss_options.ephemeris_log), true);
+    cfg.get("output_dir", make_out(output_dir), true);
 
-    // Convert std::vector<double> into relevant Eigen types
-    p_b2g = parser.get<std::vector<double>>("--p_b2g");
-    ref_lla = parser.get<std::vector<double>>("--ref_lla");
-    Vec3 ref_lla_eigen;
-    for (int i = 0; i < 3; ++i)
-    {
-        options.gnss_options.p_b2g[i] = p_b2g[i];
-        ref_lla_eigen[i] = ref_lla[i];
-    }
-    options.gnss_options.T_e2n = utils::WGS84::dq_ecef2ned(utils::WGS84::lla2ecef(ref_lla_eigen));
+    cfg.get("max_speed", make_out(options.wp_options.max_speed));
+    cfg.get("max_omega", make_out(options.wp_options.max_omega));
+    cfg.get("gnss_update_rate", make_out(options.gnss_options.update_rate_hz_));
+    cfg.get("prange_stdev", make_out(options.gnss_options.pseudorange_stdev_));
+    cfg.get("cphase_stdev", make_out(options.gnss_options.carrier_phase_stdev_));
+    cfg.get("doppler_stdev", make_out(options.gnss_options.doppler_stdev_));
+    cfg.get("multipath_prob", make_out(options.gnss_options.multipath_probability_));
+    cfg.get("lol_probability", make_out(options.gnss_options.loss_of_lock_probability_));
+    cfg.get("clock_walk_stdev", make_out(options.gnss_options.clock_walk_stdev_));
+    cfg.get("clock_init_stdev", make_out(options.gnss_options.clock_init_stdev_));
+    cfg.get("ref_lla", make_out(ref_lla));
+    cfg.get("p_b2g", make_out(options.gnss_options.p_b2g));
+    cfg.get("update_rate", make_out(options.imu_options.update_rate_hz));
+    cfg.get("accel_noise_stdev", make_out(options.imu_options.accel_noise_stdev));
+    cfg.get("accel_walk_stdev", make_out(options.imu_options.accel_walk_stdev));
+    cfg.get("gyro_noise_stdev", make_out(options.imu_options.gyro_noise_stdev));
+    cfg.get("gyro_walk_stdev", make_out(options.imu_options.gyro_walk_stdev));
+    cfg.get("waypoints", make_out(options.wp_options.waypoints));
 
-    // Read the ephemeris directory
-    namespace fs = std::experimental::filesystem;
-    for (const auto& entry : fs::directory_iterator(fs::path(eph_directory)))
-    {
-        const std::string name = fs::path(entry).filename();
-        if (name.compare("gps.log") == 0)
-        {
-            options.gnss_options.ephemeris_files_[GnssID::GPS] = fs::path(entry).string();
-        }
-        if (name.compare("galileo.log") == 0 || name.compare("gal.log") == 0)
-        {
-            options.gnss_options.ephemeris_files_[GnssID::Galileo] = fs::path(entry).string();
-        }
-        if (name.compare("glonass.log") == 0 || name.compare("glo.log") == 0)
-        {
-            options.gnss_options.ephemeris_files_[GnssID::Glonass] = fs::path(entry).string();
-        }
-    }
-    // Get the start time from the GPS ephemeris log header
-    mc::UTCTime t0;
-    if (!mc::logging::getHeaderTime((fs::path(eph_directory) / "gps.hdr").string(), Out(t0)).ok())
-    {
-        mc::fatal("Unable to retrieve header time for ephemeris data");
-        exit(EXIT_FAILURE);
-    }
+    options.gnss_options.T_e2n = utils::WGS84::dq_ecef2ned(utils::WGS84::lla2ecef(ref_lla));
+
+    const UTCTime t0 = get_start_time(options.gnss_options.ephemeris_log);
     std::cout << "Simulation beginning at " << t0 << std::endl;
     options.car_options.t0 = t0;
-
-    options.wp_options.waypoints = default_waypoints;
+    mc::UTCTime t_end = t0 + tmax;
 
     sim::Sim sim(options);
 
-    mc::UTCTime t_end = t0 + tmax;
-
-    mc::logging::Logger truth_log(output_dir + "/truth.log");
-    truth_log.addHeader(mc::logging::makeHeader({"t", "x"}, double(0.0), math::TwoJet<double>()));
-    mc::logging::Logger obs_log(output_dir + "/obs.log");
-    obs_log.addHeader(
-        mc::logging::makeHeader({"t", "x"}, double(0.0), mc::meas::GnssObservation()));
-    mc::logging::Logger imu_log(output_dir + "/imu.log");
-    imu_log.addHeader(mc::logging::makeHeader({"t", "x"}, double(0.0), mc::meas::ImuSample()));
+    logging::Logger log(output_dir);
+    log.initStream<math::TwoJet<double>>(logging::TRUTH_POSE, {"pose"});
+    log.initStream<mc::meas::ImuSample>(logging::IMU_SAMPLE, {"imu"});
+    log.initStream<mc::meas::GnssObservation>(logging::GNSS_OBS, {"obs"});
 
     const auto obs_cb = [&](const std::vector<mc::meas::GnssObservation>& obs) {
-        const double rel_t = (sim.t() - t0).toSec();
         for (const auto o : obs)
         {
-            obs_log.log(rel_t, o);
+            log.log(logging::LogKey::GNSS_OBS, sim.t(), o);
         }
     };
     sim.registerGnssCB(obs_cb);
 
     const auto imu_cb = [&](const mc::meas::ImuSample& imu) {
-        const double rel_t = (sim.t() - t0).toSec();
-        imu_log.log(rel_t, imu);
+        log.log(logging::LogKey::IMU_SAMPLE, sim.t(), imu);
     };
     sim.registerImuCB(imu_cb);
 
@@ -154,8 +105,8 @@ int main(int argc, char** argv)
     while (!stop && sim.t() < t_end)
     {
         sim.step(dt);
+        log.log(logging::LogKey::TRUTH_POSE, sim.t(), sim.x());
         const double rel_t = (sim.t() - t0).toSec();
-        truth_log.log(rel_t, sim.x());
         prog.print(++i, rel_t);
     }
     std::cout << std::endl;

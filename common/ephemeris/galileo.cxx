@@ -1,4 +1,5 @@
 #include "common/ephemeris/galileo.h"
+
 #include "common/check.h"
 #include "common/ephemeris/bit_tools.h"
 #include "common/print.h"
@@ -288,6 +289,27 @@ bool GalileoEphemeris::frame5(const uint8_t* buf)
     }
     collected_subframes |= FRAME5;
     return true;
+}
+
+void GalileoEphemeris::setRandom()
+{
+    this->KeplerianEphemeris::setRandom();
+    ai0 = rand();
+    ai1 = rand();
+    ai2 = rand();
+    bgd_e1_e5a = rand();
+    bgd_e1_e5b = rand();
+    e5b_hs = rand();
+    e1b_hs = rand();
+    e5b_dvs = rand();
+    e1b_dvs = rand();
+}
+
+GalileoEphemeris GalileoEphemeris::Random()
+{
+    GalileoEphemeris out(0);
+    out.setRandom();
+    return out;
 }
 
 }  // namespace ephemeris

@@ -77,9 +77,8 @@ TEST(Satellite, WrongGnssIDThrow)
     eph.gnssID = GnssID::Glonass;
     eph.sat = 0;
     eph.toe = UTCTime(0);
-#ifndef DISABLE_CHECK
+
     EXPECT_DIE(sat.addEph(std::move(eph)), "");
-#endif
 }
 
 TEST(Satellite, WrongSatNumThrow)
@@ -89,21 +88,18 @@ TEST(Satellite, WrongSatNumThrow)
     eph.gnssID = GnssID::GPS;
     eph.sat = 1;
     eph.toe = UTCTime(0);
-#ifndef DISABLE_CHECK
+
     EXPECT_DIE(sat.addEph(std::move(eph)), "");
-#endif
 }
 
 TEST(Satellite, InitWrongGnssID)
 {
-#ifndef DISABLE_CHECK
     EXPECT_DIE(Satellite<GpsEph> sat(GnssID::Glonass, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::GPS, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Galileo, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Beidou, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::Qzss, 0), "");
     EXPECT_DIE(Satellite<GloEph> sat(GnssID::SBAS, 0), "");
-#endif
 }
 
 TEST(Satellite, ReplaceDuplicate)
@@ -280,7 +276,7 @@ TEST_F(KeplerSat, checkPVT)
     const Vec3 truth_pos(-12611434.19782218519, -13413103.97797041226, 19062913.07357876760);
     const Vec3 truth_vel(266.280379332602, -2424.768347293139, -1529.762077704072);
     SatelliteState sat_state;
-    const Error result = sat.getState(t, Out(sat_state));
+    const Error result = sat.getState(t, make_out(sat_state));
 
     EXPECT_OK(result);
     MATRIX_CLOSE(truth_pos, sat_state.pos, 1e-5);

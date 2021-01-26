@@ -2,8 +2,7 @@
 
 #include <random>
 
-#include "common/logging/header.h"
-#include "common/logging/logger.h"
+#include "common/logging/log_writer.h"
 #include "common/math/jet.h"
 #include "common/numerical_jacobian.h"
 #include "common/print.h"
@@ -33,9 +32,8 @@ TEST(ImuModel, integrateRandomImu)
     const Vec3 gravity(0, 0, 9.80665);
 
     logging::Logger logger("/tmp/ImuModel/integrateRandomImu.log");
-    logger.addHeader(logging::makeHeader({"t", "x", "xhat", "vhat"}, UTCTime(), math::Jet<double>(),
-                                         math::DQuat<double>(),
-                                         math::DQuat<double>::TangentVector()));
+    logger.initStream<math::Jet<double>, math::DQuat<double>, math::DQuat<double>::TangentVector>(
+        1, {"x", "xhat", "vhat"});
 
     Vec3 accel = -gravity;
     Vec3 omega = Vec3::Zero();
@@ -67,7 +65,7 @@ TEST(ImuModel, integrateRandomImu)
         Vec3 v2;
         integrator.computeEndState(x1, v1, Out(x2), Out(v2));
 
-        logger.log(sample.t, x, x2, v2);
+        logger.log(1, sample.t, x, x2, v2);
     }
 
     math::DQuat<double> x2;
@@ -167,8 +165,6 @@ TEST(ImuModel, ErrorStateDynamics)
 
 TEST(ImuFactor, DynamicsJacobians)
 {
-    Mat6 cov = Mat6::Identity() * 1e-3;
-
     Vec6 b0;
     ImuState y0;
     meas::ImuSample u0;
@@ -193,13 +189,13 @@ TEST(ImuFactor, DynamicsJacobians)
         ImuModel f(u0, b0, R);
         f.dynamics(y0, u0, Out(ydot), Out(A), Out(B));
 
-        auto yfun = [&y0, &cov, &b0, &u0, &eta0, &R](const ImuErrorState& dy) {
+        auto yfun = [&](const ImuErrorState& dy) {
             ImuModel functor(u0, b0, R);
             ImuErrorState dydot;
             functor.errorStateDynamics(y0, dy, u0, eta0, Out(dydot));
             return dydot;
         };
-        auto etafun = [&y0, &cov, &b0, &dy0, &u0, &R](const Vec6& eta) {
+        auto etafun = [&](const Vec6& eta) {
             ImuModel functor(u0, b0, R);
             ImuErrorState dydot;
             functor.errorStateDynamics(y0, dy0, u0, eta, Out(dydot));
@@ -218,7 +214,6 @@ TEST(ImuFactor, DynamicsJacobians)
 TEST(ImuFactor, BiasJacobians)
 {
     UTCTime t(0, 0);
-    const UTCTime t0(0, 0);
     std::vector<meas::ImuSample> imu_samples;
     while (t.toSec() < 0.1)
     {
@@ -236,7 +231,6 @@ TEST(ImuFactor, BiasJacobians)
 
     b0.setZero();
     ImuModel f(imu_samples.front(), b0, cov);
-    ImuState y0 = f.state();
     for (size_t i = 1; i < imu_samples.size(); ++i)
     {
         const auto sample = imu_samples[i];
@@ -244,7 +238,7 @@ TEST(ImuFactor, BiasJacobians)
     }
     const Mat96 J = f.dStatedBias();
 
-    auto fun = [&cov, &imu_samples, &t, &y0](const Vec6& bias0) {
+    auto fun = [&](const Vec6& bias0) {
         ImuModel functor(imu_samples.front(), bias0, cov);
         for (size_t i = 1; i < imu_samples.size(); ++i)
         {

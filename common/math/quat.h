@@ -98,14 +98,34 @@ class Quat
     }
     Quat& operator*=(const Quat& q)
     {
+        const T _w = w();
+        const T _x = x();
+        const T _y = y();
+        const T _z = z();
+
         // clang-format off
-        arr_ << w() * q.w() - x() * q.x() - y() * q.y() - z() * q.z(),
-                w() * q.x() + x() * q.w() + y() * q.z() - z() * q.y(),
-                w() * q.y() - x() * q.z() + y() * q.w() + z() * q.x(),
-                w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
+        arr_ << _w * q.w() - _x * q.x() - _y * q.y() - _z * q.z(),
+                _w * q.x() + _x * q.w() + _y * q.z() - _z * q.y(),
+                _w * q.y() - _x * q.z() + _y * q.w() + _z * q.x(),
+                _w * q.z() + _x * q.y() - _y * q.x() + _z * q.w();
         // clang-format on
         return *this;
     }
+
+    template <typename Tout = T, typename T2>
+    Quat<Tout> otimes(const Quat<T2>& q) const
+    {
+        Quat<Tout> qout;
+        // clang-format off
+        qout.arr_ << w() * q.w() - x() * q.x() - y() * q.y() - z() * q.z(),
+                     w() * q.x() + x() * q.w() + y() * q.z() - z() * q.y(),
+                     w() * q.y() - x() * q.z() + y() * q.w() + z() * q.x(),
+                     w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
+        // clang-format on
+        return qout;
+    }
+
+    bool operator==(const Quat& other) const { return (arr_ == other.arr_); }
 
     void setRandom() { arr_.setRandom(); }
 
@@ -461,17 +481,6 @@ class Quat
         tmp.arr_(2) = -arr_(2);
         tmp.arr_(3) = -arr_(3);
         return tmp;
-    }
-
-    template <typename Tout = T, typename T2>
-    Quat<Tout> otimes(const Quat<T2>& q) const
-    {
-        Quat<Tout> qout;
-        qout.arr_ << w() * q.w() - x() * q.x() - y() * q.y() - z() * q.z(),
-            w() * q.x() + x() * q.w() + y() * q.z() - z() * q.y(),
-            w() * q.y() - x() * q.z() + y() * q.w() + z() * q.x(),
-            w() * q.z() + x() * q.y() - y() * q.x() + z() * q.w();
-        return qout;
     }
 
     Mat3 Ad() const { return R().transpose(); }

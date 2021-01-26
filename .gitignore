@@ -6,3 +6,5 @@ __pycache__/
 python.env
 *.swp
 logs/
+out/
+eph/

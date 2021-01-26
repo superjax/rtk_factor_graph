@@ -1,4 +1,5 @@
 #include "common/satellite/satellite_state.h"
+
 #include "common/defs.h"
 #include "common/math/rk4.h"
 #include "common/print.h"
@@ -111,22 +112,35 @@ Error eph2Sat(const UTCTime& t,
               const ephemeris::GlonassEphemeris& eph,
               Out<SatelliteState> sat_state)
 {
-    double dt = (t - eph.toe).toSec();
+    using std::abs;
     static constexpr double TSTEP = 60.0; /* integration step glonass ephemeris (s) */
 
-    using std::abs;
-
+    double dt = (t - eph.toe).toSec();
     // Clock Biases
     sat_state->clk(0) = (-eph.taun + eph.gamn * dt) * 1e9;
     sat_state->clk(1) = (eph.gamn) * 1e9;
 
+    // Position
     Vec6 x;
-    auto p = x.head<3>();
-    auto v = x.tail<3>();
-    p = eph.pos;
-    v = eph.vel;
+    if (sat_state->t == INVALID_TIME)
+    {
+        auto p = x.head<3>();
+        auto v = x.tail<3>();
+        p = eph.pos;
+        v = eph.vel;
+    }
+    else
+    {
+        // Seed from last time
+        dt = (t - sat_state->t).toSec();
+        auto p = x.head<3>();
+        auto v = x.tail<3>();
+        p = sat_state->pos;
+        v = sat_state->vel;
+    }
 
     double timestep = dt < 0.0 ? -TSTEP : TSTEP;
+    int i = 0;
     while (abs(dt) > 1e-9)
     {
         if (abs(dt) < TSTEP)
@@ -136,6 +150,7 @@ Error eph2Sat(const UTCTime& t,
         std::function<Vec6(const Vec6&, const Vec3&)> f = &glonassOrbit;
         x = math::RK4(glonassOrbit, timestep, x, eph.acc);
         dt -= timestep;
+        i++;
     }
 
     sat_state->pos = x.head<3>();

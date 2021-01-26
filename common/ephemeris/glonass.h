@@ -6,7 +6,7 @@
 namespace mc {
 namespace ephemeris {
 
-class GlonassEphemeris : public EphBase
+class GlonassEphemeris final : public EphBase
 {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -20,13 +20,15 @@ class GlonassEphemeris : public EphBase
     static constexpr double FREQ3_GLO = 1.202025e9;  // GLONASS G3 frequency (Hz)
     int iode;                                        // IODE (0-6 bit of tb field)
     int slot;                                        // satellite frequency slot
-    int svh, sva, age;                               // satellite health, accuracy, age of operation
-    UTCTime toe;                                     // epoch of epherides (UTC)
+    int svh;                                         // health
+    int sva;                                         // accuracy
+    int age;                                         // age of operation
     UTCTime tof;                                     // message frame time (UTC)
     Vec3 pos;                                        // satellite position (ecef) (m)
     Vec3 vel;                                        // satellite velocity (ecef) (m/s)
     Vec3 acc;                                        // satellite acceleration (ecef) (m/s^2)
-    double taun, gamn;                               // SV clock bias (s)/relative freq bias
+    double taun;                                     // SV clock bias (s)
+    double gamn;                                     // relative freq bias (s)
     double dtaun;                                    // delay between L1 and L2 (s)
 
     bool parse(const uint8_t* buf, size_t size);
@@ -74,6 +76,9 @@ class GlonassEphemeris : public EphBase
               // year
     int N4_;  // four-year interval number starting from 1996
     int NA_;  // calendar day number within the four-year period beginning since the leap year
+
+    void setRandom();
+    static GlonassEphemeris Random();
 };
 }  // namespace ephemeris
 }  // namespace mc

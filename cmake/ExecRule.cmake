@@ -9,6 +9,7 @@ function(executable name)
         ${EIGEN3_INCLUDE_DIRS}
         ${FMT_INCLUDE_DIRS}
         ${ASYNC_COMM_INCLUDE_DIRS}
+        ${YAML_INCLUDE_DIRS}
         ${REPO_ROOT})
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
 endfunction()

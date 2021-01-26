@@ -13,54 +13,35 @@ stages:
     - export CC=gcc
     - export CXX=g++
     - export CCACHE_DIR="$(pwd)/ccache"
-    - ccache -M 500M
     - ccache -s
-
-.upload_ccache: &upload_cache
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
-      - build/async_comm_ext-prefix
-
 
 build:
   stage: build
   <<: *prepare_build
   script:
     - cmake .. -DCMAKE_BUILD_TYPE=Release
-    - make
+    - make -j12 -l12
     - ccache -s
     - ../script/run_tests.sh
-  <<: *upload_cache
 
 
 static analysis:
   stage: test
   allow_failure: true
-  when: manual
   <<: *prepare_build
   script:
     - mkdir scan_results
     - scan-build -o scan_results cmake .. -DCMAKE_BUILD_TYPE=Release
-    - scan-build -o scan_results make
+    - scan-build -o scan_results make -j12 -l12
     - ccache -s
   artifacts:
     paths:
       - build/scan_results
     expire_in: 1000 yrs
-  <<: *upload_cache
 
 coverage:
   stage: test
   allow_failure: true
-  only:
-    refs:
-      - master
   <<: *prepare_build
   script:
     - ../script/run_coverage.sh
@@ -68,20 +49,15 @@ coverage:
     paths:
       - build/coverage
     expire_in: 1000 yrs
-  <<: *upload_cache
 
 benchmarks:
   stage: test
   allow_failure: true
-  only:
-    refs:
-      - master
   <<: *prepare_build
   script:
     - cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_BENCHMARKS=ON
-    - make
+    - make -j12 -l12
     - ./run_benchmarks
   artifacts:
     paths:
       - build/bench_results
-  <<: *upload_cache

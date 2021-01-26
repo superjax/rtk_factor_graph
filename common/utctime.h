@@ -58,6 +58,8 @@ class UTCTime
 
     UTCTime();
 
+    static UTCTime Random();
+
     bool operator>(const UTCTime& other) const;
     bool operator>=(const UTCTime& other) const;
     bool operator<(const UTCTime& other) const;
@@ -112,5 +114,7 @@ class UTCTime
 std::ostream& operator<<(std::ostream& os, const UTCTime& t);
 
 static constexpr UTCTime INVALID_TIME = UTCTime{std::numeric_limits<int64_t>::lowest(), 0};
+static constexpr UTCTime MIN_TIME = UTCTime{std::numeric_limits<int64_t>::lowest(), 0};
+static constexpr UTCTime MAX_TIME = UTCTime{std::numeric_limits<int64_t>::max(), 0};
 
 }  // namespace mc

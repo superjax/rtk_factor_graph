@@ -7,8 +7,9 @@ namespace mc {
 namespace math {
 
 template <typename T>
-struct TwoJet
+class TwoJet
 {
+ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     DQuat<T> x;
     typename DQuat<T>::TangentVector dx;
@@ -31,7 +32,19 @@ struct TwoJet
         out.d2x.setZero();
         return out;
     }
+
+    bool operator==(const TwoJet& other) const
+    {
+        return (x == other.x) && (dx == other.dx) && (d2x == other.d2x);
+    }
 };
+
+template <typename T>
+inline std::ostream& operator<<(std::ostream& os, const TwoJet<T>& jet)
+{
+    os << "x: " << jet.x << "\ndx: " << jet.dx.transpose() << "\nd2x: " << jet.d2x.transpose();
+    return os;
+}
 
 }  // namespace math
 }  // namespace mc

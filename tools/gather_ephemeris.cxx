@@ -1,3 +1,4 @@
+#include <experimental/filesystem>
 #include <map>
 #include <vector>
 
@@ -6,8 +7,7 @@
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"
 #include "common/ephemeris/gps.h"
-#include "common/logging/header.h"
-#include "common/logging/logger.h"
+#include "common/logging/log_writer.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/print.h"
 #include "parsers/ubx/ubx.h"
@@ -17,6 +17,7 @@ using namespace mc;
 using namespace third_party::argparse;
 using namespace parsers;
 using namespace ephemeris;
+namespace fs = std::experimental::filesystem;
 
 bool stop = false;
 void inthand(int signum)
@@ -27,8 +28,10 @@ void inthand(int signum)
 template <typename EphType>
 struct Accumulator
 {
-    std::map<int, EphType*> working;
-    std::map<int, std::vector<EphType*>> finished;
+    Accumulator(logging::Logger& log, logging::LogKey key) : log_(log), key_(key)
+    {
+        log_.initStream<EphType>(key_, {"eph"});
+    }
 
     void handle(const ublox::RXM_SFRBX_t& msg)
     {
@@ -41,39 +44,32 @@ struct Accumulator
 
         if (working[sat]->parse(reinterpret_cast<const uint8_t*>(&msg.dwrd), msg.num_words * 4))
         {
+            const auto now = UTCTime::now();
             warn("finished {}: {}", mc::fmt(working[sat]->Type(), working[sat]->sat));
 
-            if ((working[sat]->toe - UTCTime::now()).toSec() > 2 * UTCTime::SEC_IN_HOUR)
+            if ((working[sat]->toe - now).toSec() > 2 * UTCTime::SEC_IN_HOUR)
             {
-                warn("really stale ephemeris: toe: {}, now: {}",
-                     mc::fmt(working[sat]->toe, UTCTime::now()));
+                warn("really stale ephemeris: toe: {}, now: {}", mc::fmt(working[sat]->toe, now));
             }
 
-            // move the ephemeris into the finished bucket
-            finished[sat].push_back(working[sat]);
-            working[sat] = nullptr;
+            // Commit the finished ephemeris to the log
+            log_.log(key_, now, *working[sat]);
         }
     }
 
-    void dumpToFile(const std::string& output_file) const
-    {
-        logging::Logger log(output_file);
-        log.addHeader(logging::makeHeader({"eph"}, EphType(0)));
-        for (const auto& sat_vec : finished)
-        {
-            for (const auto& eph : sat_vec.second)
-            {
-                log.log(*eph);
-            }
-        }
-    }
-
-    std::string type_string;
+    std::map<int, EphType*> working;
+    std::map<int, std::vector<EphType*>> finished;
+    mc::logging::Logger& log_;
+    const mc::logging::LogKey key_;
 };
 
 struct ObsListener : public ublox::UbxListener
 {
-    ObsListener() { subscribe(ublox::CLASS_RXM, ublox::RXM_RAWX); }
+    ObsListener(logging::Logger& log) : log_(log)
+    {
+        subscribe(ublox::CLASS_RXM, ublox::RXM_RAWX);
+        log.initStream<meas::GnssObservation>(logging::LogKey::GNSS_OBS, {"obs"});
+    }
 
     static double get_freq(int gnss_id, int sig_id, int slot)
     {
@@ -116,7 +112,8 @@ struct ObsListener : public ublox::UbxListener
     void gotUbx(const uint8_t cls, const uint8_t id, const ublox::UbxMessage& msg)
     {
         const ublox::RXM_RAWX_t& data = msg.RXM_RAWX;
-        fmt::print("{}, Got {} observations\n", UTCTime::now(), data.num_meas);
+        const auto now = UTCTime::now();
+        info("{}, Got {} observations", mc::fmt(now, data.num_meas));
         for (int i = 0; i < data.num_meas; ++i)
         {
             const ublox::RXM_RAWX_t::RawxMeas& meas = data.meas[i];
@@ -130,26 +127,22 @@ struct ObsListener : public ublox::UbxListener
             o.carrier_phase = meas.cp_meas;
             if (o.freq > 0)
             {
-                obs.emplace_back(o, UTCTime::now());
+                log_.log(logging::LogKey::GNSS_OBS, now, o);
             }
         }
     }
     std::vector<std::pair<meas::GnssObservation, UTCTime>> obs;
 
-    void dumpToFile(const std::string& output_file)
-    {
-        logging::Logger log(output_file);
-        log.addHeader(logging::makeHeader({"t", "x"}, UTCTime(), meas::GnssObservation()));
-        for (const auto& o_t : obs)
-        {
-            log.log(o_t.second, o_t.first);
-        }
-    }
+    logging::Logger& log_;
 };
 
 struct Listener : public ublox::UbxListener
 {
-    Listener() { subscribe(ublox::CLASS_RXM, ublox::RXM_SFRBX); }
+    Listener(logging::Logger& log)
+        : gps(log, logging::GPS_EPH), galileo(log, logging::GAL_EPH), glonass(log, logging::GLO_EPH)
+    {
+        subscribe(ublox::CLASS_RXM, ublox::RXM_SFRBX);
+    }
 
     void gotUbx(const uint8_t cls, const uint8_t id, const ublox::UbxMessage& msg)
     {
@@ -206,6 +199,12 @@ int main(int argc, char** argv)
     fmt::print("baudrate = {}\n", baudrate);
     fmt::print("output_directory = {}\n", output_directory);
 
+    // Create output directory
+    if (!fs::exists(output_directory))
+    {
+        fs::create_directories(output_directory);
+    }
+
     // Initialize Serial Port
     async_comm::Serial serial(port, baudrate);
     if (!serial.init())
@@ -222,8 +221,10 @@ int main(int argc, char** argv)
     ubx.enableMessage(ublox::CLASS_RXM, ublox::RXM_SFRBX, 1);
     ubx.enableMessage(ublox::CLASS_RXM, ublox::RXM_RAWX, 1);
 
-    Listener listener;
-    ObsListener obs_listener;
+    logging::Logger log(output_directory);
+
+    Listener listener(log);
+    ObsListener obs_listener(log);
     ubx.registerListener(&listener);
     ubx.registerListener(&obs_listener);
 
@@ -234,12 +235,7 @@ int main(int argc, char** argv)
         sleep(1);
     }
 
-    warn("Saving files, do not close");
-    listener.gps.dumpToFile(output_directory + "/gps.log");
-    listener.glonass.dumpToFile(output_directory + "/glonass.log");
-    listener.galileo.dumpToFile(output_directory + "/galileo.log");
-    obs_listener.dumpToFile(output_directory + "/obs.log");
-    warn("Done saving files to {}", mc::fmt(output_directory));
+    warn("Done saving log to {}", mc::fmt(log.logId()));
 
     serial.close();
 

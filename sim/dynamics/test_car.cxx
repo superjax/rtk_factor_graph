@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "common/logging/logger.h"
+#include "common/logging/log_writer.h"
 #include "common/random.h"
 #include "sim/dynamics/car.h"
 
@@ -16,6 +16,8 @@ TEST(SimCar, Random)
     SimCar car(options);
 
     logging::Logger log("/tmp/mc/SimCar.Random.log");
+    log.initStream<Vec3, Vec3, Vec6, Vec6, Vec2, Vec2, Vec3>(
+        0, {"translation", "rotation", "dx", "d2x", "u", "vw", "wp"});
 
     const double dt = 0.001;
     const double noise = 0.1;
@@ -25,7 +27,7 @@ TEST(SimCar, Random)
     {
         car.step(car.t() + dt, u);
 
-        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+        log.log(0, car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
                 car.x.d2x, u, Vec2::Zero(), Vec3::Constant(NAN));
         u += dt * randomNormal<Vec2>() * noise;
     }
@@ -43,6 +45,8 @@ TEST(SimCar, Controller)
     SimCar car(options);
 
     logging::Logger log("/tmp/mc/SimCar.Controller.log");
+    log.initStream<Vec3, Vec3, Vec6, Vec6, Vec2, Vec2, Vec3>(
+        0, {"translation", "rotation", "dx", "d2x", "u", "vw", "wp"});
 
     const double dt = 0.001;
     const double noise = 0.01;
@@ -53,7 +57,7 @@ TEST(SimCar, Controller)
         const Vec2 u = car.controller(car.t() + dt, vw) + dt * randomNormal<Vec2>() * noise;
         car.step(car.t() + dt, u);
 
-        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+        log.log(0, car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
                 car.x.d2x, u, vw, Vec3::Constant(NAN));
     }
 }
@@ -77,6 +81,8 @@ TEST(SimCar, Waypoints)
     SimCar::WaypointFollower follower(wp);
 
     logging::Logger log("/tmp/mc/SimCar.Waypoints.log");
+    log.initStream<Vec3, Vec3, Vec6, Vec6, Vec2, Vec2, Vec3>(
+        0, {"translation", "rotation", "dx", "d2x", "u", "vw", "wp"});
 
     const double dt = 0.001;
     const double noise = 0.01;
@@ -87,7 +93,7 @@ TEST(SimCar, Waypoints)
         const Vec2 u = car.controller(car.t() + dt, vw) + dt * randomNormal<Vec2>() * noise;
         car.step(car.t() + dt, u);
 
-        log.log(car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
+        log.log(0, car.t().toSec(), car.x.x.translation(), car.x.x.rotation().log(), car.x.dx,
                 car.x.d2x, u, vw, follower.current_waypoint());
     }
 }

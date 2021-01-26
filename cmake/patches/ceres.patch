@@ -1,0 +1,34 @@
+From f6c2f1397524a8f052cec31d976d35c38a4fbed4 Mon Sep 17 00:00:00 2001
+From: James Jackson <superjax08@gmail.com>
+Date: Sat, 16 Jan 2021 11:30:28 -0800
+Subject: [PATCH] fix
+
+Change-Id: Ib451d144babbafb6e061dfa6e4c5bd65fee7678b
+---
+ include/ceres/ceres.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/include/ceres/ceres.h b/include/ceres/ceres.h
+index d249351..28a3049 100644
+--- a/include/ceres/ceres.h
++++ b/include/ceres/ceres.h
+@@ -34,6 +34,9 @@
+ #ifndef CERES_PUBLIC_CERES_H_
+ #define CERES_PUBLIC_CERES_H_
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wshadow"
++
+ #include "ceres/autodiff_cost_function.h"
+ #include "ceres/autodiff_local_parameterization.h"
+ #include "ceres/conditioned_cost_function.h"
+@@ -63,4 +66,6 @@
+ #include "ceres/types.h"
+ #include "ceres/version.h"
+ 
++#pragma GCC diagnostic pop
++
+ #endif  // CERES_PUBLIC_CERES_H_
+-- 
+2.25.1
+

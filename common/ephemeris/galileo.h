@@ -5,7 +5,7 @@
 namespace mc {
 namespace ephemeris {
 
-class GalileoEphemeris : public KeplerianEphemeris
+class GalileoEphemeris final : public KeplerianEphemeris
 {
  public:
     static constexpr double FREQUENCY_E1 = 1.57542E9;     // E1 frequency (HZ)
@@ -29,6 +29,7 @@ class GalileoEphemeris : public KeplerianEphemeris
         E6
     };
 
+    GalileoEphemeris() = default;
     explicit GalileoEphemeris(int sat_id);
 
     bool parse(const uint8_t* buf, size_t size);
@@ -67,6 +68,9 @@ class GalileoEphemeris : public KeplerianEphemeris
 
     int time_f;
     int iod[4] = {0};
+
+    void setRandom();
+    static GalileoEphemeris Random();
 };
 }  // namespace ephemeris
 }  // namespace mc

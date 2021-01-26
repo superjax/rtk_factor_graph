@@ -7,6 +7,7 @@
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"
 #include "common/ephemeris/gps.h"
+#include "common/logging/log_reader.h"
 #include "common/math/two_jet.h"
 #include "common/matrix_defs.h"
 #include "common/measurements/gnss_observation.h"
@@ -23,7 +24,7 @@ class GnssSim
  public:
     struct Options
     {
-        std::map<int, std::string> ephemeris_files_;
+        std::string ephemeris_log;
         double update_rate_hz_ = 5;
         double pseudorange_stdev_ = 3.0;
         double carrier_phase_stdev_ = 0.01;

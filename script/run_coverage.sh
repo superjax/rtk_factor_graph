@@ -21,7 +21,7 @@ BUILD_DIR=$PWD
 ROOT=$PWD/..
 
 # Adding BRANCH_COVERAGE makes things super slow
-BRANCH_COVERAGE=$BRANCH_COVERAGE
+BRANCH_COVERAGE=1
 
 rm -r coverage
 mkdir coverage
@@ -32,7 +32,7 @@ rm all_tests.info
 ./clean
 rm CMakeCache.txt
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DTEST_COVERAGE=ON
-make -j4 -l4
+make -j12 -l12
 
 while read p; do
     echo_bblue Gathering Coverage for $p

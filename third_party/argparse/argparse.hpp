@@ -944,9 +944,18 @@ class ArgumentParser
      */
     void parse_args(int argc, const char *const argv[])
     {
-        std::vector<std::string> arguments;
-        std::copy(argv, argv + argc, std::back_inserter(arguments));
-        parse_args(arguments);
+        try
+        {
+            std::vector<std::string> arguments;
+            std::copy(argv, argv + argc, std::back_inserter(arguments));
+            parse_args(arguments);
+        }
+        catch (const std::runtime_error &err)
+        {
+            std::cout << err.what() << std::endl;
+            std::cout << *this;
+            exit(EXIT_FAILURE);
+        }
     }
 
     /* Getter for options with default values.

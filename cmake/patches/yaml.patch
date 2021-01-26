@@ -1,0 +1,33 @@
+From be81f5c654e33a79bbde4a9094e8f84f4b59478f Mon Sep 17 00:00:00 2001
+From: James Jackson <superjax08@gmail.com>
+Date: Sun, 24 Jan 2021 21:42:42 -0800
+Subject: [PATCH] fix clang errors
+
+---
+ include/yaml-cpp/yaml.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/include/yaml-cpp/yaml.h b/include/yaml-cpp/yaml.h
+index 7f515ef..f02811a 100644
+--- a/include/yaml-cpp/yaml.h
++++ b/include/yaml-cpp/yaml.h
+@@ -7,6 +7,9 @@
+ #pragma once
+ #endif
+ 
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wshadow"
++
+ #include "yaml-cpp/parser.h"
+ #include "yaml-cpp/emitter.h"
+ #include "yaml-cpp/emitterstyle.h"
+@@ -21,4 +24,6 @@
+ #include "yaml-cpp/node/parse.h"
+ #include "yaml-cpp/node/emit.h"
+ 
++#pragma clang diagnostic pop
++
+ #endif  // YAML_H_62B23520_7C8E_11DE_8A39_0800200C9A66
+-- 
+2.25.1
+

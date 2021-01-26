@@ -5,6 +5,7 @@
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"
 #include "common/ephemeris/gps.h"
+#include "common/logging/log_key.h"
 #include "common/logging/log_reader.h"
 #include "common/random.h"
 #include "common/satellite/atm_correction.h"
@@ -31,32 +32,15 @@ GnssSim::GnssSim(const Options& options, const UTCTime& t0) : options_(options)
 }
 
 template <typename T>
-void readEph(const std::string& file, Out<std::map<int, satellite::Satellite<T>>> sats)
+void ephCb(const T& new_eph, Out<std::map<int, satellite::Satellite<T>>> sats)
 {
-    mc::logging::LogReader log_reader;
-    const auto result = log_reader.open(file);
-    if (!result.ok())
+    if (sats->find(new_eph.sat) == sats->end())
     {
-        return;
+        sats->emplace(new_eph.sat, satellite::Satellite<T>(new_eph.gnssID, new_eph.sat));
     }
+    sats->at(new_eph.sat).addEph(new_eph);
 
-    while (true)
-    {
-        T new_eph(0);
-        log_reader.read(new_eph);
-        if (log_reader.done())
-        {
-            break;
-        }
-
-        if (sats->find(new_eph.sat) == sats->end())
-        {
-            sats->emplace(new_eph.sat, satellite::Satellite<T>(new_eph.gnssID, new_eph.sat));
-        }
-        sats->at(new_eph.sat).addEph(new_eph);
-
-        fmt::print("Type: {}, sat: {}, TOE: {}\n", new_eph.Type(), new_eph.sat, new_eph.toe);
-    }
+    fmt::print("Type: {}, sat: {}, TOE: {}\n", new_eph.Type(), new_eph.sat, new_eph.toe);
 }
 
 template <typename T>
@@ -71,32 +55,29 @@ void getSatPointers(const std::map<int, satellite::Satellite<T>>& sat_map,
 
 void GnssSim::load()
 {
-    for (const auto& eph_file : options_.ephemeris_files_)
-    {
-        mc::logging::LogReader log_reader;
-        const auto result = log_reader.open(eph_file.second);
-        if (!result.ok())
-        {
-            continue;
-        }
-        switch (eph_file.first)
-        {
-        case GnssID::GPS:
-            readEph(eph_file.second, Out(gps_));
-            getSatPointers(gps_, Out(satellites_));
-            break;
-        case GnssID::Galileo:
-            readEph(eph_file.second, Out(gal_));
-            getSatPointers(gal_, Out(satellites_));
-            break;
-        case GnssID::Glonass:
-            readEph(eph_file.second, Out(glo_));
-            getSatPointers(glo_, Out(satellites_));
-            break;
-        default:
-            warn("Unhandled ephemeris type {}", fmt(eph_file.first));
-        }
-    }
+    logging::LogReader log(options_.ephemeris_log);
+
+    log.setCallback(logging::GPS_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
+        ephemeris::GPSEphemeris eph;
+        reader.get(eph);
+        ephCb(eph, make_out(gps_));
+    });
+    log.setCallback(logging::GLO_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
+        ephemeris::GlonassEphemeris eph;
+        reader.get(eph);
+        ephCb(eph, make_out(glo_));
+    });
+    log.setCallback(logging::GAL_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
+        ephemeris::GalileoEphemeris eph;
+        reader.get(eph);
+        ephCb(eph, make_out(gal_));
+    });
+    log.read();
+
+    getSatPointers(gps_, make_out(satellites_));
+    getSatPointers(glo_, make_out(satellites_));
+    getSatPointers(gal_, make_out(satellites_));
+
     check(satellites_.size() > 0ul, "Unable to find any satellites in ephemeris data");
 }
 
@@ -125,7 +106,7 @@ bool GnssSim::sample(const UTCTime& t,
         {
             double pseudorange;
             double doppler;
-            range(t, sat, p_ecef, vel_ecef, Out(pseudorange), Out(doppler));
+            range(t, sat, p_ecef, vel_ecef, make_out(pseudorange), make_out(doppler));
             double carrier_phase = pseudorange / sat->carrierWavelength(0) +
                                    normal_(gen_) * options_.carrier_phase_stdev_ +
                                    carrier_phase_offsets_[i++];
@@ -160,7 +141,7 @@ void GnssSim::range(const UTCTime& t,
                     Out<double> doppler)
 {
     satellite::SatelliteState sat_state;
-    sat->getState(t, Out(sat_state));
+    sat->getState(t, make_out(sat_state));
 
     double dt;
     Vec3 los_to_sat;
@@ -174,11 +155,11 @@ void GnssSim::range(const UTCTime& t,
 
         double tau = range / C_LIGHT;
         dt = tau - (t - sat_state.t).toSec();
-        sat->getState(sat_state.t - dt, Out(sat_state));
+        sat->getState(sat_state.t - dt, make_out(sat_state));
     } while (abs(dt) * sat_state.vel.norm() > 1e-3);  // get millimeter-accurate
 
     satellite::AtmosphericCorrection atm;
-    satellite::computeAtmCorrection(t, p_ecef, sat_state, Out(atm));
+    satellite::computeAtmCorrection(t, p_ecef, sat_state, make_out(atm));
 
     const double dclock = clock_bias_(0) - sat_state.clk(0);
     const double dclock_rate = clock_bias_(1) - sat_state.clk(1);

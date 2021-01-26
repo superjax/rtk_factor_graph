@@ -8,6 +8,7 @@ namespace models {
 TEST(ImuState, CopyConstructor)
 {
     Vec10 x_vec;
+    x_vec.setRandom();
     ImuState x(x_vec);
 
     for (int i = 0; i < 10; ++i)
@@ -19,6 +20,7 @@ TEST(ImuState, CopyConstructor)
 TEST(ImuState, EqualsVector)
 {
     Vec10 x_vec;
+    x_vec.setRandom();
     ImuState x;
     x = x_vec;
 

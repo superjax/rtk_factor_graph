@@ -7,83 +7,53 @@
 #include "common/ephemeris/gps.h"
 #include "common/error.h"
 #include "common/logging/log_reader.h"
+#include "common/logging/log_writer.h"
 #include "common/print.h"
+#include "common/utctime.h"
 #include "third_party/argparse/argparse.hpp"
 
 using namespace third_party::argparse;
 using namespace mc::ephemeris;
+using namespace mc::logging;
+using mc::UTCTime;
 
 template <typename EphType>
-mc::Error verify(const std::string& file)
+mc::Error verify(const EphType& eph)
 {
-    std::vector<EphType> eph;
-    mc::logging::LogReader log_reader;
-    const auto result = log_reader.open(file);
-    if (!result.ok())
-    {
-        return result;
-    }
-
-    while (true)
-    {
-        EphType new_eph(0);
-        log_reader.read(new_eph);
-        if (log_reader.done())
-        {
-            break;
-        }
-        eph.push_back(new_eph);
-        fmt::print("Type: {}, sat: {}, TOE: {}\n", new_eph.Type(), new_eph.sat, new_eph.toe);
-    }
+    fmt::print("Type: {}, sat: {}, TOE: {}\n", eph.Type(), eph.sat, eph.toe);
     return mc::Error::none();
 }
 
 int main(int argc, char** argv)
 {
     ArgumentParser parser("Verify Ephemeris Data gathered from UBX Receiver");
-    parser.add_argument("--type").help("Type of ephemeris [gps galileo glonass]").required();
-    parser.add_argument("--file").help("File to verify").required();
+    parser.add_argument("--log").help("Log to verify").required();
+    parser.parse_args(argc, argv);
 
-    try
-    {
-        parser.parse_args(argc, argv);
-    }
-    catch (const std::runtime_error& err)
-    {
-        std::cout << err.what() << std::endl;
-        std::cout << parser;
-        return EXIT_FAILURE;
-    }
+    const std::string file = parser.get<std::string>("--log");
 
-    const std::string type = parser.get<std::string>("--type");
-    const std::string file = parser.get<std::string>("--file");
+    auto gps_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
+        GPSEphemeris eph;
+        reader.get(eph);
+        verify(eph);
+    };
+    auto gal_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
+        GalileoEphemeris eph;
+        reader.get(eph);
+        verify(eph);
+    };
+    auto glo_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
+        GlonassEphemeris eph;
+        reader.get(eph);
+        verify(eph);
+    };
 
-    if (type.compare("gps") == 0)
-    {
-        if (!verify<GPSEphemeris>(file).ok())
-        {
-            return EXIT_FAILURE;
-        }
-    }
-    else if (type.compare("glonass") == 0)
-    {
-        if (!verify<GlonassEphemeris>(file).ok())
-        {
-            return EXIT_FAILURE;
-        }
-    }
-    else if (type.compare("galileo") == 0)
-    {
-        if (!verify<GalileoEphemeris>(file).ok())
-        {
-            return EXIT_FAILURE;
-        }
-    }
-    else
-    {
-        fmt::print("unsupported ephemeris type {}.  Choose from [gps, glonass, galileo]\n", type);
-        return EXIT_FAILURE;
-    }
+    LogReader log(file);
+    log.setCallback(LogKey::GPS_EPH, std::move(gps_cb));
+    log.setCallback(LogKey::GAL_EPH, std::move(gal_cb));
+    log.setCallback(LogKey::GLO_EPH, std::move(glo_cb));
+
+    log.read();
 
     return EXIT_SUCCESS;
 }

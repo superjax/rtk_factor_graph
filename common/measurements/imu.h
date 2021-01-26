@@ -6,8 +6,9 @@
 namespace mc {
 namespace meas {
 
-struct ImuSample
+class ImuSample
 {
+ public:
     UTCTime t;
     Vec3 accel;
     Vec3 gyro;
@@ -16,6 +17,13 @@ struct ImuSample
     {
         ImuSample out;
         out.setZero();
+        return out;
+    }
+
+    static ImuSample Random()
+    {
+        ImuSample out;
+        out.setRandom();
         return out;
     }
 

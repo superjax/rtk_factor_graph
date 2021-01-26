@@ -28,12 +28,11 @@ TEST(Error, EqOperator)
     Error b = Error::create(message);
     EXPECT_EQ(a, b);
 
-    Error c = Error::create("Test 1");  // This error has the same text, but not the same address
+    static constexpr char message3[] = "Test 2";
+    Error c = Error::create(message3);  // This error has the same text, but not the same address
     EXPECT_NE(a, c);
 
     EXPECT_EQ(a, message);
-    EXPECT_NE(a, "Test 1");
-
     EXPECT_NE(c, message);
 
     static constexpr char message2[] = "Test 2";

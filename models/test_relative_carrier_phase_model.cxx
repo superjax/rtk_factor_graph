@@ -166,12 +166,12 @@ TEST_F(TestRelCP, Jac_T2nb1)
     Vec8 jac;
     double* jacobians[] = {jac.data(), 0, 0, 0, 0, 0, 0, 0};
 
-    Vec8 num_jac = compute_jac(Vec8(T_n2b1.arr_), fun, 1e-4);
+    const auto num_jac = compute_jac(Vec8(T_n2b1.arr_), fun, 1e-4);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac.transpose() * T_n2b1.dParamDGen(), jac.transpose() * T_n2b1.dParamDGen(),
+    MATRIX_CLOSE(num_jac * T_n2b1.dParamDGen(), jac.transpose() * T_n2b1.dParamDGen(),
                  1e-5);
 }
 
@@ -192,12 +192,12 @@ TEST_F(TestRelCP, Jac_T2nb2)
     Vec8 jac;
     double* jacobians[] = {0, jac.data(), 0, 0, 0, 0, 0, 0};
 
-    Vec8 num_jac = compute_jac(Vec8(T_n2b2.arr_), fun, 1e-4);
+    const auto num_jac = compute_jac(Vec8(T_n2b2.arr_), fun, 1e-4);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac.transpose() * T_n2b2.dParamDGen(), jac.transpose() * T_n2b2.dParamDGen(),
+    MATRIX_CLOSE(num_jac * T_n2b2.dParamDGen(), jac.transpose() * T_n2b2.dParamDGen(),
                  1e-5);
 }
 
@@ -218,12 +218,12 @@ TEST_F(TestRelCP, JacClk1)
     Vec2 jac;
     double* jacobians[] = {0, 0, jac.data(), 0, 0, 0, 0, 0};
 
-    Vec2 num_jac = compute_jac(clk1, fun, 1e-5);
+    const auto num_jac = compute_jac(clk1, fun, 1e-5);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac, jac, 1e-4);
+    MATRIX_CLOSE(num_jac, jac.transpose(), 1e-4);
 }
 
 TEST_F(TestRelCP, JacClk2)
@@ -243,12 +243,12 @@ TEST_F(TestRelCP, JacClk2)
     Vec2 jac;
     double* jacobians[] = {0, 0, 0, jac.data(), 0, 0, 0, 0};
 
-    Vec2 num_jac = compute_jac(clk1, fun, 1e-5);
+    const auto num_jac = compute_jac(clk1, fun, 1e-5);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac, jac, 1e-4);
+    MATRIX_CLOSE(num_jac.transpose(), jac, 1e-4);
 }
 
 TEST_F(TestRelCP, JacSw1)
@@ -318,12 +318,12 @@ TEST_F(TestRelCP, Jac_Tr2n)
     Vec8 jac;
     double* jacobians[] = {0, 0, 0, 0, 0, 0, jac.data(), 0};
 
-    Vec8 num_jac = compute_jac(Vec8(T_r2n.arr_), fun, 1e-4);
+    const auto num_jac = compute_jac(Vec8(T_r2n.arr_), fun, 1e-4);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac.transpose() * T_r2n.dParamDGen(), jac.transpose() * T_r2n.dParamDGen(),
+    MATRIX_CLOSE(num_jac * T_r2n.dParamDGen(), jac.transpose() * T_r2n.dParamDGen(),
                  1e-5);
 }
 
@@ -344,12 +344,12 @@ TEST_F(TestRelCP, JacPb2g)
     Vec3 jac;
     double* jacobians[] = {0, 0, 0, 0, 0, 0, 0, jac.data()};
 
-    Vec3 num_jac = compute_jac(p_b2g, fun, 1e-5);
+    const auto num_jac = compute_jac(p_b2g, fun, 1e-5);
 
     Vec1 res;
     EXPECT_TRUE(f.Evaluate(parameters, res.data(), jacobians));
 
-    MATRIX_CLOSE(num_jac, jac, 1e-4);
+    MATRIX_CLOSE(num_jac, jac.transpose(), 1e-4);
 }
 
 }  // namespace models

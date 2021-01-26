@@ -142,6 +142,14 @@ UTCTime& UTCTime::operator-=(int sec_)
     return *this;
 }
 
+UTCTime UTCTime::Random()
+{
+    UTCTime out;
+    out.sec = rand();
+    out.nsec = rand();
+    return out;
+}
+
 int UTCTime::week() const
 {
     return std::floor(sec / SEC_IN_WEEK);

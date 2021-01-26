@@ -172,7 +172,7 @@ namespace rtklib
 
 static const double gpst0[]={1980,1, 6,0,0,0}; /* gps time reference */
 static const double gst0 []={1999,8,22,0,0,0}; /* galileo system time reference */
-static const double bdt0 []={2006,1, 1,0,0,0}; /* beidou time reference */
+// static const double bdt0 []={2006,1, 1,0,0,0}; /* beidou time reference */
 
 extern unsigned int getbitu(const unsigned char *buff, int pos, int len)
 {

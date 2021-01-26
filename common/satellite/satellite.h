@@ -17,6 +17,8 @@ class SatelliteBase
     SatelliteBase(uint8_t gnss_id, uint8_t sat_num) : gnss_id_{gnss_id}, sat_{sat_num} {}
     virtual Error getState(const UTCTime& t, Out<SatelliteState> sat_state) const = 0;
 
+    virtual ~SatelliteBase() = default;
+
     uint8_t gnssId() const { return gnss_id_; }
     uint8_t sat_num() const { return sat_; }
 
@@ -87,9 +89,9 @@ class Satellite : public SatelliteBase
         return *min_it;
     }
 
-    int almanacSize() const { return almanac_.size(); }
+    int almanacSize() const override { return almanac_.size(); }
 
-    Error getState(const UTCTime& t, Out<SatelliteState> sat_state) const
+    Error getState(const UTCTime& t, Out<SatelliteState> sat_state) const override
     {
         return eph2Sat(t, findClosestEphemeris(t), sat_state);
     }
