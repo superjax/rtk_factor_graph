@@ -1,3 +1,5 @@
+#pragma once
+
 #include "common/circular_buffer.h"
 #include "common/ephemeris/galileo.h"
 #include "common/ephemeris/glonass.h"

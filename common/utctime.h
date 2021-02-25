@@ -65,6 +65,7 @@ class UTCTime
     bool operator<(const UTCTime& other) const;
     bool operator<=(const UTCTime& other) const;
     bool operator==(const UTCTime& other) const;
+    bool operator!=(const UTCTime& other) const;
 
     UTCTime operator-(const UTCTime& other) const;
     UTCTime& operator-=(const UTCTime& other);

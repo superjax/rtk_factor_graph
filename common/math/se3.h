@@ -19,6 +19,7 @@ class SE3
     using Mat6 = Eigen::Matrix<T, 6, 6>;
 
  public:
+    using Scalar = T;
     static constexpr int DOF = 6;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -240,4 +241,13 @@ class SE3
 };
 
 }  // namespace math
+
+namespace detail {
+template <typename T>
+struct is_lie_group<math::SE3<T>>
+{
+    static constexpr std::true_type value = std::true_type();
+};
+
+}  // namespace detail
 }  // namespace mc

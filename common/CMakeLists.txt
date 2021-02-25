@@ -29,3 +29,5 @@ target_link_libraries(test_hetero_collection states)
 
 add_gtest(test_circular_buffer test_circular_buffer.cxx)
 target_link_libraries(test_circular_buffer print)
+
+add_gtest(test_numerical_jacobian test_numerical_jacobian.cxx)

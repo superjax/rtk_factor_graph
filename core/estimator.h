@@ -18,7 +18,7 @@
 namespace mc {
 namespace core {
 
-class Estimator
+class KalmanFilter
 {
  public:
     struct Options
@@ -29,7 +29,7 @@ class Estimator
         FactorGraph::Options fg_options;
     };
 
-    explicit Estimator(const Options& options);
+    explicit KalmanFilter(const Options& options);
 
     // Return current estimates
     void currentState(Out<UTCTime> t, Out<math::DQuat<double>> pose, Out<Vec3> vel) const;

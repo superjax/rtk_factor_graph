@@ -342,5 +342,18 @@ TEST(DQuat, LocalParamLog)
     MATRIX_CLOSE(jac_numerical, jac_analytical, 1e-6);
 }
 
+TEST(State, BoxplusRules)
+{
+    using DQ = DQuat<double>;
+    const DQ x = DQ::Random();
+    const DQ x2 = DQ::Random();
+    const DQ::TangentVector zeros = DQ::TangentVector::Zero();
+    const DQ::TangentVector delta1 = DQ::TangentVector::Random();
+
+    DQUAT_EQ(x * DQ::exp(zeros), x);
+    DQUAT_EQ((x * DQ::exp((x.inverse() * x2).log())), x2);
+    MATRIX_CLOSE((x.inverse() * (x * DQ::exp(delta1))).log(), delta1, 1e-8);
+}
+
 }  // namespace math
 }  // namespace mc

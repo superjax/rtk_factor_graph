@@ -10,17 +10,29 @@ endif(CCACHE_FOUND)
 
 # C++ strict compilation
 set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Wstrict-aliasing -Wformat=2 -Winit-self \
-    -Wmissing-include-dirs -Wunreachable-code -Wcast-align -Wcast-qual \
-    -Wdisabled-optimization -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo \
-    -Wstrict-overflow=1 -Wno-address-of-packed-member"
+    "${CMAKE_CXX_FLAGS} -Wall -Wstrict-aliasing -Wformat=2 -Winit-self  -Wmissing-include-dirs \
+-Wunreachable-code -Wcast-align -Wcast-qual -Wdisabled-optimization -Woverloaded-virtual \
+-Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=1 -Wno-unknown-pragmas"
 )
-set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wnoexcept -Wstrict-null-sentinel -Wlogical-op -Wno-unknown-pragmas"
-)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # using Clang
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wnoexcept -Wstrict-null-sentinel -Wlogical-op -Wno-unknown-pragmas"
+    )
+else()
+    message(WARNING "Unknown Compiler ${CMAKE_CXX_COMPILER_ID}")
+endif()
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # using Clang elseif(CMAKE_CXX_COMPILER_ID STREQUAL
+# "GNU") # using GCC  else() message(WARNING) endif()
 
-# Extra features/enablements
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+if(CMAKE_BUILD_TYPE EQUAL "RELEASE")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+elseif(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+endif()
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set all warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")

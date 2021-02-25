@@ -36,3 +36,12 @@ target_link_libraries(
     wgs84
     rtklib_adapter
 )
+
+library(satellite_cache satellite_cache.cxx)
+target_link_libraries(
+    satellite_cache
+    atm_correction
+    satellite
+    satellite_state
+    utctime
+)

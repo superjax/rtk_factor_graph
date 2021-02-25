@@ -18,6 +18,7 @@ using Vec9 = Eigen::Matrix<double, 9, 1>;
 using Vec10 = Eigen::Matrix<double, 10, 1>;
 using Vec11 = Eigen::Matrix<double, 11, 1>;
 using Vec12 = Eigen::Matrix<double, 12, 1>;
+using Vec30 = Eigen::Matrix<double, 30, 1>;
 
 using Vec1f = Eigen::Matrix<float, 1, 1>;
 using Vec2f = Eigen::Matrix<float, 2, 1>;
@@ -31,6 +32,7 @@ using Vec9f = Eigen::Matrix<float, 9, 1>;
 using Vec10f = Eigen::Matrix<float, 10, 1>;
 using Vec11f = Eigen::Matrix<float, 11, 1>;
 using Vec12f = Eigen::Matrix<float, 12, 1>;
+using Vec30f = Eigen::Matrix<float, 30, 1>;
 
 using Mat1 = Eigen::Matrix<double, 1, 1>;
 using Mat2 = Eigen::Matrix<double, 2, 2>;
@@ -44,6 +46,7 @@ using Mat9 = Eigen::Matrix<double, 9, 9>;
 using Mat10 = Eigen::Matrix<double, 10, 10>;
 using Mat11 = Eigen::Matrix<double, 11, 11>;
 using Mat12 = Eigen::Matrix<double, 12, 12>;
+using Mat30 = Eigen::Matrix<double, 30, 30>;
 
 using Mat36 = Eigen::Matrix<double, 3, 6>;
 using Mat38 = Eigen::Matrix<double, 3, 8>;
@@ -118,6 +121,12 @@ bool isFinite(const Eigen::MatrixBase<Derived>& m)
     return (m.array() == m.array()).all();
 }
 
+template <typename Derived>
+bool isFinite(const Eigen::DiagonalBase<Derived>& m)
+{
+    return (m.diagonal().array() == m.diagonal().array()).all();
+}
+
 const Vec3 GRAVITY = 9.80665 * Vec3::UnitZ();
 
 namespace detail {
@@ -166,4 +175,25 @@ Derived modf(const Derived& x)
 
     return x - floored;
 }
+
+namespace detail {
+template <typename T>
+std::true_type is_eigen_test(const Eigen::MatrixBase<T>*);
+std::false_type is_eigen_test(...);
+
+template <typename T>
+struct is_eigen : public decltype(is_eigen_test(std::declval<T*>()))
+{
+};
+
+template <typename T>
+struct is_lie_group;
+
+template <typename T>
+struct is_lie_group
+{
+    static constexpr std::false_type value = std::false_type();
+};
+
+}  // namespace detail
 }  // namespace mc

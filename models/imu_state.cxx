@@ -6,15 +6,11 @@ namespace models {
 
 constexpr int ImuState::DOF;
 
-ImuState::ImuState() : alpha(data()), beta(data() + 3), gamma(data() + 6) {}
-
 ImuState::ImuState(const ImuState& other)
-    : Vec10(other), alpha(data()), beta(data() + 3), gamma(data() + 6)
 {
-}
-ImuState::ImuState(const Vec10& other)
-    : Vec10(other), alpha(data()), beta(data() + 3), gamma(data() + 6)
-{
+    alpha = other.alpha;
+    beta = other.beta;
+    gamma = other.gamma;
 }
 
 void ImuState::setIdentity()
@@ -42,13 +38,9 @@ ImuState ImuState::operator+(const ImuErrorState& dstate) const
 
 ImuState& ImuState::operator=(const ImuState& other)
 {
-    Vec10::operator=(other);
-    return *this;
-}
-
-ImuState& ImuState::operator=(const Vec10& other)
-{
-    Vec10::operator=(other);
+    alpha = other.alpha;
+    beta = other.beta;
+    gamma = other.gamma;
     return *this;
 }
 

@@ -1,4 +1,5 @@
 library(imu_state imu_state.cxx)
+target_link_libraries(imu_state check)
 add_gtest(test_imu_state test_imu_state.cxx)
 target_link_libraries(test_imu_state imu_state)
 

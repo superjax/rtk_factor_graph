@@ -3,6 +3,7 @@ include_directories(..)
 add_subdirectory(factors)
 add_subdirectory(states)
 add_subdirectory(solver)
+add_subdirectory(ekf)
 
 library(factor_graph factor_graph.cxx)
 target_link_libraries(factor_graph utctime)

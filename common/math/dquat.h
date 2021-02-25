@@ -24,12 +24,27 @@ class DQuat
     T buf_[8];
 
  public:
+    using Scalar = T;
     struct TangentVector : public Vec6
     {
         Eigen::VectorBlock<Vec6, 3> angular() { return this->template head<3>(); }
         Eigen::VectorBlock<Vec6, 3> linear() { return this->template tail<3>(); }
         const Eigen::VectorBlock<const Vec6, 3> angular() const { return this->template head<3>(); }
         const Eigen::VectorBlock<const Vec6, 3> linear() const { return this->template tail<3>(); }
+
+        template <typename Derived>
+        TangentVector& operator=(const Eigen::MatrixBase<Derived>& other)
+        {
+            Vec6::operator=(other);
+            return *this;
+        }
+
+        TangentVector() = default;
+        template <typename Derived>
+        TangentVector(const Eigen::MatrixBase<Derived>& obj) : TangentVector()
+        {
+            Vec6::operator=(obj);
+        }
 
         static TangentVector Random()
         {
@@ -122,11 +137,22 @@ class DQuat
     Vec3 translation() const { return (T)2.0 * (d_ * r_.inverse()).bar(); }
     const Quat<T>& rotation() const { return r_; }
 
-    Vec3 transformp(const Vec3& v) const { return r_.rotp(v - translation()); }
-    Vec3 transforma(const Vec3& v) const { return r_.rota(v) + translation(); }
+    template <typename Derived3>
+    Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> transformp(
+        const Eigen::MatrixBase<Derived3>& v) const
+    {
+        return r_.rotp(v.colwise() - translation());
+    }
+    template <typename Derived3>
+    Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> transforma(
+        const Eigen::MatrixBase<Derived3>& v) const
+    {
+        return r_.rota(v).colwise() + translation();
+    }
 
     static DQuat Random() { return DQuat(Quat<T>::Random(), Vec3::Random()); }
     static DQuat identity() { return DQuat(); }
+    static DQuat Identity() { return DQuat(); }
     static DQuat from_4x4(const Mat4& m)
     {
         Quat<T> q = Quat<T>::from_R(m.template block<3, 3>(0, 0));
@@ -165,8 +191,16 @@ class DQuat
         return Q;
     }
 
-    inline Vec3 rota(const Vec3& v) const { return real().rota(v); }
-    inline Vec3 rotp(const Vec3& v) const { return real().rotp(v); }
+    template <typename Derived3>
+    inline auto rota(const Eigen::MatrixBase<Derived3>& v) const
+    {
+        return real().rota(v);
+    }
+    template <typename Derived3>
+    inline auto rotp(const Eigen::MatrixBase<Derived3>& v) const
+    {
+        return real().rotp(v);
+    }
 
     template <JacobianSide SIDE = JacobianSide::LEFT>
     static DQuat exp(const Vec6& wv, Mat6* jac)
@@ -391,4 +425,13 @@ inline std::ostream& operator<<(std::ostream& os, const DQuat<T>& q)
 }
 
 }  // namespace math
+
+namespace detail {
+template <typename T>
+struct is_lie_group<math::DQuat<T>>
+{
+    static constexpr std::true_type value = std::true_type();
+};
+
+}  // namespace detail
 }  // namespace mc

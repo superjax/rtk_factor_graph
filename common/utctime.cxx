@@ -47,6 +47,11 @@ bool UTCTime::operator==(const UTCTime& other) const
     return (sec == other.sec && nsec == other.nsec);
 }
 
+bool UTCTime::operator!=(const UTCTime& other) const
+{
+    return (sec != other.sec || nsec != other.nsec);
+}
+
 UTCTime UTCTime::operator-(const UTCTime& other) const
 {
     UTCTime out;

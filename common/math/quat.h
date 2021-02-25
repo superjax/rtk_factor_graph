@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <cmath>
 
 #include "common/defs.h"
@@ -25,6 +26,7 @@ class Quat
 
  public:
     static constexpr int DOF = 3;
+    using Scalar = T;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Quat() : buf_{1, 0, 0, 0}, arr_(buf_) {}
 
@@ -457,18 +459,29 @@ class Quat
         return out;
     }
 
+    // template <typename Derived3>
+    // static cross(const Vec3& x, const Eigen::MatrixBase<Derived3> m)
+    // {
+    // }
+
     // The same as R.T * v but faster
-    Vec3 rota(const Vec3& v) const
+    template <typename Derived3>
+    Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> rota(
+        const Eigen::MatrixBase<Derived3>& v) const
     {
-        Vec3 t = (T)2.0 * v.cross(arr_.template segment<3>(1));
-        return v - w() * t + t.cross(arr_.template segment<3>(1));
+        Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> t =
+            (T)2.0 * v.colwise().cross(arr_.template segment<3>(1));
+        return v - w() * t + t.colwise().cross(arr_.template segment<3>(1));
     }
 
     // The same as R * v but faster
-    Vec3 rotp(const Vec3& v) const
+    template <typename Derived3>
+    Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> rotp(
+        const Eigen::MatrixBase<Derived3>& v) const
     {
-        Vec3 t = (T)2.0 * v.cross(arr_.template segment<3>(1));
-        return v + w() * t + t.cross(arr_.template segment<3>(1));
+        Eigen::Matrix<T, 3, Derived3::ColsAtCompileTime> t =
+            (T)2.0 * v.colwise().cross(arr_.template segment<3>(1));
+        return v + w() * t + t.colwise().cross(arr_.template segment<3>(1));
     }
 
     Quat& invert() { arr_.template block<3, 1>(1, 0) *= (T)-1.0; }
@@ -511,38 +524,38 @@ class Quat
     }
 };
 
-// Specialized double-versions of rotation
-template <>
-inline Vec3 Quat<double>::rotp(const Vec3& v) const
-{
-    // clang-format off
-        const double qvw = x() * v.x() + y() * v.y() + z() * v.z();
-        const double qvx = w() * v.x() - y() * v.z() + z() * v.y();
-        const double qvy = w() * v.y() + x() * v.z() - z() * v.x();
-        const double qvz = w() * v.z() - x() * v.y() + y() * v.x();
+// // Specialized double-versions of rotation
+// template <>
+// Vec3 Quat<double>::rotp(const Vec3& v) const
+// {
+//     // clang-format off
+//         const double qvw = x() * v.x() + y() * v.y() + z() * v.z();
+//         const double qvx = w() * v.x() - y() * v.z() + z() * v.y();
+//         const double qvy = w() * v.y() + x() * v.z() - z() * v.x();
+//         const double qvz = w() * v.z() - x() * v.y() + y() * v.x();
 
-        Vec3 out(qvw * x() + qvx * w() + qvy * z() - qvz * y(),
-                 qvw * y() - qvx * z() + qvy * w() + qvz * x(),
-                 qvw * z() + qvx * y() - qvy * x() + qvz * w());
-    // clang-format on
-    return out;
-}
+//         Vec3 out(qvw * x() + qvx * w() + qvy * z() - qvz * y(),
+//                  qvw * y() - qvx * z() + qvy * w() + qvz * x(),
+//                  qvw * z() + qvx * y() - qvy * x() + qvz * w());
+//     // clang-format on
+//     return out;
+// }
 
-template <>
-inline Vec3 Quat<double>::rota(const Vec3& v) const
-{
-    // clang-format off
-        const double qvw = -x() * v.x() - y() * v.y() - z() * v.z();
-        const double qvx =  w() * v.x() + y() * v.z() - z() * v.y();
-        const double qvy =  w() * v.y() - x() * v.z() + z() * v.x();
-        const double qvz =  w() * v.z() + x() * v.y() - y() * v.x() ;
+// template <>
+// Vec3 Quat<double>::rota(const Vec3& v) const
+// {
+//     // clang-format off
+//         const double qvw = -x() * v.x() - y() * v.y() - z() * v.z();
+//         const double qvx =  w() * v.x() + y() * v.z() - z() * v.y();
+//         const double qvy =  w() * v.y() - x() * v.z() + z() * v.x();
+//         const double qvz =  w() * v.z() + x() * v.y() - y() * v.x() ;
 
-        Vec3 out(-qvw * x() + qvx * w() - qvy * z() + qvz * y(),
-                 -qvw * y() + qvx * z() + qvy * w() - qvz * x(),
-                 -qvw * z() - qvx * y() + qvy * x() + qvz * w());
-    // clang-format on
-    return out;
-}
+//         Vec3 out(-qvw * x() + qvx * w() - qvy * z() + qvz * y(),
+//                  -qvw * y() + qvx * z() + qvy * w() - qvz * x(),
+//                  -qvw * z() - qvx * y() + qvy * x() + qvz * w());
+//     // clang-format on
+//     return out;
+// }
 
 template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const Quat<T>& q)
@@ -562,4 +575,13 @@ Quat<T> operator*(const T& s, const Quat<T>& q)
 typedef Quat<double> Quatd;
 
 }  // namespace math
+
+namespace detail {
+template <typename T>
+struct is_lie_group<math::Quat<T>>
+{
+    static constexpr std::true_type value = std::true_type();
+};
+
+}  // namespace detail
 }  // namespace mc

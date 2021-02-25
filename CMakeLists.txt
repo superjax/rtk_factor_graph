@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 
-# set(CMAKE_C_COMPILER "clang") set(CMAKE_CXX_COMPILER "clang++")
-
-# set(CMAKE_C_COMPILER "gcc") set(CMAKE_CXX_COMPILER "g++")
-
 project(globalai)
 
 # Project-Wide Settings
@@ -30,6 +26,7 @@ include(cmake/GTestRule.cmake)
 include(cmake/BuildGuard.cmake)
 include(cmake/PyRule.cmake)
 include(cmake/CapnpRule.cmake)
+include(cmake/EkfRule.cmake)
 
 build_guard()
 

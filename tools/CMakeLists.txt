@@ -25,4 +25,4 @@ target_link_libraries(
 py_executable(plot_gathered_eph plot_gathered_eph.py)
 
 executable(post_process post_process.cxx)
-target_link_libraries(post_process)
+target_link_libraries(post_process config log_reader)

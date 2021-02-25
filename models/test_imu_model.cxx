@@ -20,6 +20,12 @@ namespace models {
     MATRIX_CLOSE((x1).beta, (x2).beta, tol);   \
     QUAT_CLOSE((x1).gamma, (x2).gamma, tol)
 
+#define IMU_STATE_EQ(x1, x2)                    \
+    MATRIX_CLOSE((x1).alpha, (x2).alpha, 1e-8); \
+    MATRIX_CLOSE((x1).beta, (x2).beta, 1e-8);   \
+    MATRIX_CLOSE((x1).beta, (x2).beta, 1e-8);   \
+    QUAT_CLOSE((x1).gamma, (x2).gamma, 1e-8)
+
 TEST(ImuModel, integrateRandomImu)
 {
     math::Jet<double> x = math::Jet<double>::Identity();
@@ -314,7 +320,7 @@ TEST(ImuFactor, Split)
     DQUAT_EQ(xm, xm_hat);
     MAT_EQ(vf_hat, vf);
     MAT_EQ(vm_hat, vm);
-    MAT_EQ(y_split, f.state());
+    IMU_STATE_EQ(y_split, f.state());
 }
 
 TEST(ImuFactor, SplitMiddle)
@@ -509,14 +515,12 @@ class ImuFactorJacobian : public ::testing::Test
 
 TEST_F(ImuFactorJacobian, dRes_dStartPose)
 {
-    auto fun = [this](const Vec8& _start_pose, double* _jac) {
-        const double* parameters[] = {_start_pose.data(), end_pose.data(), start_vel.data(),
-                                      end_vel.data(), bias.data()};
-        double* jacobians[] = {
-            _jac, nullptr, nullptr, nullptr, nullptr,
-        };
+    const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
+                                  end_vel.data(), bias.data()};
+    auto fun = [&](const Vec8& _start_pose) {
+        parameters[0] = _start_pose.data();
         Vec9 residuals;
-        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
+        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), nullptr));
         return residuals;
     };
 
@@ -524,23 +528,23 @@ TEST_F(ImuFactorJacobian, dRes_dStartPose)
     start_pose = math::DQuat<double>::identity();
 
     MatRM98 J;
-    fun(start_pose.arr_, J.data());
+    Vec9 residuals;
+    double* jacobians[] = {J.data(), nullptr, nullptr, nullptr, nullptr};
+    EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
 
-    Mat98 JFD = compute_jac(Vec8(start_pose.arr_), fun, nullptr);
+    Mat98 JFD = compute_jac(Vec8(start_pose.arr_), fun);
 
     MATRIX_CLOSE(J.rightCols(7), JFD.rightCols(7), 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dRes_dEndPose)
 {
-    auto fun = [this](const Vec8& _end_pose, double* _jac) {
-        const double* parameters[] = {start_pose.data(), _end_pose.data(), start_vel.data(),
-                                      end_vel.data(), bias.data()};
-        double* jacobians[] = {
-            nullptr, _jac, nullptr, nullptr, nullptr,
-        };
+    const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
+                                  end_vel.data(), bias.data()};
+    auto fun = [&](const Vec8& _end_pose) {
+        parameters[1] = _end_pose.data();
         Vec9 residuals;
-        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
+        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), nullptr));
         return residuals;
     };
 
@@ -548,58 +552,61 @@ TEST_F(ImuFactorJacobian, dRes_dEndPose)
     end_pose = math::DQuat<double>::identity();
 
     MatRM98 J;
-    fun(end_pose.arr_, J.data());
+    double* jacobians[] = {nullptr, J.data(), nullptr, nullptr, nullptr};
+    Vec9 residuals;
+    EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
 
-    Mat98 JFD = compute_jac(Vec8(end_pose.arr_), fun, nullptr);
+    Mat98 JFD = compute_jac(Vec8(end_pose.arr_), fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dRes_dStartVel)
 {
-    auto fun = [this](const Vec3& _start_vel, double* _jac) {
-        const double* parameters[] = {start_pose.data(), end_pose.data(), _start_vel.data(),
-                                      end_vel.data(), bias.data()};
-        double* jacobians[] = {
-            nullptr, nullptr, _jac, nullptr, nullptr,
-        };
+    const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
+                                  end_vel.data(), bias.data()};
+    auto fun = [&](const Vec3& _start_vel) {
+        parameters[2] = _start_vel.data();
         Vec9 residuals;
-        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
+        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), nullptr));
         return residuals;
     };
 
     MatRM93 J;
-    fun(start_vel, J.data());
+    double* jacobians[] = {nullptr, nullptr, J.data(), nullptr, nullptr};
+    Vec9 residuals;
+    EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
 
-    Mat93 JFD = compute_jac(start_vel, fun, nullptr);
+    Mat93 JFD = compute_jac(start_vel, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dRes_dEndVel)
 {
-    auto fun = [this](const Vec3& _end_vel, double* _jac) {
-        const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
-                                      _end_vel.data(), bias.data()};
-        double* jacobians[] = {
-            nullptr, nullptr, nullptr, _jac, nullptr,
-        };
+    const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
+                                  end_vel.data(), bias.data()};
+    auto fun = [&](const Vec3& _end_vel) {
+        parameters[3] = _end_vel.data();
+
         Vec9 residuals;
-        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
+        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), nullptr));
         return residuals;
     };
 
     MatRM93 J;
-    fun(end_vel, J.data());
+    double* jacobians[] = {nullptr, nullptr, nullptr, J.data(), nullptr};
+    Vec9 residuals;
+    EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
 
-    Mat93 JFD = compute_jac(end_vel, fun, nullptr);
+    Mat93 JFD = compute_jac(end_vel, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dAdjustedState_dAdjustment)
 {
-    auto fun = [this](const Vec9& bias_adjustment, double* _jac) {
+    auto fun = [this](const Vec9& bias_adjustment) {
         ImuState adjusted_state = integrator.state() + bias_adjustment;
         return adjusted_state;
     };
@@ -615,14 +622,14 @@ TEST_F(ImuFactorJacobian, dAdjustedState_dAdjustment)
     J.block<3, 3>(3, 3).setIdentity();
     J.block<3, 3>(6, 6) = dexp.transpose();
 
-    Mat9 JFD = compute_jac(bias_adjustment, fun, nullptr);
+    Mat9 JFD = compute_jac(bias_adjustment, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dAdjustedState_dBias)
 {
-    auto fun = [this](const Vec6& _bias, double* _jac) {
+    auto fun = [this](const Vec6& _bias) {
         const Vec9 bias_adjustment = integrator.dStatedBias() * _bias;
         ImuState adjusted_state = integrator.state() + bias_adjustment;
         return adjusted_state;
@@ -641,32 +648,32 @@ TEST_F(ImuFactorJacobian, dAdjustedState_dBias)
 
     Mat96 J = d_adjusted_by_state * integrator.dStatedBias();
 
-    Mat96 JFD = compute_jac(bias, fun, nullptr);
+    Mat96 JFD = compute_jac(bias, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
-template <typename Fun, typename... Args>
-Eigen::MatrixXd compute_jac_imu(const ImuState& x, const Fun& fun, const Args&... args)
-{
-    const double eps = 1e-8;
-    Eigen::MatrixXd out;
-    for (int i = 0; i < ImuState::DOF; ++i)
-    {
-        const ImuState xp = x + (ImuErrorState::Unit(i) * eps);
-        const ImuState xm = x + (ImuErrorState::Unit(i) * -eps);
-        const Vec9 ym = fun(xm, args...);
-        const Vec9 yp = fun(xp, args...);
+// template <typename Fun, typename... Args>
+// Eigen::MatrixXd compute_jac_imu(const ImuState& x, const Fun& fun, const Args&... args)
+// {
+//     const double eps = 1e-8;
+//     Eigen::MatrixXd out;
+//     for (int i = 0; i < ImuState::DOF; ++i)
+//     {
+//         const ImuState xp = x + (ImuErrorState::Unit(i) * eps);
+//         const ImuState xm = x + (ImuErrorState::Unit(i) * -eps);
+//         const Vec9 ym = fun(xm, args...);
+//         const Vec9 yp = fun(xp, args...);
 
-        if (out.rows() == 0 || out.cols() == 0)
-        {
-            out.resize(decltype(yp - yp)::RowsAtCompileTime, ImuState::DOF);
-        }
+//         if (out.rows() == 0 || out.cols() == 0)
+//         {
+//             out.resize(decltype(yp - yp)::RowsAtCompileTime, ImuState::DOF);
+//         }
 
-        out.col(i) = (yp - ym) / (2.0 * eps);
-    }
-    return out;
-}
+//         out.col(i) = (yp - ym) / (2.0 * eps);
+//     }
+//     return out;
+// }
 
 TEST_F(ImuFactorJacobian, dRes_dAdjusted)
 {
@@ -707,26 +714,28 @@ TEST_F(ImuFactorJacobian, dRes_dAdjusted)
     J.block<3, 3>(3, 6) = -adjusted_state.gamma.R().transpose() * skew(end_vel);
     J.block<3, 3>(6, 6) = -(rot_error.Ad() * log_jac).transpose();
 
-    const Mat9 JFD = compute_jac_imu(adjusted_state, fun);
+    const Mat9 JFD = compute_jac(adjusted_state, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }
 
 TEST_F(ImuFactorJacobian, dRes_dBias)
 {
-    auto fun = [this](const Vec6& _bias, double* _jac) {
-        const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
-                                      end_vel.data(), _bias.data()};
-        double* jacobians[] = {nullptr, nullptr, nullptr, nullptr, _jac};
+    const double* parameters[] = {start_pose.data(), end_pose.data(), start_vel.data(),
+                                  end_vel.data(), bias.data()};
+    auto fun = [&](const Vec6& _bias) {
+        parameters[4] = _bias.data();
         Vec9 residuals;
-        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
+        EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), nullptr));
         return residuals;
     };
 
     MatRM96 J;
-    fun(bias, J.data());
+    double* jacobians[] = {nullptr, nullptr, nullptr, nullptr, J.data()};
+    Vec9 residuals;
+    EXPECT_TRUE(integrator.Evaluate(parameters, residuals.data(), jacobians));
 
-    Mat96 JFD = compute_jac(bias, fun, nullptr);
+    Mat96 JFD = compute_jac(bias, fun);
 
     MATRIX_CLOSE(J, JFD, 1e-6);
 }

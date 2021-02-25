@@ -7,6 +7,112 @@
 
 namespace mc {
 
+double rel_err(double a, double b)
+{
+    return std::abs(a - b) / std::max({std::abs(a), std::abs(b), 1.0});
+}
+
+template <typename Derived1, typename Derived2>
+std::vector<int> col_print_width(const Derived1& a, const Derived2& b)
+{
+    std::vector<int> widths;
+    for (int col = 0; col < a.cols(); ++col)
+    {
+        bool zero = true;
+        bool one = false;
+        for (int row = 0; row < a.rows(); ++row)
+        {
+            if (a(row, col) != 0 || b(row, col) != 0)
+            {
+                zero = false;
+                if (a(row, col) == 1 || a(row, col) == -1 || b(row, col) == 1 || b(row, col) == -1)
+                {
+                    one = true;
+                }
+                else
+                {
+                    one = false;
+                    break;
+                }
+            }
+        }
+        widths.push_back(zero ? 0 : one ? 2 : 12);
+    }
+    return widths;
+}
+
+template <typename Derived1, typename Derived2>
+std::string print_side_by_side(const Derived1& a, const Derived2& b, const double tol)
+{
+    std::stringstream ss;
+    const auto widths = col_print_width(a, b);
+    for (typename Derived1::Index row = 0; row < a.rows(); ++row)
+    {
+        const auto print_row_side_by_side = [&](const auto& mat) {
+            for (int col = 0; col < mat.cols(); ++col)
+            {
+                if (col != 0)
+                {
+                    ss << ", ";
+                }
+                if (rel_err(a(row, col), b(row, col)) > tol)
+                {
+                    ss << "\033[1;31m" << std::setw(widths[col]) << mat(col) << "\033[0m";
+                }
+                else if (a(row, col) != 0)
+                {
+                    ss << "\033[0;34m" << std::setw(widths[col]) << mat(col) << "\033[0m";
+                }
+                else
+                {
+                    ss << std::setw(widths[col]) << mat(col);
+                }
+            }
+        };
+        print_row_side_by_side(a.row(row));
+        ss << "    ";
+        print_row_side_by_side(b.row(row));
+        ss << "\n";
+    }
+    return ss.str();
+}
+
+template <typename Derived1, typename Derived2>
+std::string print_after_one_another(const Derived1& a, const Derived2& b, const double tol)
+{
+    std::stringstream ss;
+    const auto widths = col_print_width(a, b);
+    const auto print_matrix = [&](const auto& mat) {
+        for (typename Derived1::Index row = 0; row < mat.rows(); ++row)
+        {
+            for (int col = 0; col < mat.cols(); ++col)
+            {
+                if (col != 0)
+                {
+                    ss << ", ";
+                }
+                if (rel_err(a(row, col), b(row, col)) > tol)
+                {
+                    ss << "\033[1;31m" << std::setw(widths[col]) << mat(row, col) << "\033[0m";
+                }
+                else if (a(row, col) != 0)
+                {
+                    ss << "\033[0;34m" << std::setw(widths[col]) << mat(row, col) << "\033[0m";
+                }
+                else
+                {
+                    ss << std::setw(widths[col]) << mat(row, col);
+                }
+            }
+            ss << "\n";
+        }
+    };
+    print_matrix(a);
+    ss << "\n\n";
+    print_matrix(b);
+    return ss.str();
+}
+
 template <typename Derived1, typename Derived2>
 ::testing::AssertionResult matrixClose(const char* a_expr,
                                        const char* b_expr,
@@ -22,25 +128,33 @@ template <typename Derived1, typename Derived2>
                << a_expr << ": " << a.rows() << "x" << a.cols() << "\n"
                << b_expr << ": " << b.rows() << "x" << b.cols();
     }
+    bool error = false;
+    double max_error = 0;
     for (typename Derived1::Index row = 0; row < a.rows(); ++row)
     {
         for (typename Derived1::Index col = 0; col < b.cols(); ++col)
         {
-            if (std::abs(a(row, col) - b(row, col)) > tol)
+            const double err = rel_err(a(row, col), b(row, col));
+            if (err > tol)
             {
-                return ::testing::AssertionFailure()
-                       << "element (" << row << "," << col << ") of " << a_expr << " and " << b_expr
-                       << " is not within " << tol_expr << "\n"
-                       << a_expr << ": \n"
-                       << a << "\n"
-                       << b_expr << ": \n"
-                       << b << "\n"
-                       << "error: " << std::abs(a(row, col) - b(row, col)) << "\n"
-                       << "tol: " << tol;
+                error = true;
+                max_error = (err > max_error) ? err : max_error;
             }
         }
     }
-    return ::testing::AssertionSuccess();
+    if (!error)
+    {
+        return ::testing::AssertionSuccess();
+    }
+
+    static constexpr int MAX_SIDE_BY_SIDE_COLS = 6;
+    std::string printout = (a.cols() > MAX_SIDE_BY_SIDE_COLS) ? print_after_one_another(a, b, tol)
+                                                              : print_side_by_side(a, b, tol);
+
+    return ::testing::AssertionFailure()
+           << a_expr << " and " << b_expr << " are not within (" << tol_expr << " )\n"
+           << "max error: " << max_error << " > " << tol << "\n"
+           << printout << "\n";
 }
 
 ::testing::AssertionResult dquatClose(const char* a_expr,

@@ -38,6 +38,7 @@ target_link_libraries(
     yaml
     serialize
     print
+    stdc++fs
 )
 add_gtest(log_reader_test log_reader_test.cxx)
 target_link_libraries(log_reader_test log_reader log_writer)

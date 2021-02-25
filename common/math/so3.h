@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <iostream>
+
 #include "common/math/quat.h"
 #include "common/matrix_defs.h"
 
@@ -15,6 +16,7 @@ template <typename T>
 class SO3
 {
  public:
+    using Scalar = T;
     static constexpr int DOF = 3;
     using Vec3 = Eigen::Matrix<T, 3, 1>;
     using Mat3 = Eigen::Matrix<T, 3, 3>;
@@ -282,4 +284,13 @@ inline std::ostream& operator<<(std::ostream& os, const SO3<double>& r)
 }
 
 }  // namespace math
+
+namespace detail {
+template <typename T>
+struct is_lie_group<math::SO3<T>>
+{
+    static constexpr std::true_type value = std::true_type();
+};
+
+}  // namespace detail
 }  // namespace mc

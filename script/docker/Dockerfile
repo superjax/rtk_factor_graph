@@ -14,4 +14,8 @@ RUN apt-get update && \
     lcov \
     ccache \
     libboost-system-dev \
+    clang \
     libatlas-base-dev && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+RUN pip3 install scipy

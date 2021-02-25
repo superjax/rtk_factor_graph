@@ -1,0 +1,87 @@
+namespaces:
+  - mc
+  - ekf
+
+state_name: State
+error_state_name: ErrorState
+input_name: Input
+
+state_composition:
+  pose: DQuat
+  vel: Vec3
+  acc_bias: Vec3
+  gyro_bias: Vec3
+  gps_clk: Vec2
+  gal_clk: Vec2
+  glo_clk: Vec2
+  p_b2g: Vec3
+  T_I2e: DQuat
+  sd: Vec30
+
+extra_members:
+  accel: Vec3
+  omega: Vec3
+
+measurements:
+  pointPos:
+    type: Vec6
+    size: 6
+    gating_probability: 0.95
+    states:
+      - pose
+      - T_I2e
+      - p_b2g
+      - vel
+  gps_obs:
+    type: Vec2
+    size: 2
+    gating_probability: 0.95
+    states:
+      - pose
+      - T_I2e
+      - p_b2g
+      - gps_clk
+      - vel
+  gal_obs:
+    type: Vec2
+    size: 2
+    gating_probability: 0.95
+    states:
+      - pose
+      - T_I2e
+      - p_b2g
+      - gal_clk
+      - vel
+  glo_obs:
+    type: Vec2
+    size: 2
+    gating_probability: 0.95
+    states:
+      - pose
+      - T_I2e
+      - p_b2g
+      - glo_clk
+      - vel
+  fix_and_hold:
+    type: Vec30
+    size: 30
+    gating_probability: 0.90
+    states:
+      - sd
+
+input:
+  accel: Vec3
+  gyro: Vec3
+
+dynamics:
+  #  pose, vel, angular_vel, acc_bias, gyro_bias, gps_clk, gal_clk, glo_clk, p_b2g, T_I2e, sd,
+  pose: [[pose, vel, gyro_bias], [gyro]]
+  vel: [[pose, acc_bias], [accel]]
+  acc_bias: [[], []]
+  gyro_bias: [[], []]
+  gps_clk: [[gps_clk], []]
+  gal_clk: [[gal_clk], []]
+  glo_clk: [[glo_clk], []]
+  p_b2g: [[], []]
+  T_I2e: [[], []]
+  sd: [[], []]

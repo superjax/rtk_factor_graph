@@ -4,21 +4,9 @@
 #include <type_traits>
 
 #include "common/check.h"
+#include "common/matrix_defs.h"
 
 namespace mc {
-
-namespace detail {
-// These functions are never defined.
-template <typename T>
-std::true_type is_eigen_test(const Eigen::MatrixBase<T>*);
-std::false_type is_eigen_test(...);
-
-template <typename T>
-struct is_eigen : public decltype(is_eigen_test(std::declval<T*>()))
-{
-};
-
-}  // namespace detail
 
 // This is a simple wrapper for a reference to a type.  It is intended to flag an argument of a
 // function as an output.  It acts a lot like a pointer to the object

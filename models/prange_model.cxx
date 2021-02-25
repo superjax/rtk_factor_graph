@@ -1,9 +1,10 @@
 #include "models/prange_model.h"
+
+#include <limits>
+
 #include "common/check.h"
 #include "common/defs.h"
 #include "common/matrix_defs.h"
-
-#include <limits>
 
 namespace mc {
 namespace models {
@@ -27,7 +28,7 @@ void PseudorangeModel::computeConstants(const Vec3& rec_pos_ecef)
 {
     check(sat_.almanacSize() > 0, "Cannot create factor without ephemeris");
 
-    sat_.getState(obs_.t, Out(sat_state_));
+    sat_.getState(obs_.t, make_out(sat_state_));
     double dt = std::numeric_limits<double>::max();
     while (abs(dt) * sat_state_.vel.norm() > 1e-3)  // get millimeter-accurate
     {
@@ -38,7 +39,7 @@ void PseudorangeModel::computeConstants(const Vec3& rec_pos_ecef)
 
         double tau = range / C_LIGHT;
         dt = tau - (obs_.t - sat_state_.t).toSec();
-        sat_.getState(sat_state_.t - dt, Out(sat_state_));
+        sat_.getState(sat_state_.t - dt, make_out(sat_state_));
     }
 
     satellite::computeAtmCorrection(obs_.t, rec_pos_ecef, sat_state_, Out(atm_));

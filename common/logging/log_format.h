@@ -13,6 +13,7 @@
 #include "common/error.h"
 #include "common/out.h"
 #include "common/print.h"
+#include "common/utctime.h"
 
 namespace mc {
 
@@ -125,8 +126,9 @@ YAML::Node __make_format_impl(const std::array<std::string, sizeof...(Args)>& na
                               const Args&... args)
 {
     YAML::Node out;
-    std::stringstream ss;
+    out["t"] = format(UTCTime(0));
     const auto fun = [&](const std::string& name, YAML::Node node) {
+        check(name != "t", "Use of reserved field name 't'");
         out[name] = node;
         return 1;
     };

@@ -23,7 +23,7 @@ fi
 
 while read p; do
   echo_bblue Running Tests `basename "$p"`
-  $p
+  $p --gtest_output="xml:$p-report.xml"
   RESULT=$?
   if [ $RESULT -ne 0 ]; then
       FAILED_TESTS+=($p)
