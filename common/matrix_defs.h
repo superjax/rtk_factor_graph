@@ -74,6 +74,18 @@ using Mat8f = Eigen::Matrix<float, 8, 8>;
 using Mat9f = Eigen::Matrix<float, 9, 9>;
 using Mat10f = Eigen::Matrix<float, 10, 10>;
 
+using DiagMat1 = Eigen::DiagonalMatrix<double, 1>;
+using DiagMat2 = Eigen::DiagonalMatrix<double, 2>;
+using DiagMat3 = Eigen::DiagonalMatrix<double, 3>;
+using DiagMat4 = Eigen::DiagonalMatrix<double, 4>;
+using DiagMat5 = Eigen::DiagonalMatrix<double, 5>;
+using DiagMat6 = Eigen::DiagonalMatrix<double, 6>;
+using DiagMat7 = Eigen::DiagonalMatrix<double, 7>;
+using DiagMat8 = Eigen::DiagonalMatrix<double, 8>;
+using DiagMat9 = Eigen::DiagonalMatrix<double, 9>;
+using DiagMat10 = Eigen::DiagonalMatrix<double, 10>;
+using DiagMat30 = Eigen::DiagonalMatrix<double, 30>;
+
 static const Eigen::Vector3d e_x(1.0, 0, 0);
 static const Eigen::Vector3d e_y(0, 1.0, 0);
 static const Eigen::Vector3d e_z(0, 0, 1.0);

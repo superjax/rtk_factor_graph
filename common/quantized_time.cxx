@@ -2,6 +2,12 @@
 
 namespace mc {
 
+QuantizedTime& QuantizedTime::operator=(const UTCTime& other)
+{
+    UTCTime::operator=(other);
+    return *this;
+}
+
 bool QuantizedTime::operator>(const UTCTime& other) const
 {
     return ((*this) - other).toSec() > resolution_half;

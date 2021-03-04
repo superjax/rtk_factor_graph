@@ -26,6 +26,8 @@ class RtkEkf : public RtkEkfBase<RtkEkf>
                                const Input& u,
                                RtkEkf::StateJac* dxdx,
                                RtkEkf::InputJac* dxdu);
+
+    Vec3 p_e_g2e() const { return x().T_I2e.transformp(x().pose.transforma(x().p_b2g)); }
 };
 
 }  // namespace ekf

@@ -129,7 +129,7 @@ class ObsMeasJacTest : public ::testing::Test
 
 typedef ::testing::Types<gpsObsMeas, galObsMeas, gloObsMeas> MeasurementTypes;
 
-TYPED_TEST_CASE(ObsMeasJacTest, MeasurementTypes);
+TYPED_TEST_SUITE(ObsMeasJacTest, MeasurementTypes);
 
 TYPED_TEST(ObsMeasJacTest, JacobianTest)
 {
@@ -227,7 +227,7 @@ TEST(DynamicsTest, InputJacobianTest)
     RtkEkf::InputJac B;
     RtkEkf::dynamics(x, u0, nullptr, &B);
 
-    MATRIX_CLOSE(B, fd, 1e-8);
+    MATRIX_CLOSE(B, fd, 1e-7);
 }
 
 }  // end namespace ekf

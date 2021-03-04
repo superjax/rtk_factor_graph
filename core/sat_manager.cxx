@@ -1,7 +1,6 @@
 #include "core/sat_manager.h"
 
 namespace mc {
-namespace core {
 
 template <typename T, int SIZE>
 static const T* find(int sat_num, const CircularBuffer<T, SIZE>& sat_vec)
@@ -92,5 +91,4 @@ Error SatelliteManager::getSat(int gnss_id,
     return Error::none();
 }
 
-}  // namespace core
 }  // namespace mc

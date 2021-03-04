@@ -7,7 +7,6 @@
 #include "common/satellite/satellite.h"
 
 namespace mc {
-namespace core {
 
 class SatelliteManager
 {
@@ -31,5 +30,4 @@ class SatelliteManager
     CircularBuffer<satellite::Satellite<GalEph>, MAX_SAT> gal_;
 };
 
-}  // namespace core
 }  // namespace mc

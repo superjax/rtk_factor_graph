@@ -22,6 +22,13 @@ def begin_namespaces(cfg):
     return "\n".join([f"namespace {ns} {{" for ns in cfg['namespaces']])
 
 
+def includes(cfg):
+    if 'includes' not in cfg.keys():
+        return ""
+    else:
+        return "\n".join([f'#include "{inc}' for inc in cfg['includes']])
+
+
 def end_namespaces(cfg):
     return "\n".join(f"}} // end namespace {ns}" for ns in reversed(cfg['namespaces']))
 
@@ -131,8 +138,6 @@ def boxplus_vector_impl(cfg):
             lines.append(f"xp.{k} =  {k} * {v}::exp({dx});")
         else:
             lines.append(f"xp.{k} = {dx} + {k};")
-    for k in cfg["extra_members"].keys():
-        lines.append(f"xp.{k} = {k};")
     lines.append("return xp;")
     return "\n    ".join(lines)
 
@@ -177,8 +182,6 @@ def state_random_impl(cfg):
     lines = [f"{cfg['state_name']} x;"]
     for k, v in cfg["state_composition"].items():
         lines.append(f"x.{k} = {v}::Random();")
-    for k, v in cfg["extra_members"].items():
-        lines.append(f"x.{k} = {v}::Random();")
     lines.append("return x;")
     return "\n    ".join(lines)
 
@@ -190,17 +193,8 @@ def identity_impl(cfg):
             lines.append(f"x.{k} = {v}::Identity();")
         else:
             lines.append(f"x.{k}.setZero();")
-    for k, v in cfg["extra_members"].items():
-        if is_lie(v):
-            lines.append(f"x.{k} = {v}::Identity();")
-        else:
-            lines.append(f"x.{k}.setZero();")
     lines.append("return x;")
     return "\n    ".join(lines)
-
-
-def extra_assign(cfg):
-    return "\n    ".join([f"{key} = other.{key};" for key in cfg["extra_members"].keys()])
 
 
 def jac_types(cfg):
@@ -244,18 +238,6 @@ def jac_types(cfg):
     return "\n    ".join(lines)
 
 
-def eigen_aliases():
-    out = [
-        "template<int Rows, int Cols>",
-        "using Mat = typename Eigen::Matrix<double, Rows, Cols>;",
-        "template<int Rows>",
-        "using Vec = typename Eigen::Matrix<double, Rows, 1>;",
-        "template<typename T, int R, int C>",
-        "using BlkMat = Eigen::Block<T, R, C>;",
-    ]
-    return out
-
-
 def meas_types(cfg):
     def make_jacobian(meas_cfg):
         out_size = meas_cfg["size"]
@@ -280,7 +262,7 @@ def meas_types(cfg):
 
     def make_meas(cfg, key):
         meas_cfg = cfg["measurements"][key]
-        lines = eigen_aliases()
+        lines = []
         lines.append(f"struct {make_camel(key)}Meas {{")
         lines.append(f"    using Residual = Vec<{meas_cfg['size']}>;")
         lines.append(f"    using Covariance = Eigen::DiagonalMatrix<double, {meas_cfg['size']}>;")
@@ -288,6 +270,13 @@ def meas_types(cfg):
         lines.append(f"    static constexpr double MAX_MAHAL = {compute_max_mahal(cfg, key)};")
         lines.append(f"    static constexpr double MAX_PROB = {meas_cfg['gating_probability']};")
         lines.append(f"    static constexpr int SIZE = {meas_cfg['size']};")
+        lines.append(f"    ZType z;")
+        if 'metadata' in meas_cfg.keys():
+            for item in meas_cfg['metadata']:
+                lines.append(f"    {item[0]} {item[1]};")
+        if 'constants' in meas_cfg.keys():
+            for item in meas_cfg['constants']:
+                lines.append(f"    static constexpr {item[0]} {item[1]} = {item[2]};")
         lines.append("")
         lines.append(make_jacobian(meas_cfg))
         lines.append("};")
@@ -332,7 +321,6 @@ def state_header(cfg):
         INPUT_INDEXES=input_indexes(cfg),
         EXTRA_TYPEDEFS=extra_typedefs(cfg),
         INPUT_SIZE=input_size(cfg),
-        EXTRA_MEMBERS="\n    ".join([f"{v} {k};" for k, v in cfg["extra_members"].items()]),
         DOF=dof(cfg),
         END_NAMESPACES=end_namespaces(cfg)
     )
@@ -348,7 +336,6 @@ def state_impl(cfg):
         STATE_INIT_LIST=state_init_list(cfg),
         BOXPLUS_IMPL=boxplus_impl(cfg),
         BOXPLUS_VECTOR_IMPL=boxplus_vector_impl(cfg),
-        EXTRA_ASSIGN=extra_assign(cfg),
         SELF_PLUS_IMPL=self_plus_impl(cfg),
         SELF_PLUS_VECTOR_IMPL=self_plus_vector_impl(cfg),
         Input=cfg["input_name"],
@@ -364,6 +351,7 @@ def state_impl(cfg):
 def ekf_header(cfg):
     return EKF_HEADER_TEMPLATE.format(
         DESTINATION_DIR=cfg["destination"],
+        INCLUDES=includes(cfg),
         BEGIN_NAMESPACES=begin_namespaces(cfg),
         EkfType=cfg["kalman_filter_class"],
         ErrorState=cfg["error_state_name"],

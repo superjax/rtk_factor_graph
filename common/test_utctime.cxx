@@ -27,6 +27,13 @@ TEST(Time, FromSeconds)
     EXPECT_EQ(t1, t2);
 }
 
+TEST(Time, Negative)
+{
+    UTCTime t1(-0.1);
+    UTCTime t2(0, -100000000);
+    EXPECT_EQ(t1, t2);
+}
+
 TEST(Time, CompareSec)
 {
     UTCTime t1 = UTCTime(1564005746, 0);  // random start time

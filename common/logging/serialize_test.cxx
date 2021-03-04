@@ -112,7 +112,7 @@ typedef ::testing::Types<UTCTime,
                          ephemeris::GalileoEphemeris>
     TestTypes;
 
-TYPED_TEST_CASE(SerializeTest, TestTypes);
+TYPED_TEST_SUITE(SerializeTest, TestTypes);
 
 TYPED_TEST(SerializeTest, ToAndFrom)
 {

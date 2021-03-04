@@ -101,6 +101,7 @@ class Satellite : public SatelliteBase
         check(almanac_.size() > 0, "Tried to get Ephemeris from an empty almanac");
         return almanac_.front().getWavelength(freq);
     }
+    
 
  private:
     std::vector<EphType> almanac_;

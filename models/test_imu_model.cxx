@@ -293,7 +293,7 @@ TEST(ImuFactor, Split)
     {
         const auto sample = imu_samples[i];
         f.integrate(sample);
-        if (f.tf().quantized(0.0001) == tsplit)
+        if (f.tf().quantized() == tsplit)
         {
             y_split = f.state();
             f.computeEndState(x0, v0, Out(xm), Out(vm));

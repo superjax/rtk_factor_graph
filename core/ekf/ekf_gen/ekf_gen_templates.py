@@ -3,7 +3,7 @@ STATE_HEADER_TEMPLATE = """
 
 #include "common/matrix_defs.h"
 #include "common/math/dquat.h"
-#include "common/utctime.h"
+#include "common/quantized_time.h"
 
 {BEGIN_NAMESPACES}
 
@@ -23,7 +23,7 @@ class {ErrorState} : public  Eigen::Matrix<double, {DOF}, 1> {{
 
     // Constructors
     {ErrorState}();
-    {ErrorState}(const {ErrorState}& obj);
+    // {ErrorState}(const {ErrorState}& obj);
     template<typename Derived>
     {ErrorState}(const Eigen::MatrixBase<Derived>& obj) :
         {ErrorState}()
@@ -59,7 +59,7 @@ class {State} {{
 
     // These are the only memory-holding variable.  The rest of the class is just syntactical sugar
     Eigen::Matrix<double, SIZE, 1> arr;
-    UTCTime t;
+    QuantizedTime t;
 
     // Convenient accessors.  These are implemented so they behave like python @property
     // getters/setters
@@ -79,8 +79,6 @@ class {State} {{
 
     static State Random();
     static State Identity();
-
-    {EXTRA_MEMBERS}
 }};
 
 class {Input} : public Eigen::Matrix<double, {INPUT_SIZE}, 1> {{
@@ -97,7 +95,6 @@ class {Input} : public Eigen::Matrix<double, {INPUT_SIZE}, 1> {{
 
     // Constructors
     {Input}();
-    {Input}(const {Input}& other);
     template <typename Derived>
     {Input}(const Eigen::MatrixBase<Derived>& obj) : {Input} ()
     {{
@@ -138,7 +135,7 @@ using namespace Eigen;
 {{
 #ifdef INIT_NAN
     // This is to help track down init-time bugs
-    arr.setConstant(NAN);
+    this->setConstant(NAN);
 #endif
 }}
 
@@ -164,20 +161,21 @@ constexpr int {ErrorState}::DOF;
 #ifdef INIT_NAN
     // This is to help track down init-time bugs
     arr.setConstant(NAN);
+    t = INVALID_TIME;
 #endif
 }}
 
 {State}::{State}(const {State} &other) :
     {State}()
 {{
+    t = other.t;
     arr = other.arr;
-    {EXTRA_ASSIGN}
 }}
 
 {State}& {State}::operator= (const {State}& other)
 {{
+    t = other.t;
     arr = other.arr;
-    {EXTRA_ASSIGN}
     return *this;
 }}
 
@@ -224,9 +222,10 @@ constexpr int {State}::DOF;
 {{
 #ifdef INIT_NAN
     // This is to help track down init-time bugs
-    arr.setConstant(NAN);
+    this->setConstant(NAN);
 #endif
 }}
+
 
 {Input} {Input}::Random()
 {{
@@ -285,12 +284,16 @@ class {EkfType} {{
     using ProcessCov = Eigen::DiagonalMatrix<double, {ErrorState}::SIZE>;
     using InputCov = Eigen::DiagonalMatrix<double, {InputSize}>;
 
+    const UTCTime& t() const {{ return x_.t; }}
+
     {JAC_TYPES}
 
     State& x() {{ return x_; }} // The current state object
     const State& x() const {{ return x_; }}
     dxMat& P() {{ return cov_; }} // The current covariance
     const dxMat& P() const {{ return cov_; }}
+    const {Input}& u() const {{ return u_; }} // The current input
+    {Input}& u() {{ return u_; }}
 
     Error predict(const UTCTime& t_new,
                          const {Input}& u,
@@ -305,7 +308,7 @@ class {EkfType} {{
         check(mc::isFinite(Qx), "Numerical problems in process noise");
         check(mc::isFinite(Qu), "Numerical problems in input noise");
 
-        const double dt = (x_.t - t_new).toSec();
+        const double dt = (t_new - x_.t).toSec();
 
         StateJac dxdx;
         InputJac dxdu;
@@ -317,11 +320,14 @@ class {EkfType} {{
 
         // Propagate State
         x_ += (xdot * dt);
+        x_.t += dt;
 
         // Propagate Covariance
         // P = A ⋅ P ⋅ Aᵀ + B ⋅ Qu ⋅ Bᵀ + Qx
         cov_ = dxdx * cov_ * dxdx.transpose() + dxdu * Qu*dt*dt * dxdu.transpose();
         cov_ += Qx*dt*dt;
+
+        u_ = u;
 
         return Error::none();
     }}
@@ -335,12 +341,14 @@ class {EkfType} {{
         check(mc::isFinite(R), "numerical issues in measurement covariance");
 
         typename Meas::Jac dzdx;
-        const typename Meas::Residual res = static_cast<ChildType*>(this)->h(z, x_, &dzdx, args...);
+        const typename Meas::Residual res = static_cast<ChildType*>(this)->template h<Meas, Args...>(z, x_, &dzdx, args...);
         check(mc::isFinite(dzdx), "numerical issues in measurement jacobian");
         check(mc::isFinite(res), "numerical issues in measurement residual");
 
         // innov = (H ⋅ P ⋅ H.T + R)⁻¹
-        const Mat<Meas::SIZE, Meas::SIZE> innov = (dzdx * cov_ * dzdx.transpose() + R).inverse();
+        Mat<Meas::SIZE, Meas::SIZE> HPHT = (dzdx * cov_ * dzdx.transpose());
+        HPHT += R;
+        Mat<Meas::SIZE, Meas::SIZE> innov = HPHT.inverse();
         check(mc::isFinite(innov), "numerical issues in innovation");
 
         const double mahal = res.transpose() * innov * res;
@@ -367,12 +375,20 @@ class {EkfType} {{
         return Error::none();
     }}
 
- private:
+ protected:
     {State} x_;
     dxMat cov_;
+    {Input} u_;
 
 
 }};
+
+template<int Rows, int Cols>
+using Mat = typename Eigen::Matrix<double, Rows, Cols>;
+template<int Rows>
+using Vec = typename Eigen::Matrix<double, Rows, 1>;
+template<typename T, int R, int C>
+using BlkMat = Eigen::Block<T, R, C>;
 
 {MEAS_TYPES}
 

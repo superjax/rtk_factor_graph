@@ -26,5 +26,5 @@ function(ekf_cpp name src)
             ${CMAKE_CURRENT_BINARY_DIR}/state.cxx
     )
     target_include_directories(${name} PUBLIC ${CMAKE_BINARY_DIR})
-    target_link_libraries(${name} utctime)
+    target_link_libraries(${name} utctime quantized_time)
 endfunction()

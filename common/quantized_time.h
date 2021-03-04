@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/defs.h"
 #include "common/utctime.h"
 
 namespace mc {
@@ -14,7 +15,9 @@ class QuantizedTime : public UTCTime
     bool operator==(const UTCTime& other) const;
     bool operator!=(const UTCTime& other) const;
 
-    double resolution_half = 0;
+    QuantizedTime& operator=(const UTCTime& other);
+
+    static constexpr double resolution_half = TIME_QUANTIZATION / 2.0;
 };
 
 bool operator>(const UTCTime& other, const QuantizedTime& q);

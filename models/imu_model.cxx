@@ -296,7 +296,7 @@ Error ImuModel::computeEndState(const math::DQuat<double>& start,
 
 ImuModel ImuModel::split(const UTCTime& t)
 {
-    const auto t_split = t.quantized(TIME_QUANTIZATION);
+    const auto t_split = t.quantized();
 
     check(t_split > t0() && t_split < tf(), "split time must be in interval");
 

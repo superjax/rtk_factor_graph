@@ -250,7 +250,7 @@ void UTCTime::wrapNsec()
         sec -= 1;
         nsec += E9;
     }
-    else if (nsec > E9)
+    else if (nsec >= E9)
     {
         sec += 1;
         nsec -= E9;
@@ -288,12 +288,11 @@ double UTCTime::GpsTow() const
     return ((*this) - UTCTime::fromGPS(GpsWeek(), 0)).toSec();
 }
 
-QuantizedTime UTCTime::quantized(double resolution) const
+QuantizedTime UTCTime::quantized() const
 {
     QuantizedTime out;
     out.sec = sec;
     out.nsec = nsec;
-    out.resolution_half = resolution / 2.0;
     return out;
 }
 
@@ -302,8 +301,16 @@ std::ostream& operator<<(std::ostream& os, const UTCTime& t)
     time_t time(t.sec);
     tm* date = gmtime(&time);
 
-    os << 1900 + date->tm_year << "/" << 1 + date->tm_mon << "/" << date->tm_mday << " "
-       << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec << "." << t.nsec / 1'000'000;
+    if (date->tm_year == 70)
+    {
+        os << t.sec << "." << t.nsec / 1'000'000;
+    }
+    else
+    {
+        os << 1900 + date->tm_year << "/" << 1 + date->tm_mon << "/" << date->tm_mday << " "
+           << date->tm_hour << ":" << date->tm_min << ":" << date->tm_sec << "."
+           << t.nsec / 1'000'000;
+    }
 
     return os;
 }

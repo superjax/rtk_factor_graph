@@ -51,7 +51,6 @@ class UTCTime
     constexpr UTCTime(const int64_t _sec, const int64_t _nsec)
         : sec(_sec + _nsec / E9), nsec(_nsec % E9)
     {
-        assert(nsec >= 0);
     }
 
     constexpr UTCTime(const double _sec) : sec((int64_t)_sec), nsec((int64_t)(_sec * E9) % E9) {}
@@ -108,7 +107,7 @@ class UTCTime
     int GlonassWeek() const;
     int GlonassDayOfWeek() const;
 
-    QuantizedTime quantized(double resolution) const;
+    QuantizedTime quantized() const;
     //    int BeidouWeek();
 };  // namespace mc
 
