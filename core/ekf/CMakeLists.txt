@@ -20,3 +20,9 @@ target_link_libraries(
 
 add_gtest(rtk_ekf_estimator_test rtk_ekf_estimator_test.cxx)
 target_link_libraries(rtk_ekf_estimator_test rtk_ekf_estimator)
+
+add_benchmark(
+    rtk_ekf_bench
+    SRCS rtk_ekf_bench.cxx
+    DEPS rtk_ekf
+)
