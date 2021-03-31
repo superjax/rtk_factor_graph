@@ -18,9 +18,20 @@ using namespace mc::logging;
 using mc::UTCTime;
 
 template <typename EphType>
-mc::Error verify(const EphType& eph)
+mc::Error verify(const UTCTime& t, const EphType& eph)
 {
-    fmt::print("Type: {}, sat: {}, TOE: {}\n", eph.Type(), eph.sat, eph.toe);
+    const double dt = (t - eph.toe).toSec();
+    if (std::abs(dt) > 7200)
+    {
+        mc::error("Unusual Timestamp");
+        mc::error("Type: {}, sat: {}, t: {}, TOE: {}, dt: {}",
+                  mc::fmt(eph.Type(), eph.sat, t, eph.toe, dt));
+    }
+    else
+    {
+        mc::info("Type: {}, sat: {}, t: {}, TOE: {}, dt: {}",
+                 mc::fmt(eph.Type(), eph.sat, t, eph.toe, dt));
+    }
     return mc::Error::none();
 }
 
@@ -35,17 +46,17 @@ int main(int argc, char** argv)
     auto gps_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
         GPSEphemeris eph;
         reader.get(eph);
-        verify(eph);
+        verify(t, eph);
     };
     auto gal_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
         GalileoEphemeris eph;
         reader.get(eph);
-        verify(eph);
+        verify(t, eph);
     };
     auto glo_cb = [&](const UTCTime& t, int key, mc::logging::StreamReader& reader) {
         GlonassEphemeris eph;
         reader.get(eph);
-        verify(eph);
+        verify(t, eph);
     };
 
     LogReader log(file);

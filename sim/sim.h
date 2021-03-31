@@ -39,8 +39,22 @@ class Sim
         imu_callback_ = imu_callback;
     }
 
+    inline void registerGloEphCb(std::function<void(const mc::ephemeris::GlonassEphemeris&)> cb)
+    {
+        glo_ephemeris_ = cb;
+    }
+    inline void registerGalEphCb(std::function<void(const mc::ephemeris::GalileoEphemeris&)> cb)
+    {
+        gal_ephemeris_ = cb;
+    }
+    inline void registerGPSEphCb(std::function<void(const mc::ephemeris::GPSEphemeris&)> cb)
+    {
+        gps_ephemeris_ = cb;
+    }
+
     inline const UTCTime& t() const { return dynamics_.t(); }
     inline const math::TwoJet<double>& x() const { return dynamics_.x; }
+    inline const std::string& logPath() const { return gnss_.log_path_; }
 
  private:
     Options options_;
@@ -51,6 +65,10 @@ class Sim
 
     std::function<void(std::vector<meas::GnssObservation>)> gnss_callback_;
     std::function<void(meas::ImuSample)> imu_callback_;
+
+    std::function<void(const mc::ephemeris::GlonassEphemeris&)> glo_ephemeris_;
+    std::function<void(const mc::ephemeris::GalileoEphemeris&)> gal_ephemeris_;
+    std::function<void(const mc::ephemeris::GPSEphemeris&)> gps_ephemeris_;
 };
 
 }  // namespace sim

@@ -26,6 +26,25 @@ void inthand(int signum)
 }
 
 template <typename EphType>
+mc::Error verify(const UTCTime& t, const EphType& eph)
+{
+    const double dt = (t - eph.toe).toSec();
+    if (std::abs(dt) > 7200)
+    {
+        mc::error("Unusual Timestamp");
+        mc::error("Type: {}, sat: {}, t: {}, TOE: {}, dt: {}",
+                  mc::fmt(eph.Type(), eph.sat, t, eph.toe, dt));
+        return mc::Error::create("Weird timestamp");
+    }
+    else
+    {
+        mc::info("Type: {}, sat: {}, t: {}, TOE: {}, dt: {}",
+                 mc::fmt(eph.Type(), eph.sat, t, eph.toe, dt));
+        return mc::Error::none();
+    }
+}
+
+template <typename EphType>
 struct Accumulator
 {
     Accumulator(logging::Logger& log, logging::LogKey key) : log_(log), key_(key)
@@ -47,13 +66,11 @@ struct Accumulator
             const auto now = UTCTime::now();
             warn("finished {}: {}", mc::fmt(working[sat]->Type(), working[sat]->sat));
 
-            if ((working[sat]->toe - now).toSec() > 2 * UTCTime::SEC_IN_HOUR)
+            if (verify(UTCTime::now(), *working[sat]).ok())
             {
-                warn("really stale ephemeris: toe: {}, now: {}", mc::fmt(working[sat]->toe, now));
+                // Commit the finished ephemeris to the log
+                log_.log(key_, now, *working[sat]);
             }
-
-            // Commit the finished ephemeris to the log
-            log_.log(key_, now, *working[sat]);
         }
     }
 

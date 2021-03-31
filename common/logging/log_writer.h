@@ -12,6 +12,7 @@
 
 #include "common/logging/log_format.h"
 #include "common/logging/log_key.h"
+#include "common/logging/log_reader.h"
 #include "common/logging/serialize.h"
 #include "common/print.h"
 #include "common/utctime.h"
@@ -26,7 +27,7 @@ namespace logging {
 static constexpr int VERSION_MAJOR = 3;
 static constexpr int VERSION_MINOR = 0;
 
-std::string createLogId();
+std::string createLogId(const UTCTime& start_time);
 
 class Stream : public utils::NonCopyable
 {
@@ -62,16 +63,20 @@ class Stream : public utils::NonCopyable
 class Logger
 {
  public:
-    Logger(const std::string directory) { open(directory); }
+    Logger(const std::string directory) { open(UTCTime::now(), directory); }
+    Logger(const UTCTime& start_time, const std::string directory) { open(start_time, directory); }
 
-    ~Logger() { close(); }
+    ~Logger() { close(UTCTime::now()); }
 
-    void open(const std::string& directory);
+    void open(const std::string& directory) { open(UTCTime::now(), directory); }
+    void open(const UTCTime& start_time, const std::string& directory);
 
-    void close();
+    void close(const UTCTime& t_end);
 
-    void createManifest();
-    void writeManifest();
+    void amends(const std::string& other_log);
+
+    void createManifest(const UTCTime& start_time);
+    void writeManifest(const UTCTime& t_end);
 
     std::string logId() { return log_id_; }
 

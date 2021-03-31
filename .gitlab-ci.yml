@@ -10,24 +10,9 @@ stages:
     - mkdir -p build
     - cd build
     - mkdir -p ccache
-    - export CCACHE_DIR="$(pwd)/ccache"
+    - export CCACHE_DIR="/ccache"
     - export PATH=/usr/lib/ccache:$PATH
     - ccache -s
-
-.upload_ccache: &upload_cache
-  cache:
-    key: master_key
-    paths:
-      - build/ccache
-      - build/eigen_ext-prefix
-      - build/googletest-prefix
-      - build/fmt_ext-prefix
-      - build/google_benchmark_ext-prefix
-      - build/async_comm_ext-prefix
-      - build/ext_ceres-prefix
-      - build/google_gflags-prefix
-      - build/google_glog-prefix
-      - build/yaml_ext-prefix
 
 .gtest_reports: &gtest_reports
   artifacts:
@@ -39,7 +24,6 @@ stages:
 build_gcc:
   stage: build
   <<: *prepare_build
-  <<: *upload_cache
   <<: *gtest_reports
   script:
     - CC=gcc CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -50,7 +34,6 @@ build_gcc:
 build_clang:
   stage: build
   <<: *prepare_build
-  <<: *upload_cache
   <<: *gtest_reports
   script:
     - CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -62,7 +45,6 @@ static analysis:
   stage: test
   allow_failure: true
   <<: *prepare_build
-  <<: *upload_cache
   script:
     - mkdir scan_results
     - CC=gcc CXX=g++ scan-build -o scan_results cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -77,7 +59,6 @@ coverage:
   stage: test
   allow_failure: true
   <<: *prepare_build
-  <<: *upload_cache
   script:
     - ../script/run_coverage.sh
   artifacts:
@@ -89,7 +70,6 @@ benchmarks:
   stage: test
   allow_failure: true
   <<: *prepare_build
-  <<: *upload_cache
   script:
     - CC=gcc CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_BENCHMARKS=ON
     - make -j12 -l12

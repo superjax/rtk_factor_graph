@@ -87,9 +87,7 @@ TEST_F(KeplerSatState, StaleEphemeris)
 {
     SatelliteState sat_state;
     t -= 2.0;
-    const Error result = eph2Sat(t, eph, Out(sat_state));
-
-    EXPECT_NOK(result);
+    EXPECT_CHECK_FAIL(eph2Sat(t, eph, Out(sat_state)), "");
 }
 
 class GlonassSatState : public ::testing::Test

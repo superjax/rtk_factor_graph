@@ -30,6 +30,22 @@ void Sim::step(const double dt)
     {
         imu_callback_(imu);
     }
+
+    ephemeris::GPSEphemeris gps_eph;
+    if (gnss_.sampleGpsEph(t(), make_out(gps_eph)) && gps_ephemeris_ != nullptr)
+    {
+        gps_ephemeris_(gps_eph);
+    }
+    ephemeris::GalileoEphemeris gal_eph;
+    if (gnss_.sampleGalEph(t(), make_out(gal_eph)) && gal_ephemeris_ != nullptr)
+    {
+        gal_ephemeris_(gal_eph);
+    }
+    ephemeris::GlonassEphemeris glo_eph;
+    if (gnss_.sampleGloEph(t(), make_out(glo_eph)) && glo_ephemeris_ != nullptr)
+    {
+        glo_ephemeris_(glo_eph);
+    }
 }
 
 }  // namespace sim

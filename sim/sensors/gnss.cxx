@@ -57,21 +57,28 @@ void GnssSim::load()
 {
     logging::LogReader log(options_.ephemeris_log);
 
-    log.setCallback(logging::GPS_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
-        ephemeris::GPSEphemeris eph;
-        reader.get(eph);
-        ephCb(eph, make_out(gps_));
-    });
-    log.setCallback(logging::GLO_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
-        ephemeris::GlonassEphemeris eph;
-        reader.get(eph);
-        ephCb(eph, make_out(glo_));
-    });
-    log.setCallback(logging::GAL_EPH, [&](const UTCTime&, int key, logging::StreamReader& reader) {
-        ephemeris::GalileoEphemeris eph;
-        reader.get(eph);
-        ephCb(eph, make_out(gal_));
-    });
+    log.setCallback(logging::GPS_EPH,
+                    [&](const UTCTime& t, int key, logging::StreamReader& reader) {
+                        ephemeris::GPSEphemeris eph;
+                        reader.get(eph);
+                        ephCb(eph, make_out(gps_));
+                        gps_ephemerides_.push_back(std::make_tuple(t, eph));
+                    });
+    log.setCallback(logging::GLO_EPH,
+                    [&](const UTCTime& t, int key, logging::StreamReader& reader) {
+                        ephemeris::GlonassEphemeris eph;
+                        reader.get(eph);
+                        ephCb(eph, make_out(glo_));
+                        glo_ephemerides_.push_back(std::make_tuple(t, eph));
+                    });
+    log.setCallback(logging::GAL_EPH,
+                    [&](const UTCTime& t, int key, logging::StreamReader& reader) {
+                        ephemeris::GalileoEphemeris eph;
+                        reader.get(eph);
+                        ephCb(eph, make_out(gal_));
+                        gal_ephemerides_.push_back(std::make_tuple(t, eph));
+                    });
+    log_path_ = log.logPath();
     log.read();
 
     getSatPointers(gps_, make_out(satellites_));
@@ -125,6 +132,40 @@ bool GnssSim::sample(const UTCTime& t,
     }
 
     return false;
+}
+
+bool GnssSim::sampleGpsEph(const UTCTime& t, Out<ephemeris::GPSEphemeris> eph)
+{
+    if (std::get<UTCTime>(gps_ephemerides_.front()) >= t)
+    {
+        (*eph) = std::get<ephemeris::GPSEphemeris>(gps_ephemerides_.front());
+        gps_ephemerides_.erase(gps_ephemerides_.begin());
+        return true;
+    }
+    else
+        return false;
+}
+bool GnssSim::sampleGloEph(const UTCTime& t, Out<ephemeris::GlonassEphemeris> eph)
+{
+    if (std::get<UTCTime>(glo_ephemerides_.front()) >= t)
+    {
+        (*eph) = std::get<ephemeris::GlonassEphemeris>(glo_ephemerides_.front());
+        glo_ephemerides_.erase(glo_ephemerides_.begin());
+        return true;
+    }
+    else
+        return false;
+}
+bool GnssSim::sampleGalEph(const UTCTime& t, Out<ephemeris::GalileoEphemeris> eph)
+{
+    if (std::get<UTCTime>(gal_ephemerides_.front()) >= t)
+    {
+        (*eph) = std::get<ephemeris::GalileoEphemeris>(gal_ephemerides_.front());
+        gal_ephemerides_.erase(gal_ephemerides_.begin());
+        return true;
+    }
+    else
+        return false;
 }
 
 double computeSagnac(const satellite::SatelliteState& sat_state, const Vec3& rec_pos_ecef)

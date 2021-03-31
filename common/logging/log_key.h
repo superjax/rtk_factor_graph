@@ -1,5 +1,9 @@
 #pragma once
 
+#include <string>
+
+#include "common/print.h"
+
 namespace mc {
 namespace logging {
 

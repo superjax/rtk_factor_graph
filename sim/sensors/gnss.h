@@ -43,6 +43,10 @@ class GnssSim
                 const math::TwoJet<double>& x,
                 Out<std::vector<meas::GnssObservation>> obs);
 
+    bool sampleGpsEph(const UTCTime& t, Out<ephemeris::GPSEphemeris> obs);
+    bool sampleGloEph(const UTCTime& t, Out<ephemeris::GlonassEphemeris> obs);
+    bool sampleGalEph(const UTCTime& t, Out<ephemeris::GalileoEphemeris> obs);
+
     void range(const UTCTime& t,
                const satellite::SatelliteBase* sat,
                const Vec3& p_ecef,
@@ -52,6 +56,7 @@ class GnssSim
 
     void load();
 
+    std::string log_path_;
     UTCTime prev_t_;
     Options options_;
     Vec2 clock_bias_;
@@ -60,6 +65,10 @@ class GnssSim
     std::map<int, satellite::Satellite<ephemeris::GPSEphemeris>> gps_;
     std::map<int, satellite::Satellite<ephemeris::GlonassEphemeris>> glo_;
     std::map<int, satellite::Satellite<ephemeris::GalileoEphemeris>> gal_;
+
+    std::vector<std::tuple<UTCTime, ephemeris::GPSEphemeris>> gps_ephemerides_;
+    std::vector<std::tuple<UTCTime, ephemeris::GlonassEphemeris>> glo_ephemerides_;
+    std::vector<std::tuple<UTCTime, ephemeris::GalileoEphemeris>> gal_ephemerides_;
 
     std::normal_distribution<double> normal_;
     std::default_random_engine gen_;

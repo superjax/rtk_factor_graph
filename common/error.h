@@ -6,6 +6,15 @@
 
 namespace mc {
 
+#define RETURN_IF_NOT_OK(expr)    \
+    {                             \
+        const Error err = (expr); \
+        if (!err.ok())            \
+        {                         \
+            return err;           \
+        }                         \
+    }
+
 class Error
 {
  private:

@@ -92,7 +92,7 @@ class RtkEkfEstimatorTest : public ::testing::Test
         Vec2 gps_obs_cov = Vec2::Ones();
         Vec2 gal_obs_cov = Vec2::Ones();
         Vec2 glo_obs_cov = Vec2::Ones();
-        Vec30 fix_and_hold_cov = Vec30::Ones();
+        double fix_and_hold_cov = 1.0;
         Vec6 imu_cov = Vec6::Ones();
         Vec<60> process_cov = Vec<60>::Ones();
 

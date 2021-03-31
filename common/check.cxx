@@ -1,5 +1,12 @@
 #include "common/check.h"
 
+#include <unistd.h>
+
+#ifdef FANCY_BACKTRACE
+#define BACKWARD_HAS_DW 1
+#endif
+#include "third_party/backward/backward.h"
+
 namespace mc {
 
 void check(bool condition,
@@ -11,6 +18,10 @@ void check(bool condition,
     if (!condition)
     {
         fatal(fmt, args, location);
+        third_party::backward::StackTrace st;
+        st.load_here(32);
+        third_party::backward::Printer p;
+        p.print(st);
         exit(-1);
     }
 #endif

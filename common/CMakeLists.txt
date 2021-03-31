@@ -22,7 +22,7 @@ add_gtest(test_print test_print.cxx)
 target_link_libraries(test_print print)
 
 library(check check.cxx)
-target_link_libraries(check print)
+target_link_libraries(check print backward)
 
 add_gtest(test_hetero_collection test_hetero_collection.cxx)
 target_link_libraries(test_hetero_collection states)

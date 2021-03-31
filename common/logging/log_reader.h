@@ -36,7 +36,9 @@ class StreamReader : public utils::NonCopyable
 
     bool done();
 
-    int key() { return key_; }
+    int key() const { return key_; }
+
+    int numRecords() const { return num_records_; }
 
  private:
     void readStamp()
@@ -53,6 +55,7 @@ class StreamReader : public utils::NonCopyable
     std::ifstream file_;
     UTCTime next_stamp_;
     int key_;
+    int num_records_;
 };
 
 class LogReader
@@ -70,16 +73,56 @@ class LogReader
 
     void setCallback(int key, const MsgCallback&& fn);
 
+    template <typename... T>
+    struct Entry
+    {
+        UTCTime t;
+        std::tuple<T...> data;
+    };
+
+    template <typename... T>
+    Entry<T...> getNext(int key)
+    {
+        auto& stream = streams_.at(key);
+        Entry<T...> out;
+        out.t = stream.nextStamp();
+        std::apply([&](auto&... args) { stream.get(args...); }, out.data);
+        return out;
+    }
+
     UTCTime startTime() { return start_time_; }
     UTCTime endTime() { return end_time_; }
 
+    const std::string logPath() const { return directory_.string(); }
+
  private:
+    void openLog(const std::experimental::filesystem::path& directory);
+
     std::unordered_map<int, MsgCallback> callbacks_;
-    UTCTime start_time_;
-    UTCTime end_time_;
+
+    struct MaintenanceCallbackState
+    {
+        const double period_s;
+        std::function<Error(const UTCTime&)> cb;
+        UTCTime next_call;
+    };
+
+ public:
+    void setMaintenanceCallback(const double period_s, std::function<Error(const UTCTime&)> cb)
+    {
+        check(start_time_ != UTCTime::min());
+        maintenance_callbacks_.push_back(MaintenanceCallbackState{period_s, cb, start_time_});
+    }
+
+ private:
+    std::vector<MaintenanceCallbackState> maintenance_callbacks_;
+    UTCTime start_time_ = UTCTime::max();
+    UTCTime end_time_ = UTCTime::min();
     std::string log_id_;
     std::experimental::filesystem::path directory_;
     std::unordered_map<int, StreamReader> streams_;
+    std::string version_;
+    std::vector<std::string> amends_;
 };
 
 }  // namespace logging

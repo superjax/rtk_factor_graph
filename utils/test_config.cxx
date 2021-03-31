@@ -24,13 +24,19 @@ class ConfigTest : public ::testing::Test
         yaml["int"] = 12398;
         yaml["double"] = M_PI;
         yaml["string"] = "String Config";
+        yaml["nested"]["string"] = "Nested String Config";
+        yaml["nested"]["int"] = 456;
+        yaml["nested"]["double"] = 456.392;
+
         for (double i : {1.0, 2.0, 3.0})
         {
             yaml["list"].push_back(i);
+            yaml["nested"]["list"].push_back(i + 3);
         }
         for (double i : {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0})
         {
             yaml["matrix"].push_back(i);
+            yaml["nested"]["matrix"].push_back(i + 9.0);
         }
         std::ofstream tmp(temp_file_);
         tmp << YAML::Dump(yaml);
@@ -63,11 +69,15 @@ TEST_F(ConfigTest, BadPath)
 TEST_F(ConfigTest, ReadValues)
 {
     double dbl = 0.0;
+    double nested_dbl = 0.0;
     int val = 0;
+    int nested_val = 0;
     std::string str = "";
+    std::string nested_str = "";
     std::vector<double> list = {};
+    std::vector<double> nested_list = {};
     Mat3 mat = Mat3::Zero();
-    ;
+    Mat3 nested_mat = Mat3::Zero();
 
     Config cfg(temp_file_);
 
@@ -77,14 +87,27 @@ TEST_F(ConfigTest, ReadValues)
     EXPECT_TRUE(cfg.get("list", make_out(list)));
     EXPECT_TRUE(cfg.get("matrix", make_out(mat)));
 
+    EXPECT_TRUE(cfg.get("nested/int", make_out(nested_val)));
+    EXPECT_TRUE(cfg.get("nested/double", make_out(nested_dbl)));
+    EXPECT_TRUE(cfg.get("nested/string", make_out(nested_str)));
+    EXPECT_TRUE(cfg.get("nested/list", make_out(nested_list)));
+    EXPECT_TRUE(cfg.get("nested/matrix", make_out(nested_mat)));
+
     EXPECT_EQ(dbl, M_PI);
+    EXPECT_EQ(nested_dbl, 456.392);
     EXPECT_EQ(val, 12398);
+    EXPECT_EQ(nested_val, 456);
     EXPECT_EQ(str, "String Config");
+    EXPECT_EQ(nested_str, "Nested String Config");
     EXPECT_EQ(list.size(), 3ul);
+    EXPECT_EQ(nested_list.size(), 3ul);
     for (int i : {0, 1, 2})
     {
         EXPECT_EQ(list[i], i + 1);
+        EXPECT_EQ(nested_list[i], i + 4);
     }
+    EXPECT_EQ(mat, (Mat3() << 1, 2, 3, 4, 5, 6, 7, 8, 9).finished());
+    EXPECT_EQ(nested_mat, (Mat3() << 10, 11, 12, 13, 14, 15, 16, 17, 18).finished());
 }
 
 TEST_F(ConfigTest, KeepDefaultNotRequired)

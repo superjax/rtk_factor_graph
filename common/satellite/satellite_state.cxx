@@ -20,11 +20,8 @@ Error eph2Sat(const UTCTime& t,
     using std::sqrt;
 
     const double dt = (t - eph.toe).toSec();
-    if (fabs(dt) > MAXDTOE)
-    {
-        error("Ephemeris dt = {}.  eph.toe = {}, t = {}", fmt(dt, eph.toe.str(), t.str()));
-        return Error::create("Stale Ephemeris");
-    }
+    check(fabs(dt) <= MAXDTOE, "Stale Ephemeris.  MAXDTOE = {}, dt = {}.  eph.toe = {}, t = {}",
+          fmt(MAXDTOE, dt, eph.toe.str(), t.str()));
 
     // https://www.ngs.noaa.gov/gps-toolbox/bc_velo/bc_velo.c
     const double A = eph.sqrta * eph.sqrta;

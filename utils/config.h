@@ -3,6 +3,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "common/out.h"
+#include "utils/split_string.h"
 #include "yaml-cpp/node/convert.h"
 #include "yaml-cpp/yaml.h"
 
@@ -84,14 +85,35 @@ class Config
     template <typename T>
     bool get(const std::string& key, Out<T> out, bool required = false)
     {
-        if (yaml_[key])
+        YAML::Node node = YAML::Clone(yaml_);
+        std::vector<std::string> key_path = split_string(key, '/');
+        for (size_t i = 0; i < key_path.size(); ++i)
         {
-            (*out) = yaml_[key].as<T>();
-            return true;
-        }
-        else
-        {
-            check(!required, "Missing configuration {}", fmt(key));
+            if (node[key_path[i]])
+            {
+                if (i == key_path.size() - 1)
+                {
+                    try
+                    {
+                        (*out) = node[key_path[i]].as<T>();
+                        return true;
+                    }
+                    catch (const YAML::TypedBadConversion<T>& e)
+                    {
+                        error("Unable to convert {}", fmt(key));
+                        error("{}", fmt(e.what()));
+                    }
+                }
+                else
+                {
+                    node = node[key_path[i]];
+                }
+            }
+            else
+            {
+                check(!required, "Missing configuration {}", fmt(key));
+                return false;
+            }
         }
         return false;
     }

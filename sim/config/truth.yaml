@@ -15,5 +15,5 @@ accel_walk_stdev: 0
 gyro_noise_stdev: 0
 gyro_walk_stdev: 0
 
-eph_log: "../logs/20210126_093513"
+eph_log: "../logs/"
 output_dir: "../logs/simulate/"

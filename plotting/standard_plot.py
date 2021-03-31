@@ -33,7 +33,7 @@ def bottom_field(data, keys):
     return field
 
 
-def standard_plot(data, y_key, x_key="t", title=None, fig=None):
+def standard_plot(data, y_key, x_key="t", title=None, fig=None, label=None, **kwargs):
     xfield = bottom_field(data, x_key)
     yfield = bottom_field(data, y_key)
 
@@ -53,7 +53,12 @@ def standard_plot(data, y_key, x_key="t", title=None, fig=None):
         ax = None
         for i in range(num_plots):
             ax = plt.subplot(num_plots, 1, i + 1, sharex=ax)
-            plt.plot(xfield, yfield[:, i])
+            plt.plot(xfield, yfield[:, i], label=label, **kwargs)
+            if label is not None and i == 0:
+                plt.legend()
     else:
-        plt.plot(xfield, yfield)
+        plt.plot(xfield, yfield, label=label, **kwargs)
+        if label is not None:
+            plt.legend()
+
     return fig

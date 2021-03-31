@@ -51,9 +51,9 @@ void error(const std::string fmt,
 {
     if constexpr (LOGGING_LEVEL <= LoggingLevel::WARN)
     {
-        fmt::print(fg(fmt::color::crimson) | fmt::emphasis::bold, "{}:{} ", location.file_name(),
-                   location.line());
-        fmt::vprint(fmt + "\n", fmt::format_args(args));
+        fmt::print(stderr, fg(fmt::color::crimson) | fmt::emphasis::bold, "{}:{} ",
+                   location.file_name(), location.line());
+        fmt::vprint(stderr, fmt + "\n", fmt::format_args(args));
     }
 }
 
@@ -63,11 +63,11 @@ void fatal(const std::string fmt,
 {
     if constexpr (LOGGING_LEVEL <= LoggingLevel::WARN)
     {
-        fmt::print(bg(fmt::color::crimson) | fmt::emphasis::bold, "{}:{} ", location.file_name(),
-                   location.line());
-        fmt::vprint(stdout, bg(fmt::color::crimson) | fmt::emphasis::bold, fmt,
+        fmt::print(stderr, bg(fmt::color::crimson) | fmt::emphasis::bold, "{}:{} ",
+                   location.file_name(), location.line());
+        fmt::vprint(stderr, bg(fmt::color::crimson) | fmt::emphasis::bold, fmt,
                     fmt::format_args(args));
-        fmt::print("\n");
+        fmt::print(stderr, "\n");
     }
 }
 

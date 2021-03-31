@@ -10,6 +10,7 @@ ExternalProject_Add(
   LOG_DOWNLOAD ON
   LOG_CONFIGURE ON
   LOG_BUILD ON
+  GIT_SHALLOW ON
   CMAKE_ARGS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBENCHMARK_ENABLE_GTEST_TESTS=OFF)
 
 ExternalProject_Get_Property(google_benchmark_ext binary_dir)

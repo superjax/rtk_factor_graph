@@ -6,6 +6,7 @@ ExternalProject_Add(
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     LOG_DOWNLOAD ON
+    GIT_SHALLOW ON
     LOG_CONFIGURE ON
     PATCH_COMMAND git reset --hard && git apply ${CMAKE_CURRENT_LIST_DIR}/patches/eigen.patch
 )

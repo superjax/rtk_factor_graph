@@ -9,6 +9,7 @@
 #include "common/math/two_jet.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
+#include "common/quantized_time.h"
 #include "common/utctime.h"
 
 namespace mc {
@@ -77,6 +78,7 @@ namespace logging {
 DEF_SERIALIZE(meas::ImuSample, t, accel, gyro)
 DEF_SERIALIZE(meas::GnssObservation, t, gnss_id, sat_num, freq, pseudorange, doppler, carrier_phase)
 DEF_SERIALIZE(UTCTime, sec, nsec)
+DEF_SERIALIZE(QuantizedTime, sec, nsec)
 DEF_SERIALIZE(math::Quat<double>, arr_)
 DEF_SERIALIZE(math::Jet<double>, x, dx)
 DEF_SERIALIZE(math::TwoJet<double>, x, dx, d2x)

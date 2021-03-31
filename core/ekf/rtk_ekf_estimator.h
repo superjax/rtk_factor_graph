@@ -5,6 +5,7 @@
 #include <set>
 #include <variant>
 
+#include "common/logging/log_writer.h"
 #include "common/satellite/satellite_cache.h"
 #include "common/utctime.h"
 #include "core/ekf/rtk_ekf.h"
@@ -61,17 +62,20 @@ class EkfEstimator
               const Vec2& gps_obs_cov,
               const Vec2& gal_obs_cov,
               const Vec2& glo_obs_cov,
-              const Vec30& fix_and_hold_cov,
-              const Vec6& imu_cov,
-              const Vec<60>& process_cov)
+              const double& fix_and_hold_cov,
+              const Input& imu_cov,
+              const Vec<60>& process_cov,
+              logging::Logger* log = nullptr)
     {
         point_pos_cov_ = point_pos_cov.asDiagonal();
         gps_obs_cov_ = gps_obs_cov.asDiagonal();
         gal_obs_cov_ = gal_obs_cov.asDiagonal();
         glo_obs_cov_ = glo_obs_cov.asDiagonal();
-        fix_and_hold_cov_ = fix_and_hold_cov.asDiagonal();
+        fix_and_hold_cov_ = Vec30::Constant(fix_and_hold_cov).asDiagonal();
         imu_cov_ = imu_cov.asDiagonal();
         process_cov_ = process_cov.asDiagonal();
+
+        log_ = log;
 
         const auto init_ekf = [&](EkfType& ekf) {
             ekf.x() = x0;
@@ -90,6 +94,31 @@ class EkfEstimator
         if (t < delayed_ekf_.t())
         {
             return Error::create("cannot handle stale measurement");
+        }
+
+        if constexpr (std::is_same_v<T, gpsObsMeas>)
+        {
+            if (!hasCache(GnssID::GPS, z.sat_id))
+            {
+                warn("Unknown GPS Satellite {}", fmt(z.sat_id));
+                return Error::create("Unknown satellite");
+            }
+        }
+        else if constexpr (std::is_same_v<T, galObsMeas>)
+        {
+            if (!hasCache(GnssID::Galileo, z.sat_id))
+            {
+                warn("Unknown Galileo Satellite {}", fmt(z.sat_id));
+                return Error::create("Unknown satellite");
+            }
+        }
+        else if constexpr (std::is_same_v<T, gloObsMeas>)
+        {
+            if (!hasCache(GnssID::Glonass, z.sat_id))
+            {
+                warn("Unknown Glonass Satellite {}", fmt(z.sat_id));
+                return Error::create("Unknown satellite");
+            }
         }
 
         static size_t meas_idx = 0;
@@ -126,12 +155,12 @@ class EkfEstimator
 
         rollFilter(propagated_ekf_, it, measurements_.end());
 
-        drop_old_measurements();
+        dropOldMeasurements();
 
         return Error::none();
     }
 
-    void drop_old_measurements()
+    void dropOldMeasurements()
     {
         check(!measurements_.empty(), "cannot process empty buffer");
         auto first = measurements_.begin();
@@ -152,7 +181,13 @@ class EkfEstimator
     }
 
     mutable std::unordered_map<int, satellite::SatelliteCache> sat_cache_;
+
     static constexpr int cacheId(int gnss_id, int sat_num) { return (gnss_id << 8) | sat_num; }
+
+    inline bool hasCache(int gnss_id, int sat_num) const
+    {
+        return sat_cache_.find(cacheId(gnss_id, sat_num)) != sat_cache_.end();
+    }
 
     const satellite::SatelliteCache& getCache(const UTCTime& t,
                                               const Vec3 pe2g,
@@ -249,6 +284,12 @@ class EkfEstimator
         return *(--it);
     }
 
+    const UTCTime& t() const { return propagated_ekf_.x().t; }
+    const State& x() const { return propagated_ekf_.x(); }
+    const Input& u() const { return propagated_ekf_.u(); }
+    Input& u() { return propagated_ekf_.u(); }
+    const dxMat& cov() const { return propagated_ekf_.P(); }
+
     std::multiset<Meas> measurements_;
 
     DiagMat6 point_pos_cov_;
@@ -268,8 +309,40 @@ class EkfEstimator
 
     SatelliteManager sat_manager_;
 
+    logging::Logger* log_ = nullptr;
+
+    void ephCb(const ephemeris::GPSEphemeris& eph)
+    {
+        const int cache_id = cacheId(GnssID::GPS, eph.sat);
+        if (sat_cache_.find(cache_id) == sat_cache_.end())
+        {
+            sat_cache_.insert({cache_id, satellite::SatelliteCache()});
+        }
+        sat_manager_.ephCb(eph);
+    }
+    void ephCb(const ephemeris::GlonassEphemeris& eph)
+    {
+        const int cache_id = cacheId(GnssID::Glonass, eph.sat);
+        if (sat_cache_.find(cache_id) == sat_cache_.end())
+        {
+            sat_cache_.insert({cache_id, satellite::SatelliteCache()});
+        }
+        sat_manager_.ephCb(eph);
+    }
+    void ephCb(const ephemeris::GalileoEphemeris& eph)
+    {
+        const int cache_id = cacheId(GnssID::Galileo, eph.sat);
+        if (sat_cache_.find(cache_id) == sat_cache_.end())
+        {
+            sat_cache_.insert({cache_id, satellite::SatelliteCache()});
+        }
+        sat_manager_.ephCb(eph);
+    }
+
     FRIEND_TEST(RtkEkfEstimator, OrderMeasurements);
 };
+
+using RtkEkfEstimator = EkfEstimator<RtkEkf>;
 
 }  // namespace ekf
 }  // namespace mc

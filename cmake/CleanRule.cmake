@@ -8,6 +8,7 @@ file(
     "#!/bin/bash\n\n rm -rf cmake_install.cmake\
                              coverage\
                              core\
+                             compile_commands.json\
                              bench_results\
                              CMakeCache.txt\
                              CMakeFiles\
@@ -18,6 +19,7 @@ file(
                              models\
                              common\
                              scratch\
+                             test_list\
                              third_party\
                              utils\
                              gmon.out\
@@ -25,6 +27,7 @@ file(
                              benchmark_list\
                              tools\
                              parsers\
+                             plotting\
                              sim\
                              tmp"
 )

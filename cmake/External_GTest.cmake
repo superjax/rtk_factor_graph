@@ -9,6 +9,7 @@ ExternalProject_Add(
     LOG_DOWNLOAD ON
     LOG_CONFIGURE ON
     LOG_BUILD ON
+    GIT_SHALLOW ON
 )
 
 ExternalProject_Get_Property(googletest source_dir)

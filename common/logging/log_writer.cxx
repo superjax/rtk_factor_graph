@@ -10,53 +10,65 @@ Stream::~Stream()
     auto manifest_path = filename_;
     manifest_path.replace_extension(".yml");
     std::ofstream yml(manifest_path);
+    error("writing stream {}", fmt(filename_));
     yml << YAML::Dump(format_);
     file_.close();
 }
 
-void Logger::open(const std::string& directory)
+void Logger::open(const UTCTime& start_time, const std::string& directory)
 {
     namespace fs = std::experimental::filesystem;
-    log_id_ = createLogId();
+    log_id_ = createLogId(start_time);
     directory_ = fs::path(directory) / fs::path(log_id_);
+    utils::removeDirectoryIfExist(directory_);
     utils::makeDirectoryIfNotExist(directory_);
-    createManifest();
+    createManifest(start_time);
 }
 
-void Logger::close()
+void Logger::close(const UTCTime& t_end)
 {
-    writeManifest();
+    while (!streams_.empty())
+    {
+        streams_.erase(streams_.begin());
+    }
+    writeManifest(t_end);
 }
 
-void Logger::createManifest()
+void Logger::createManifest(const UTCTime& start_time)
 {
     manifest_.reset();
     manifest_["comment"] = "Project Midnight Compass Log";
     manifest_["id"] = log_id_;
 
-    const UTCTime now = UTCTime::now();
     manifest_["ver"] = fmt::format("{}.{}", VERSION_MAJOR, VERSION_MINOR);
-    manifest_["start_time"]["stamp"] = now.str();
-    manifest_["start_time"]["sec"] = now.sec;
-    manifest_["start_time"]["nsec"] = now.nsec;
+    manifest_["start_time"]["stamp"] = start_time.str();
+    manifest_["start_time"]["sec"] = start_time.sec;
+    manifest_["start_time"]["nsec"] = start_time.nsec;
 }
 
-void Logger::writeManifest()
+void Logger::writeManifest(const UTCTime& t_end)
 {
-    const UTCTime now = UTCTime::now();
-    manifest_["end_time"]["stamp"] = now.str();
-    manifest_["end_time"]["sec"] = now.sec;
-    manifest_["end_time"]["nsec"] = now.nsec;
+    manifest_["end_time"]["stamp"] = t_end.str();
+    manifest_["end_time"]["sec"] = t_end.sec;
+    manifest_["end_time"]["nsec"] = t_end.nsec;
     namespace fs = std::experimental::filesystem;
     const auto manifest_path = directory_ / fs::path("manifest.yml");
     std::ofstream os(manifest_path);
+    error("writing manifest");
     os << YAML::Dump(manifest_);
 }
 
-std::string createLogId()
+void Logger::amends(const std::string& other_log)
 {
-    const auto now = UTCTime::now();
-    time_t time(now.sec);
+    namespace fs = std::experimental::filesystem;
+    const auto other_log_path = fs::path(other_log);
+
+    manifest_["amends"] = fs::canonical(other_log_path).string();
+}
+
+std::string createLogId(const UTCTime& start_time)
+{
+    time_t time(start_time.sec);
     tm* date = gmtime(&time);
 
     // clang-format on

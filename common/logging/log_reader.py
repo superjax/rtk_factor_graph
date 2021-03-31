@@ -39,23 +39,47 @@ def make_dtype(format):
 
 def load_header(hdr_path):
     with open(hdr_path) as header_file:
-        data = yaml.load(header_file.read())
+        data = yaml.load(header_file.read(), Loader=yaml.FullLoader)
 
     dtype = np.dtype(make_dtype(data["format"]))
 
     return dtype
 
 
+def get_log_files(file_path):
+    if not re.search(r'\d{8}_\d{6}\/?$', file_path):
+        raise RuntimeError(f"Incorrectly formatted log directory {file_path}")
+
+    manifest = yaml.load(
+        open(os.path.join(file_path, 'manifest.yml')).read(), Loader=yaml.FullLoader
+    )
+
+    files = {
+        key: os.path.join(file_path, name)
+        for key, name in zip(manifest["keys"], manifest["key_names"])
+    }
+
+    # load amended topics
+    if "amends" in manifest:
+        amendment_files = get_log_files(manifest["amends"])
+        amendment_files.update(files)
+        files = amendment_files
+
+    return files
+
+
 def load(file_path, streams=None, normalize_time=True):
     # Load the most recent log if not supplied a direct id
     if not re.search(r'\d{8}_\d{6}\/?$', file_path):
         file_path = os.path.join(file_path, sorted(os.listdir(file_path))[-1])
-    manifest = yaml.load(open(os.path.join(file_path, 'manifest.yml')).read())
-    files = [os.path.join(file_path, f) for f in os.listdir(file_path) if f[-4:] == ".log"]
-    for stream in files:
-        root_path = os.path.splitext(stream)[0]
-        log_path = root_path + ".log"
-        hdr_path = root_path + ".yml"
+
+    files = get_log_files(file_path)
+
+    log = {}
+
+    for k, stream in files.items():
+        log_path = stream + ".log"
+        hdr_path = stream + ".yml"
 
         print("loading {}".format(log_path))
         dtype = load_header(hdr_path)
@@ -70,8 +94,9 @@ def load(file_path, streams=None, normalize_time=True):
                 data=data['stamp']['sec'].astype(np.float64) +
                 data['stamp']['nsec'].astype(np.float64) / 1e9
             )
-
-        return data
+            data = data.data
+        log[k] = data
+    return log
 
 
 if __name__ == "__main__":

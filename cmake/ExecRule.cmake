@@ -16,6 +16,4 @@ function(executable name)
                ${REPO_ROOT}
     )
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
-
-    message("GTEST_INCLUDE_DIRS = ${GTEST_INCLUDE_DIRS}")
 endfunction()

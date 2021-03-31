@@ -85,6 +85,8 @@ class UTCTime
     void wrapNsec();
 
     static UTCTime now();
+    static UTCTime max() { return UTCTime(std::numeric_limits<int64_t>::max(), E9 - 1); }
+    static UTCTime min() { return UTCTime(std::numeric_limits<int64_t>::min(), 0); }
 
     static UTCTime fromGPS(int week, int tow_ms);
     static UTCTime fromGlonass(int week, int tow_ms);

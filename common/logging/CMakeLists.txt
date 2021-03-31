@@ -17,6 +17,7 @@ target_link_libraries(
     galileo
     glonass
     utctime
+    quantized_time
 )
 add_gtest(serialize_test serialize_test.cxx)
 target_link_libraries(serialize_test serialize)
@@ -39,6 +40,7 @@ target_link_libraries(
     serialize
     print
     stdc++fs
+    split_string
 )
 add_gtest(log_reader_test log_reader_test.cxx)
 target_link_libraries(log_reader_test log_reader log_writer)

@@ -10,6 +10,7 @@ ExternalProject_Add (
     LOG_DOWNLOAD ON
     LOG_CONFIGURE ON
     LOG_BUILD ON
+    GIT_SHALLOW ON
     PATCH_COMMAND git reset --hard && git apply ${CMAKE_CURRENT_LIST_DIR}/patches/async_comm.patch
     CMAKE_ARGS -DCMAKE_BUILD_TYPE=RelWithDebInfo
 )

@@ -9,6 +9,7 @@ namespace mc {
 
 // Forward declaration for special serialize types
 class UTCTime;
+class QuantizedTime;
 namespace ephemeris {
 class GPSEphemeris;
 class GlonassEphemeris;
@@ -32,6 +33,7 @@ class TwoJet;
 namespace logging {
 
 void serialize(std::ostream& file, const UTCTime& t);
+void serialize(std::ostream& file, const QuantizedTime& t);
 void serialize(std::ostream& file, const ephemeris::GPSEphemeris& eph);
 void serialize(std::ostream& file, const ephemeris::GlonassEphemeris& eph);
 void serialize(std::ostream& file, const ephemeris::GalileoEphemeris& eph);
@@ -92,6 +94,8 @@ void read(std::istream& file, T&... data)
     int dummy[sizeof...(data)] = {(deserialize(file, data), 1)...};
     (void)dummy;
 }
+
+
 
 }  // namespace logging
 }  // namespace mc

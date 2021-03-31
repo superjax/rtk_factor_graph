@@ -81,10 +81,12 @@ int main(int argc, char** argv)
 
     sim::Sim sim(options);
 
-    logging::Logger log(output_dir);
+    logging::Logger log(t0, output_dir);
+
     log.initStream<math::TwoJet<double>>(logging::TRUTH_POSE, {"pose"});
     log.initStream<mc::meas::ImuSample>(logging::IMU_SAMPLE, {"imu"});
     log.initStream<mc::meas::GnssObservation>(logging::GNSS_OBS, {"obs"});
+    log.amends(sim.logPath());
 
     const auto obs_cb = [&](const std::vector<mc::meas::GnssObservation>& obs) {
         for (const auto o : obs)
@@ -109,6 +111,7 @@ int main(int argc, char** argv)
         const double rel_t = (sim.t() - t0).toSec();
         prog.print(++i, rel_t);
     }
-    std::cout << std::endl;
+    info("wrote log to {}", log.logId());
+    log.close(sim.t());
     exit(EXIT_SUCCESS);
 }
