@@ -31,15 +31,16 @@ static void h_no_args(benchmark::State& state)
     State x = State::Random();
     const typename MeasType::ZType z = MeasType::ZType::Random();
     typename MeasType::Jac jac;
+    const Input u = Input::Zero();
 
     for (auto _ : state)
     {
-        const auto residual = ekf.h<MeasType>(z, x, &jac);
+        const auto residual = ekf.h<MeasType>(z, x, &jac, u);
         benchmark::DoNotOptimize(residual);
     }
 }
 BENCHMARK_TEMPLATE(h_no_args, pointPosMeas);
-BENCHMARK_TEMPLATE(h_no_args, fixAndHoldMeas);
+// BENCHMARK_TEMPLATE(h_no_args, fixAndHoldMeas);
 
 const Vec3 provo_lla{deg2Rad(40.246184), deg2Rad(-111.647769), 1387.997511};
 
@@ -52,8 +53,6 @@ satellite::SatelliteCache makeCache()
     const Vec3 provo_ecef = utils::WGS84::lla2ecef(provo_lla);
     const Vec3 rec_vel(1, 2, 3);
 
-    // int toe_week = 93600.0 / UTCTime::SEC_IN_WEEK;
-    // int toe_tow_sec = 93600.0 - (toe_week * UTCTime::SEC_IN_WEEK);
     ephemeris::GPSEphemeris eph(1);
     eph.sat = 1;
     eph.gnssID = GnssID::GPS;
@@ -94,10 +93,11 @@ static void h_sat_cache(benchmark::State& state)
     State x = State::Random();
     const typename MeasType::ZType z = MeasType::ZType::Random();
     typename MeasType::Jac jac;
+    const Input u = Input::Zero();
 
     for (auto _ : state)
     {
-        const auto residual = ekf.h<MeasType>(z, x, &jac, sat_cache);
+        const auto residual = ekf.h<MeasType>(z, x, &jac, u, sat_cache);
         benchmark::DoNotOptimize(residual);
     }
 }
@@ -108,18 +108,21 @@ BENCHMARK_TEMPLATE(h_sat_cache, gloObsMeas);
 static void predict(benchmark::State& state)
 {
     RtkEkf ekf;
-    ekf.x() = State::Identity();
-    ekf.x().t = UTCTime(0);
+    Snapshot snap;
+    snap.x = State::Identity();
+    snap.x.t = UTCTime(0);
+    snap.cov.setIdentity();
+    Snapshot out;
     const Input u = 1e-5 * Input::Random();
     RtkEkf::ProcessCov Qx;
     Qx.setIdentity();
     RtkEkf::InputCov Qu;
     Qu.setIdentity();
-    UTCTime t_new = ekf.x().t + 0.01;
+    UTCTime t_new(0.01);
 
     for (auto _ : state)
     {
-        ekf.predict(t_new, u, Qx, Qu);
+        ekf.predict(snap, t_new, u, Qx, Qu, make_out(snap));
         t_new += 0.01;
     }
 }
@@ -129,14 +132,20 @@ template <typename MeasType>
 static void update_no_args(benchmark::State& state)
 {
     RtkEkf ekf;
-    ekf.x() = State::Random();
-    const typename MeasType::ZType z = ekf.h<MeasType>(MeasType::ZType::Zero(), ekf.x(), nullptr);
+
+    Snapshot snap;
+    snap.x = State::Random();
+    snap.x.t = UTCTime(0);
+    snap.cov.setIdentity();
+    const Input u = Input::Zero();
+
+    const typename MeasType::ZType z = ekf.h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u);
     typename MeasType::Covariance R;
     R.setIdentity();
 
     for (auto _ : state)
     {
-        const Error res = ekf.update<MeasType>(z, R);
+        const Error res = ekf.update<MeasType>(make_out(snap), z, R, u);
         if (!res.ok())
         {
             error("UH Oh");
@@ -145,22 +154,27 @@ static void update_no_args(benchmark::State& state)
     }
 }
 BENCHMARK_TEMPLATE(update_no_args, pointPosMeas);
-BENCHMARK_TEMPLATE(update_no_args, fixAndHoldMeas);
+// BENCHMARK_TEMPLATE(update_no_args, fixAndHoldMeas);
 
 template <typename MeasType>
 static void update_sat_cache(benchmark::State& state)
 {
     RtkEkf ekf;
-    ekf.x() = State::Random();
+    Snapshot snap;
+    snap.x = State::Random();
+    snap.x.t = UTCTime(0);
+    snap.cov.setIdentity();
+    const Input u = Input::Zero();
+
     const auto sat_cache = makeCache();
     const typename MeasType::ZType z =
-        ekf.h<MeasType>(MeasType::ZType::Zero(), ekf.x(), nullptr, sat_cache);
+        ekf.h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u, sat_cache);
     typename MeasType::Covariance R;
     R.setIdentity();
 
     for (auto _ : state)
     {
-        const Error res = ekf.update<MeasType>(z, R, sat_cache);
+        const Error res = ekf.update<MeasType>(make_out(snap), z, R, u, sat_cache);
         if (!res.ok())
         {
             error("UH Oh");

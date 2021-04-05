@@ -39,13 +39,12 @@ class EkfEstimator
     {
         UTCTime t;
         std::variant<ImuMeas, pointPosMeas, gpsObsMeas, galObsMeas, gloObsMeas, fixAndHoldMeas> z;
-        size_t idx = 0;  // used to disambiguate identical timestamps
 
         inline bool operator<(const Meas& other) const
         {
             if (t == other.t)
             {
-                return idx < other.idx;
+                return z.index() < other.z.index();
             }
             else
             {
@@ -77,22 +76,24 @@ class EkfEstimator
 
         log_ = log;
 
-        const auto init_ekf = [&](EkfType& ekf) {
-            ekf.x() = x0;
-            ekf.x().t = t0;
-            ekf.P() = P0.asDiagonal();
-        };
+        Input u0;
+        u0.accel = -GRAVITY;
+        u0.gyro.setZero();
 
-        init_ekf(propagated_ekf_);
-        init_ekf(delayed_ekf_);
-        init_ekf(catchup_ekf_);
+        states_.emplace_back();
+        x() = x0;
+        t() = t0;
+        cov() = P0.asDiagonal();
+        u() = u0;
     }
 
     template <typename T>
-    Error addMeasurement(const UTCTime& t, const T& z)
+    Error addMeasurement(const UTCTime& meas_time, const T& z)
     {
-        if (t < delayed_ekf_.t())
+        if (meas_time < states_.front().x.t)
         {
+            error("Unable to handle measurement with time {}, oldest state in buffer time {}",
+                  fmt(meas_time, states_.front().x.t));
             return Error::create("cannot handle stale measurement");
         }
 
@@ -121,39 +122,21 @@ class EkfEstimator
             }
         }
 
-        static size_t meas_idx = 0;
-        auto it = measurements_.insert(Meas{t, z, ++meas_idx});
+        auto it = measurements_.insert(Meas{meas_time, z});
 
-        if (t < propagated_ekf_.t())
+        if (meas_time < t())
         {
             // Out-of-order measurement.  We need to rewind to apply it.
-            MeasIterator catchup_begin;
-            if (t < catchup_ekf_.t())
+            MeasIterator catchup_begin = measurements_.lower_bound(Meas{meas_time, {}});
+
+            // rewind the state buffer
+            while (t() > catchup_begin->t)
             {
-                // This is older than our catchup filter, go all the way back to delayed
-                catchup_ekf_ = delayed_ekf_;
-                catchup_begin = measurements_.begin();
+                states_.pop_back();
             }
-            else
-            {
-                // not older than catchup
-                catchup_begin = measurements_.find(last_catchup_meas_);
-                if (catchup_begin == measurements_.end())
-                {
-                    // This happens if `last_catchup_meas_` is uninitialized
-                    check(measurements_.begin()->t >= catchup_ekf_.t());
-                    catchup_begin = measurements_.begin();
-                }
-                else
-                {
-                    catchup_begin++;
-                }
-            }
-            last_catchup_meas_ = rollFilter(catchup_ekf_, catchup_begin, ++it);
-            propagated_ekf_ = catchup_ekf_;
         }
 
-        rollFilter(propagated_ekf_, it, measurements_.end());
+        rollFilter(it, measurements_.end());
 
         dropOldMeasurements();
 
@@ -163,20 +146,12 @@ class EkfEstimator
     void dropOldMeasurements()
     {
         check(!measurements_.empty(), "cannot process empty buffer");
-        auto first = measurements_.begin();
-        auto last = measurements_.crbegin();
 
-        while ((last->t - first->t).toSec() > MAX_DELAY_AGE_S)
+        const UTCTime t_start = measurements_.crbegin()->t - MAX_DELAY_AGE_S;
+        measurements_.erase(measurements_.cbegin(), measurements_.lower_bound(Meas{t_start, {}}));
+        while (states_.front().x.t < t_start)
         {
-            handleMeas(delayed_ekf_, *first);
-            measurements_.erase(first);
-            first = measurements_.begin();
-        }
-
-        if (delayed_ekf_.t() > catchup_ekf_.t())
-        {
-            catchup_ekf_ = delayed_ekf_;
-            last_catchup_meas_ = Meas{};
+            states_.pop_front();
         }
     }
 
@@ -189,106 +164,116 @@ class EkfEstimator
         return sat_cache_.find(cacheId(gnss_id, sat_num)) != sat_cache_.end();
     }
 
-    const satellite::SatelliteCache& getCache(const UTCTime& t,
-                                              const Vec3 pe2g,
-                                              int gnss_id,
-                                              int sat_id) const
+    const satellite::SatelliteCache& getCache(const UTCTime& t, int gnss_id, int sat_id) const
     {
         auto& cache = sat_cache_.at(cacheId(gnss_id, sat_id));
         const satellite::SatelliteBase* sat;
         const Error res = sat_manager_.getSat(gnss_id, sat_id, make_out(sat));
         check(res.ok(), "unable to retrieve satellite");
 
-        cache.update(t, pe2g, *sat);
+        cache.update(t, ekf_.p_e_g2e(x()), *sat);
         return cache;
     }
 
-    void handleImu(EkfType& ekf, const UTCTime& t, const ImuMeas& z) const
+    void handleImu(const UTCTime& meas_time, const ImuMeas& z) { handleImu(meas_time, z.z); }
+    void handleImu(const UTCTime& meas_time, const Input& z)
     {
-        if (t > ekf.t())
+        Snapshot& snap = states_.back();
+        states_.emplace_back();
+        Snapshot& new_snap = states_.back();
+        if (meas_time > t())
         {
-            ekf.predict(t, z.z, process_cov_, imu_cov_);
+            ekf_.predict(snap, meas_time, z, process_cov_, imu_cov_, make_out(new_snap));
         }
     }
 
-    void handlePointPos(EkfType& ekf, const UTCTime& t, const pointPosMeas& z) const
+    void handlePointPos(const UTCTime& meas_time, const pointPosMeas& z)
     {
-        if (t > ekf.t())
+        if (meas_time > t().quantized())
         {
-            ekf.predict(t, ekf.u(), process_cov_, imu_cov_);
+            handleImu(meas_time, u());
         }
-        ekf.template update<pointPosMeas>(z.z, point_pos_cov_);
+        ekf_.template update<pointPosMeas>(make_out(snap()), z.z, point_pos_cov_, u());
     }
 
-    void handleFixAndHold(EkfType& ekf, const UTCTime& t, const fixAndHoldMeas& z) const
+    void handleFixAndHold(const UTCTime& meas_time, const fixAndHoldMeas& z)
     {
-        if (t > ekf.t())
+        if (meas_time > t().quantized())
         {
-            ekf.predict(t, ekf.u(), process_cov_, imu_cov_);
+            handleImu(meas_time, u());
         }
-        ekf.template update<fixAndHoldMeas>(z.z, fix_and_hold_cov_);
+        ekf_.template update<fixAndHoldMeas>(make_out(snap()), z.z, fix_and_hold_cov_);
     }
 
-    void handleGpsObsMeas(EkfType& ekf, const UTCTime& t, const gpsObsMeas& z) const
+    void handleGpsObsMeas(const UTCTime& meas_time, const gpsObsMeas& z)
     {
-        if (t > ekf.t())
+        if (meas_time > t().quantized())
         {
-            ekf.predict(t, ekf.u(), process_cov_, imu_cov_);
+            handleImu(meas_time, u());
         }
-        ekf.template update<gpsObsMeas>(z.z, gps_obs_cov_,
-                                        getCache(t, ekf.p_e_g2e(), GnssID::GPS, z.sat_id));
+        const auto& cache = getCache(meas_time, GnssID::GPS, z.sat_id);
+        ekf_.template update<gpsObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
     }
 
-    void handleGalObsMeas(EkfType& ekf, const UTCTime& t, const galObsMeas& z) const
+    void handleGalObsMeas(const UTCTime& meas_time, const galObsMeas& z)
     {
-        if (t > ekf.t())
+        if (meas_time > t().quantized())
         {
-            ekf.predict(t, ekf.u(), process_cov_, imu_cov_);
+            handleImu(meas_time, u());
         }
-        ekf.template update<galObsMeas>(z.z, gal_obs_cov_,
-                                        getCache(t, ekf.p_e_g2e(), GnssID::Galileo, z.sat_id));
+        const auto& cache = getCache(meas_time, GnssID::Galileo, z.sat_id);
+        ekf_.template update<galObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
     }
 
-    void handleGloObsMeas(EkfType& ekf, const UTCTime& t, const gloObsMeas& z) const
+    void handleGloObsMeas(const UTCTime& meas_time, const gloObsMeas& z)
     {
-        if (t > ekf.t())
+        if (meas_time > t().quantized())
         {
-            ekf.predict(t, ekf.u(), process_cov_, imu_cov_);
+            handleImu(meas_time, u());
         }
-        ekf.template update<gloObsMeas>(z.z, glo_obs_cov_,
-                                        getCache(t, ekf.p_e_g2e(), GnssID::Glonass, z.sat_id));
+        const auto& cache = getCache(meas_time, GnssID::Glonass, z.sat_id);
+        ekf_.template update<gloObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
     }
 
-    void handleMeas(EkfType& ekf, const Meas& meas) const
+    void handleMeas(const Meas& meas)
     {
         std::visit(detail::overloaded{
-                       [&](const ImuMeas& z) { handleImu(ekf, meas.t, z); },
-                       [&](const pointPosMeas& z) { handlePointPos(ekf, meas.t, z); },
-                       [&](const fixAndHoldMeas& z) { handleFixAndHold(ekf, meas.t, z); },
-                       [&](const gpsObsMeas& z) { handleGpsObsMeas(ekf, meas.t, z); },
-                       [&](const galObsMeas& z) { handleGalObsMeas(ekf, meas.t, z); },
-                       [&](const gloObsMeas& z) { handleGloObsMeas(ekf, meas.t, z); },
+                       [&](const ImuMeas& z) { handleImu(meas.t, z); },
+                       [&](const pointPosMeas& z) { handlePointPos(meas.t, z); },
+                       [&](const fixAndHoldMeas& z) { handleFixAndHold(meas.t, z); },
+                       [&](const gpsObsMeas& z) { handleGpsObsMeas(meas.t, z); },
+                       [&](const galObsMeas& z) { handleGalObsMeas(meas.t, z); },
+                       [&](const gloObsMeas& z) { handleGloObsMeas(meas.t, z); },
                    },
                    meas.z);
     }
 
-    const Meas& rollFilter(EkfType& ekf, const MeasIterator& start, const MeasIterator& end) const
+    const Meas& rollFilter(const MeasIterator& start, const MeasIterator& end)
     {
         MeasIterator it = start;
         while (it != end)
         {
             const Meas& meas = *it;
-            handleMeas(ekf, meas);
+            handleMeas(meas);
             ++it;
         }
         return *(--it);
     }
 
-    const UTCTime& t() const { return propagated_ekf_.x().t; }
-    const State& x() const { return propagated_ekf_.x(); }
-    const Input& u() const { return propagated_ekf_.u(); }
-    Input& u() { return propagated_ekf_.u(); }
-    const dxMat& cov() const { return propagated_ekf_.P(); }
+    const Snapshot& snap() const { return states_.back(); }
+    Snapshot& snap() { return states_.back(); }
+
+    const UTCTime& t() const { return states_.back().x.t; }
+    UTCTime& t() { return states_.back().x.t; }
+
+    const State& x() const { return states_.back().x; }
+    State& x() { return states_.back().x; }
+
+    const Input& u() const { return states_.back().u; }
+    Input& u() { return states_.back().u; }
+
+    const dxMat& cov() const { return states_.back().cov; }
+    dxMat& cov() { return states_.back().cov; }
 
     std::multiset<Meas> measurements_;
 
@@ -300,9 +285,10 @@ class EkfEstimator
     DiagMat6 imu_cov_;
     Eigen::DiagonalMatrix<double, 60> process_cov_;
 
-    EkfType propagated_ekf_;
-    EkfType delayed_ekf_;
-    EkfType catchup_ekf_;
+    CircularBuffer<Snapshot> states_;
+    int state_idx_ = 0;
+
+    EkfType ekf_;
 
     Meas last_catchup_meas_;
     static constexpr double MAX_DELAY_AGE_S = 1.0;

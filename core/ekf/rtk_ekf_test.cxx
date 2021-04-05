@@ -93,13 +93,14 @@ TEST(MeasJacTest, pointPosMeasJacobianTest)
     const State x0 = State::Random();
 
     RtkEkf ekf;
+    const Input u = Input::Random();
 
-    const auto fun = [&](const State& x) { return ekf.h<pointPosMeas>(z0, x, nullptr); };
+    const auto fun = [&](const State& x) { return ekf.h<pointPosMeas>(z0, x, nullptr, u); };
 
     const auto fd = compute_jac(x0, fun, 1e-6);
 
     pointPosMeas::Jac analytical;
-    ekf.h<pointPosMeas>(z0, x0, &analytical);
+    ekf.h<pointPosMeas>(z0, x0, &analytical, u);
 
     MATRIX_CLOSE(analytical, fd, 1e-8);
 }
@@ -139,13 +140,14 @@ TYPED_TEST(ObsMeasJacTest, JacobianTest)
 
     RtkEkf ekf;
     const auto sat_cache = makeCache();
+    const Input u = Input::Random();
 
-    const auto fun = [&](const State& x) { return ekf.h<TypeParam>(z0, x, nullptr, sat_cache); };
+    const auto fun = [&](const State& x) { return ekf.h<TypeParam>(z0, x, nullptr, u, sat_cache); };
 
     const auto fd = compute_jac(x0, fun, 1e-4);
 
     typename TypeParam::Jac analytical;
-    ekf.h<TypeParam>(z0, x0, &analytical, sat_cache);
+    ekf.h<TypeParam>(z0, x0, &analytical, u, sat_cache);
 
     MATRIX_CLOSE(analytical, fd, 1e-3);
 }

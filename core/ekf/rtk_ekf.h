@@ -27,7 +27,7 @@ class RtkEkf : public RtkEkfBase<RtkEkf>
                                RtkEkf::StateJac* dxdx,
                                RtkEkf::InputJac* dxdu);
 
-    Vec3 p_e_g2e() const { return x().T_I2e.transformp(x().pose.transforma(x().p_b2g)); }
+    Vec3 p_e_g2e(const State& x) const { return x.T_I2e.transformp(x.pose.transforma(x.p_b2g)); }
 };
 
 }  // namespace ekf

@@ -18,13 +18,7 @@ class MockEkf : public RtkEkfBase<MockEkf>
 {
  public:
     MockEkf() = default;
-    MockEkf& operator=(const MockEkf& other)
-    {
-        x_ = other.x_;
-        u_ = other.u_;
-        cov_ = other.cov_;
-        return *this;
-    }
+
     template <typename MeasType, typename... Args>
     typename MeasType::Residual h(const typename MeasType::ZType& z,
                                   const State& x,
@@ -33,28 +27,28 @@ class MockEkf : public RtkEkfBase<MockEkf>
     {
         if constexpr (std::is_same_v<MeasType, pointPosMeas>)
         {
-            pointPosCb(x_.t);
+            pointPosCb(x.t);
         }
         if constexpr (std::is_same_v<MeasType, gpsObsMeas>)
         {
-            gpsObsCb(x_.t);
+            gpsObsCb(x.t);
         }
         if constexpr (std::is_same_v<MeasType, galObsMeas>)
         {
-            galObsCb(x_.t);
+            galObsCb(x.t);
         }
         if constexpr (std::is_same_v<MeasType, gloObsMeas>)
         {
-            gloObsCb(x_.t);
+            gloObsCb(x.t);
         }
         if constexpr (std::is_same_v<MeasType, fixAndHoldMeas>)
         {
-            fixAndHoldCb(x_.t);
+            fixAndHoldCb(x.t);
         }
         return MeasType::Residual::Zero();
     }
 
-    Vec3 p_e_g2e() const { return x().T_I2e.transformp(x().pose.transforma(x().p_b2g)); }
+    Vec3 p_e_g2e(const State& x) const { return x.T_I2e.transformp(x.pose.transforma(x.p_b2g)); }
 
     ErrorState errorStateDynamics(ErrorState, State, Input, Input) const
     {
@@ -114,11 +108,11 @@ TEST_F(RtkEkfEstimatorTest, InOrderIMU)
     {
         InSequence seq;
 
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
     }
 
     est.addMeasurement(UTCTime(0.1), ImuMeas());
@@ -135,8 +129,8 @@ TEST_F(RtkEkfEstimatorTest, InOrderIMU)
         expected_time += dt;
         EXPECT_EQ(m.t, expected_time);
     }
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.5));
+    EXPECT_EQ(est.states_.size(), 6ul);
 }
 
 TEST_F(RtkEkfEstimatorTest, InOrderMeasurements)
@@ -149,19 +143,22 @@ TEST_F(RtkEkfEstimatorTest, InOrderMeasurements)
     {
         InSequence seq;
 
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, pointPosCb(Eq(UTCTime(0.35).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.35).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.35).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.35).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
     }
+
+    pointPosMeas m;
+    m.z.setZero();
 
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
-    est.addMeasurement(UTCTime(0.35), pointPosMeas());
+    est.addMeasurement(UTCTime(0.35), m);
     est.addMeasurement(UTCTime(0.4), ImuMeas());
     est.addMeasurement(UTCTime(0.5), ImuMeas());
 
@@ -174,8 +171,8 @@ TEST_F(RtkEkfEstimatorTest, InOrderMeasurements)
     EXPECT_EQ((it++)->t, UTCTime(0.4));
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.5));
+    EXPECT_EQ(est.states_.size(), 7ul);
 }
 
 TEST_F(RtkEkfEstimatorTest, OnTopOfMeasurements)
@@ -186,18 +183,21 @@ TEST_F(RtkEkfEstimatorTest, OnTopOfMeasurements)
     {
         InSequence seq;
 
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, pointPosCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
     }
+
+    pointPosMeas m;
+    m.z.setZero();
 
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
-    est.addMeasurement(UTCTime(0.3), pointPosMeas());
+    est.addMeasurement(UTCTime(0.3), m);
     est.addMeasurement(UTCTime(0.4), ImuMeas());
     est.addMeasurement(UTCTime(0.5), ImuMeas());
 
@@ -210,8 +210,8 @@ TEST_F(RtkEkfEstimatorTest, OnTopOfMeasurements)
     EXPECT_EQ((it++)->t, UTCTime(0.4));
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.5));
+    EXPECT_EQ(est.states_.size(), 6ul);
 }
 
 TEST_F(RtkEkfEstimatorTest, SmallRewind)
@@ -225,28 +225,27 @@ TEST_F(RtkEkfEstimatorTest, SmallRewind)
         InSequence seq;
 
         // normal progression
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
         // catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
-
-        // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
     }
+
+    pointPosMeas m;
+    m.z.setZero();
+
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
     est.addMeasurement(UTCTime(0.4), ImuMeas());
-    est.addMeasurement(UTCTime(0.25), pointPosMeas());
+    est.addMeasurement(UTCTime(0.25), m);
     est.addMeasurement(UTCTime(0.5), ImuMeas());
 
     auto it = est.measurements_.begin();
@@ -257,8 +256,8 @@ TEST_F(RtkEkfEstimatorTest, SmallRewind)
     EXPECT_EQ((it++)->t, UTCTime(0.4));
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.25));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.5));
+    EXPECT_EQ(est.states_.size(), 7ul);
 }
 
 TEST_F(RtkEkfEstimatorTest, DoubleRewind)
@@ -272,39 +271,37 @@ TEST_F(RtkEkfEstimatorTest, DoubleRewind)
         InSequence seq;
 
         // normal progression
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
         // catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
-
-        // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
 
         // catchup #2
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.35).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.35).quantized())));
 
         // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.35).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.35).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
     }
+
+    pointPosMeas m;
+    m.z.setZero();
+
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
     est.addMeasurement(UTCTime(0.4), ImuMeas());
-    est.addMeasurement(UTCTime(0.25), pointPosMeas());
+    est.addMeasurement(UTCTime(0.25), m);
     est.addMeasurement(UTCTime(0.5), ImuMeas());
-    est.addMeasurement(UTCTime(0.35), pointPosMeas());
+    est.addMeasurement(UTCTime(0.35), m);
 
     auto it = est.measurements_.begin();
     EXPECT_EQ((it++)->t, UTCTime(0.1));
@@ -315,8 +312,8 @@ TEST_F(RtkEkfEstimatorTest, DoubleRewind)
     EXPECT_EQ((it++)->t, UTCTime(0.4));
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.35));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.50));
+    EXPECT_EQ(est.states_.size(), 8ul);
 }
 
 TEST_F(RtkEkfEstimatorTest, FurtherRewind)
@@ -331,46 +328,47 @@ TEST_F(RtkEkfEstimatorTest, FurtherRewind)
         InSequence seq;
 
         // normal progression
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
         // catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
 
         // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
 
         // delayed->catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.15).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.15).quantized())));
 
         // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.15).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.20).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.15).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.20).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.25).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
 
         // Final in-order measurement
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.5).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.5).quantized())));
     }
+
+    pointPosMeas m;
+    m.z.setZero();
+
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
     est.addMeasurement(UTCTime(0.4), ImuMeas());
-    est.addMeasurement(UTCTime(0.25), pointPosMeas());
+    est.addMeasurement(UTCTime(0.25), m);
     est.addMeasurement(UTCTime(0.5), ImuMeas());
-    est.addMeasurement(UTCTime(0.15), pointPosMeas());
+    est.addMeasurement(UTCTime(0.15), m);
     est.addMeasurement(UTCTime(0.6), ImuMeas());
 
     auto it = est.measurements_.begin();
@@ -383,117 +381,69 @@ TEST_F(RtkEkfEstimatorTest, FurtherRewind)
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ((it++)->t, UTCTime(0.6));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.15));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.6));
+    EXPECT_EQ(est.states_.size(), 9ul);
 }
 
-TEST_F(RtkEkfEstimatorTest, MoveDelayed)
+TEST_F(RtkEkfEstimatorTest, MoveBufferFront)
 {
-    EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(15);
-    EXPECT_CALL(est.delayed_ekf_, dynamicsCb(_)).Times(4);
+    const int OVERFLOW = 3;
+    const int times = est.states_.capacity() + OVERFLOW;
+    EXPECT_CALL(est.ekf_, dynamicsCb(_)).Times(times);
 
     const double dt = 0.1;
-    UTCTime t(0.1);
-    for (int i = 0; i < 15; ++i)
+    UTCTime t(dt);
+    for (int i = 0; i < times; ++i)
     {
         est.addMeasurement(t, ImuMeas());
         t += dt;
     }
 
-    auto it = est.measurements_.begin();
-    EXPECT_EQ(it->t, est.delayed_ekf_.t() + dt);
-    EXPECT_EQ((it++)->t, UTCTime(0.5));
-    EXPECT_EQ((it++)->t, UTCTime(0.6));
-    EXPECT_EQ((it++)->t, UTCTime(0.7));
-    EXPECT_EQ((it++)->t, UTCTime(0.8));
-    EXPECT_EQ((it++)->t, UTCTime(0.9));
-    EXPECT_EQ((it++)->t, UTCTime(1.0));
-    EXPECT_EQ((it++)->t, UTCTime(1.1));
-    EXPECT_EQ((it++)->t, UTCTime(1.2));
-    EXPECT_EQ((it++)->t, UTCTime(1.3));
-    EXPECT_EQ((it++)->t, UTCTime(1.4));
-    EXPECT_EQ((it++)->t, UTCTime(1.5));
-    EXPECT_EQ(est.propagated_ekf_.t(), UTCTime(1.5));
-    EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), est.delayed_ekf_.t());
+    EXPECT_EQ(est.t(), UTCTime(dt * (est.states_.capacity() + OVERFLOW)));
+    EXPECT_EQ(est.states_.front().x.t, est.t() - est.MAX_DELAY_AGE_S);
+    EXPECT_EQ(est.states_.front().x.t, est.measurements_.begin()->t);
 }
 
 TEST_F(RtkEkfEstimatorTest, RewindAfterMoveDelay)
 {
-    EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(15);
-    EXPECT_CALL(est.delayed_ekf_, dynamicsCb(_)).Times(4);
+    const int OVERFLOW = 3;
+    const int times = est.states_.capacity() + OVERFLOW;
     {
         InSequence seq;
 
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(_)).Times(5);
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.85))));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(7);
+        EXPECT_CALL(est.ekf_, dynamicsCb(_)).Times(times);
+        EXPECT_CALL(est.ekf_, pointPosCb(_));
+        EXPECT_CALL(est.ekf_, dynamicsCb(_)).Times(5);
     }
 
     const double dt = 0.1;
-    UTCTime t(0.1);
-    for (int i = 0; i < 15; ++i)
+    UTCTime t(dt);
+    for (int i = 0; i < times; ++i)
     {
         est.addMeasurement(t, ImuMeas());
         t += dt;
     }
-    est.addMeasurement(UTCTime(0.85), pointPosMeas());
 
-    auto it = est.measurements_.begin();
-    EXPECT_EQ(it->t, est.delayed_ekf_.t() + dt);
-    EXPECT_EQ((it++)->t, UTCTime(0.5));
-    EXPECT_EQ((it++)->t, UTCTime(0.6));
-    EXPECT_EQ((it++)->t, UTCTime(0.7));
-    EXPECT_EQ((it++)->t, UTCTime(0.8));
-    EXPECT_EQ((it++)->t, UTCTime(0.85));
-    EXPECT_EQ((it++)->t, UTCTime(0.9));
-    EXPECT_EQ((it++)->t, UTCTime(1.0));
-    EXPECT_EQ((it++)->t, UTCTime(1.1));
-    EXPECT_EQ((it++)->t, UTCTime(1.2));
-    EXPECT_EQ((it++)->t, UTCTime(1.3));
-    EXPECT_EQ((it++)->t, UTCTime(1.4));
-    EXPECT_EQ((it++)->t, UTCTime(1.5));
-    EXPECT_EQ(est.propagated_ekf_.t(), UTCTime(1.5));
-    EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.85));
+    pointPosMeas m;
+    m.z.setZero();
+    est.addMeasurement(est.t() - 0.5, pointPosMeas());
 }
 
 TEST_F(RtkEkfEstimatorTest, MeasBeforeDelayedThrowError)
 {
-    EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(15);
-    EXPECT_CALL(est.delayed_ekf_, dynamicsCb(_)).Times(4);
+    const int OVERFLOW = 3;
+    const int times = est.states_.capacity() + OVERFLOW;
+    EXPECT_CALL(est.ekf_, dynamicsCb(_)).Times(times);
 
     const double dt = 0.1;
-    UTCTime t(0.1);
-    for (int i = 0; i < 15; ++i)
+    UTCTime t(dt);
+    for (int i = 0; i < times; ++i)
     {
         est.addMeasurement(t, ImuMeas());
         t += dt;
     }
+
     EXPECT_NOK(est.addMeasurement(UTCTime(0.3), pointPosMeas()));
-}
-
-TEST_F(RtkEkfEstimatorTest, MeasOnTopOfDelayed)
-{
-    EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(15);
-    EXPECT_CALL(est.delayed_ekf_, dynamicsCb(_)).Times(4);
-
-    const double dt = 0.1;
-    UTCTime t(0.1);
-    for (int i = 0; i < 15; ++i)
-    {
-        est.addMeasurement(t, ImuMeas());
-        t += dt;
-    }
-
-    {
-        InSequence seq;
-
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.4))));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(11);
-        EXPECT_CALL(est.delayed_ekf_, pointPosCb(Eq(UTCTime(0.4))));
-    }
-    EXPECT_OK(est.addMeasurement(UTCTime(0.4), pointPosMeas()));
 }
 
 TEST_F(RtkEkfEstimatorTest, MeasOnTopRewind)
@@ -507,22 +457,25 @@ TEST_F(RtkEkfEstimatorTest, MeasOnTopRewind)
         InSequence seq;
 
         // normal progression
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(4);
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.0).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.1).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.2).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
         // catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(_)).Times(3);
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.3).quantized())));
+        EXPECT_CALL(est.ekf_, pointPosCb(Eq(UTCTime(0.3))));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
 
         // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
+        EXPECT_CALL(est.ekf_, dynamicsCb(Eq(UTCTime(0.4))));
     }
+    pointPosMeas m;
+    m.z.setZero();
     est.addMeasurement(UTCTime(0.1), ImuMeas());
     est.addMeasurement(UTCTime(0.2), ImuMeas());
     est.addMeasurement(UTCTime(0.3), ImuMeas());
     est.addMeasurement(UTCTime(0.4), ImuMeas());
-    est.addMeasurement(UTCTime(0.3), pointPosMeas());
+    est.addMeasurement(UTCTime(0.3), m);
     est.addMeasurement(UTCTime(0.5), ImuMeas());
 
     auto it = est.measurements_.begin();
@@ -533,58 +486,7 @@ TEST_F(RtkEkfEstimatorTest, MeasOnTopRewind)
     EXPECT_EQ((it++)->t, UTCTime(0.4));
     EXPECT_EQ((it++)->t, UTCTime(0.5));
     EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.3));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
-}
-
-TEST_F(RtkEkfEstimatorTest, MeasOnTopDoubleRewind)
-{
-    // t:       .1  .2  .3  .4  .5
-    // IMU      x   x   x   x   x
-    // PntPos         x<-----
-    //                 ----->
-    // PntPos         x
-    //                 ----->
-    {
-        InSequence seq;
-
-        // normal progression
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(_)).Times(4);
-
-        // catchup
-        EXPECT_CALL(est.catchup_ekf_, dynamicsCb(_)).Times(3);
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.3).quantized())));
-
-        // finish prop
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
-
-        // catchup again
-        EXPECT_CALL(est.catchup_ekf_, pointPosCb(Eq(UTCTime(0.3).quantized())));
-
-        // propagate again
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.3).quantized())));
-        EXPECT_CALL(est.propagated_ekf_, dynamicsCb(Eq(UTCTime(0.4).quantized())));
-    }
-    est.addMeasurement(UTCTime(0.1), ImuMeas());
-    est.addMeasurement(UTCTime(0.2), ImuMeas());
-    est.addMeasurement(UTCTime(0.3), ImuMeas());
-    est.addMeasurement(UTCTime(0.4), ImuMeas());
-    est.addMeasurement(UTCTime(0.3), pointPosMeas());
-    est.addMeasurement(UTCTime(0.5), ImuMeas());
-    est.addMeasurement(UTCTime(0.3), pointPosMeas());
-
-    auto it = est.measurements_.begin();
-    EXPECT_EQ((it++)->t, UTCTime(0.1));
-    EXPECT_EQ((it++)->t, UTCTime(0.2));
-    EXPECT_EQ((it++)->t, UTCTime(0.3));
-    EXPECT_EQ((it++)->t, UTCTime(0.3));
-    EXPECT_EQ((it++)->t, UTCTime(0.3));
-    EXPECT_EQ((it++)->t, UTCTime(0.4));
-    EXPECT_EQ((it++)->t, UTCTime(0.5));
-    EXPECT_EQ(it, est.measurements_.end());
-    EXPECT_EQ(est.catchup_ekf_.t(), UTCTime(0.3));
-    EXPECT_EQ(est.delayed_ekf_.t(), UTCTime(0));
+    EXPECT_EQ(est.t(), UTCTime(0.5));
 }
 
 }  // namespace ekf

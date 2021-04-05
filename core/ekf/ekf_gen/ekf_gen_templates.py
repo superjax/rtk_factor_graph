@@ -117,6 +117,13 @@ inline bool isFinite(const {State}& x) {{ return mc::isFinite(x.arr); }}
 typedef Eigen::Matrix<double, {ErrorState}::SIZE, {ErrorState}::SIZE> dxMat;
 typedef Eigen::Matrix<double, {ErrorState}::SIZE, 1> dxVec;
 
+struct Snapshot
+{{
+    {State} x;
+    dxMat cov;
+    {Input} u;
+}};
+
 {EXTRA_TYPEDEFS}
 
 {END_NAMESPACES}
@@ -243,6 +250,8 @@ constexpr int {State}::DOF;
 
 constexpr int {Input}::DOF;
 
+
+
 {END_NAMESPACES}
 
 
@@ -272,68 +281,59 @@ class {EkfType} {{
     {USING_STATEMENTS}
 
  public:
-    {EkfType}()
-    {{
-    #ifdef INIT_NAN
-        // This is to help track down init-time bugs
-        cov_.setConstant(NAN);
-    #endif
-    }}
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     using ProcessCov = Eigen::DiagonalMatrix<double, {ErrorState}::SIZE>;
     using InputCov = Eigen::DiagonalMatrix<double, {InputSize}>;
 
-    const UTCTime& t() const {{ return x_.t; }}
-
     {JAC_TYPES}
 
-    State& x() {{ return x_; }} // The current state object
-    const State& x() const {{ return x_; }}
-    dxMat& P() {{ return cov_; }} // The current covariance
-    const dxMat& P() const {{ return cov_; }}
-    const {Input}& u() const {{ return u_; }} // The current input
-    {Input}& u() {{ return u_; }}
-
-    Error predict(const UTCTime& t_new,
-                         const {Input}& u,
-                         const ProcessCov& Qx,
-                         const InputCov& Qu)
+    Error predict(const Snapshot& snap,
+                  const UTCTime& t_new,
+                  const {Input}& u,
+                  const ProcessCov& Qx,
+                  const InputCov& Qu,
+                  Out<Snapshot> out)
     {{
-        check(x_.t != INVALID_TIME, "tried to run ekf without initializing");
-        check(t_new > x_.t, "Cannot propagate backwards");
-        check(isFinite(x_), "Numerical issues in state vector");
-        check(mc::isFinite(cov_), "Numerical issues in covariance matrix");
+        const auto& x = snap.x;
+        const auto& cov = snap.cov;
+        auto& x_out = out->x;
+        auto& cov_out = out->cov;
+        check(x.t != INVALID_TIME, "tried to run ekf without initializing");
+        check(t_new > x.t, "Cannot propagate backwards");
+        check(isFinite(x), "Numerical issues in state vector");
+        check(mc::isFinite(cov), "Numerical issues in covariance matrix");
         check(mc::isFinite(u), "Numerical issues in input vector");
         check(mc::isFinite(Qx), "Numerical problems in process noise");
         check(mc::isFinite(Qu), "Numerical problems in input noise");
 
-        const double dt = (t_new - x_.t).toSec();
+        const double dt = (t_new - x.t).toSec();
 
         StateJac dxdx;
         InputJac dxdu;
-        const {ErrorState} xdot = static_cast<ChildType*>(this)->dynamics(x_, u, &dxdx, &dxdu);
+        const {ErrorState} xdot = static_cast<ChildType*>(this)->dynamics(x, u, &dxdx, &dxdu);
 
         check(mc::isFinite(xdot), "Numerical Issues in derivative");
         check(mc::isFinite(dxdx), "Numerical Issues in state jacobian");
         check(mc::isFinite(dxdu), "Numerical Issues in input jacobian");
 
         // Propagate State
-        x_ += (xdot * dt);
-        x_.t += dt;
+        x_out = x + (xdot * dt);
+        x_out.t = x.t + dt;
 
         // Propagate Covariance
         // P = A ⋅ P ⋅ Aᵀ + B ⋅ Qu ⋅ Bᵀ + Qx
-        cov_ = dxdx * cov_ * dxdx.transpose() + dxdu * Qu*dt*dt * dxdu.transpose();
-        cov_ += Qx*dt*dt;
+        cov_out = dxdx * snap.cov * dxdx.transpose() + dxdu * Qu*dt*dt * dxdu.transpose();
+        cov_out += Qx*dt*dt;
 
-        u_ = u;
+        out->u = u;
 
         return Error::none();
     }}
 
     template<typename Meas, typename...Args>
-    Error update(const typename Meas::ZType& z, const typename Meas::Covariance& R, const Args&... args)
+    Error update(Out<Snapshot> snap,
+                 const typename Meas::ZType& z,
+                 const typename Meas::Covariance& R,
+                 const Args&... args)
     {{
         using mc::isFinite;
 
@@ -341,12 +341,13 @@ class {EkfType} {{
         check(mc::isFinite(R), "numerical issues in measurement covariance");
 
         typename Meas::Jac dzdx;
-        const typename Meas::Residual res = static_cast<ChildType*>(this)->template h<Meas, Args...>(z, x_, &dzdx, args...);
+        const typename Meas::Residual res =
+            static_cast<ChildType*>(this)->template h<Meas, Args...>(z, snap->x, &dzdx, args...);
         check(mc::isFinite(dzdx), "numerical issues in measurement jacobian");
         check(mc::isFinite(res), "numerical issues in measurement residual");
 
         // innov = (H ⋅ P ⋅ H.T + R)⁻¹
-        Mat<Meas::SIZE, Meas::SIZE> HPHT = (dzdx * cov_ * dzdx.transpose());
+        Mat<Meas::SIZE, Meas::SIZE> HPHT = (dzdx * snap->cov * dzdx.transpose());
         HPHT += R;
         Mat<Meas::SIZE, Meas::SIZE> innov = HPHT.inverse();
         check(mc::isFinite(innov), "numerical issues in innovation");
@@ -359,28 +360,21 @@ class {EkfType} {{
         }}
 
         // K = P ⋅ H.T * innov
-        const Mat<ErrorState::SIZE, Meas::SIZE> K = cov_ * dzdx.transpose() * innov;
+        const Mat<ErrorState::SIZE, Meas::SIZE> K = snap->cov * dzdx.transpose() * innov;
         check(mc::isFinite(K), "numerical issues in Kalman gain");
 
-        x_ += K * res;
+        snap->x += K * res;
 
         // A = I - K ⋅ H
         // P = A ⋅ P ⋅ A.T + K ⋅ R ⋅ K.T
         const dxMat A = dxMat::Identity() - K * dzdx;
-        cov_ = A * cov_ * A.transpose() + K * R * K.transpose();
+        snap->cov = A * snap->cov * A.transpose() + K * R * K.transpose();
 
-        check(isFinite(x_), "numerical issues in state post-update");
-        check(mc::isFinite(cov_), "numerical issues in covariance post-update");
+        check(isFinite(snap->x), "numerical issues in state post-update");
+        check(mc::isFinite(snap->cov), "numerical issues in covariance post-update");
 
         return Error::none();
     }}
-
- protected:
-    {State} x_;
-    dxMat cov_;
-    {Input} u_;
-
-
 }};
 
 template<int Rows, int Cols>

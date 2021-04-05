@@ -61,12 +61,16 @@ class CircularBuffer
     template <typename... Args>
     void emplace_back(Args&&... args)
     {
+        if (full())
+            pop_front();
         new (&*tail_) T(args...);
         ++tail_;
     }
 
     void push_back(const T& obj)
     {
+        if (full())
+            pop_front();
         *tail_ = obj;
         ++tail_;
     }
@@ -74,12 +78,17 @@ class CircularBuffer
     template <typename... Args>
     void emplace_front(Args&&... args)
     {
+        if (full())
+            pop_back();
         --head_;
         new (&*head_) T(args...);
     }
 
     void push_front(const T& obj)
     {
+        if (full())
+            pop_back();
+
         --head_;
         *head_ = obj;
     }

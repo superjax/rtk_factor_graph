@@ -8,11 +8,12 @@ namespace ekf {
 template <>
 pointPosMeas::Residual RtkEkf::h<pointPosMeas>(const pointPosMeas::ZType& z,
                                                const State& x,
-                                               pointPosMeas::Jac* jac) const
+                                               pointPosMeas::Jac* jac,
+                                               const Input& u) const
 {
     const Vec3 p_I2g_I = x.pose.transforma(x.p_b2g);
     const Vec3 p_e2g_e = x.T_I2e.transformp(p_I2g_I);
-    const Vec3 v_I2g_b = u().gyro.cross(x.p_b2g) + x.vel;
+    const Vec3 v_I2g_b = u.gyro.cross(x.p_b2g) + x.vel;
     const math::Quat<double> q_b2e = (x.pose.rotation().inverse() * x.T_I2e.rotation());
 
     const Vec3 v_I2g_e = q_b2e.rotp(v_I2g_b);
@@ -27,7 +28,7 @@ pointPosMeas::Residual RtkEkf::h<pointPosMeas>(const pointPosMeas::ZType& z,
         jac->dPose().bottomLeftCorner<3, 3>() = x.T_I2e.rotp(x.pose.rota(skew(v_I2g_b)));
 
         jac->dP_b2g().topRows<3>() = -R_b2e;
-        jac->dP_b2g().bottomRows<3>() = -q_b2e.rotp(skew(u().gyro));
+        jac->dP_b2g().bottomRows<3>() = -q_b2e.rotp(skew(u.gyro));
 
         jac->dT_i2e().topLeftCorner<3, 3>() = -skew(p_e2g_e);
         jac->dT_i2e().topRightCorner<3, 3>() = Mat3::Identity();
@@ -43,11 +44,12 @@ template <>
 gpsObsMeas::Residual RtkEkf::h<gpsObsMeas>(const Vec2& z,
                                            const State& x,
                                            gpsObsMeas::Jac* jac,
+                                           const Input& u,
                                            const satellite::SatelliteCache& sat) const
 {
     const Vec3 p_I2g_I = x.pose.transforma(x.p_b2g);
     const Vec3 p_e2g_e = x.T_I2e.transformp(p_I2g_I);
-    const Vec3 v_I2g_b = u().gyro.cross(x.p_b2g) + x.vel;
+    const Vec3 v_I2g_b = u.gyro.cross(x.p_b2g) + x.vel;
     const math::Quat<double> q_b2e = (x.pose.rotation().inverse() * x.T_I2e.rotation());
 
     const Vec3 v_I2g_e = q_b2e.rotp(v_I2g_b);
@@ -87,7 +89,7 @@ gpsObsMeas::Residual RtkEkf::h<gpsObsMeas>(const Vec2& z,
         jac->dT_i2e().bottomLeftCorner<1, 3>() = e.T * skew(R_b2e * v_I2g_b);
 
         jac->dP_b2g().topRows<1>() = e.T * R_b2e;
-        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u().gyro));
+        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u.gyro));
 
         jac->dGps_clk()(0, 0) = -(C_LIGHT / 1e9);
         jac->dGps_clk()(1, 1) = -(C_LIGHT / 1e9);
@@ -99,11 +101,12 @@ template <>
 galObsMeas::Residual RtkEkf::h<galObsMeas>(const Vec2& z,
                                            const State& x,
                                            galObsMeas::Jac* jac,
+                                           const Input& u,
                                            const satellite::SatelliteCache& sat) const
 {
     const Vec3 p_I2g_I = x.pose.transforma(x.p_b2g);
     const Vec3 p_e2g_e = x.T_I2e.transformp(p_I2g_I);
-    const Vec3 v_I2g_b = u().gyro.cross(x.p_b2g) + x.vel;
+    const Vec3 v_I2g_b = u.gyro.cross(x.p_b2g) + x.vel;
     const math::Quat<double> q_b2e = (x.pose.rotation().inverse() * x.T_I2e.rotation());
 
     const Vec3 v_I2g_e = q_b2e.rotp(v_I2g_b);
@@ -143,7 +146,7 @@ galObsMeas::Residual RtkEkf::h<galObsMeas>(const Vec2& z,
         jac->dT_i2e().bottomLeftCorner<1, 3>() = e.T * skew(R_b2e * v_I2g_b);
 
         jac->dP_b2g().topRows<1>() = e.T * R_b2e;
-        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u().gyro));
+        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u.gyro));
 
         jac->dGal_clk()(0, 0) = -(C_LIGHT / 1e9);
         jac->dGal_clk()(1, 1) = -(C_LIGHT / 1e9);
@@ -155,11 +158,12 @@ template <>
 gloObsMeas::Residual RtkEkf::h<gloObsMeas>(const Vec2& z,
                                            const State& x,
                                            gloObsMeas::Jac* jac,
+                                           const Input& u,
                                            const satellite::SatelliteCache& sat) const
 {
     const Vec3 p_I2g_I = x.pose.transforma(x.p_b2g);
     const Vec3 p_e2g_e = x.T_I2e.transformp(p_I2g_I);
-    const Vec3 v_I2g_b = u().gyro.cross(x.p_b2g) + x.vel;
+    const Vec3 v_I2g_b = u.gyro.cross(x.p_b2g) + x.vel;
     const math::Quat<double> q_b2e = (x.pose.rotation().inverse() * x.T_I2e.rotation());
 
     const Vec3 v_I2g_e = q_b2e.rotp(v_I2g_b);
@@ -199,7 +203,7 @@ gloObsMeas::Residual RtkEkf::h<gloObsMeas>(const Vec2& z,
         jac->dT_i2e().bottomLeftCorner<1, 3>() = e.T * skew(R_b2e * v_I2g_b);
 
         jac->dP_b2g().topRows<1>() = e.T * R_b2e;
-        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u().gyro));
+        jac->dP_b2g().bottomRows<1>() = e.T * q_b2e.rotp(skew(u.gyro));
 
         jac->dGlo_clk()(0, 0) = -(C_LIGHT / 1e9);
         jac->dGlo_clk()(1, 1) = -(C_LIGHT / 1e9);
