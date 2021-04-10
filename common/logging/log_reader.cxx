@@ -16,6 +16,7 @@
 #include "common/measurements/imu.h"
 #include "common/quantized_time.h"
 #include "common/utctime.h"
+#include "utils/progress_bar.h"
 #include "utils/split_string.h"
 
 namespace fs = std::experimental::filesystem;
@@ -186,7 +187,17 @@ void LogReader::read()
         }
     }
 
+    // Count the number of messages
+    int total_msgs = 0;
+    for (const auto& stream : streams_)
+    {
+        total_msgs += stream.second.numRecords();
+    }
+
+    utils::ProgressBar bar(total_msgs, 100);
+
     // Go through all streams and call messages as they occur.
+    int called_msgs = 0;
     while (true)
     {
         UTCTime min_time = MAX_TIME;
@@ -228,6 +239,7 @@ void LogReader::read()
         if (cb != callbacks_.end())
         {
             cb->second(min_time, lowest_it->second.key(), lowest_it->second);
+            bar.print(++called_msgs, lowest_it->second.nextStamp().toSec());
         }
     }
 }

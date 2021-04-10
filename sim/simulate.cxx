@@ -83,7 +83,8 @@ int main(int argc, char** argv)
 
     logging::Logger log(t0, output_dir);
 
-    log.initStream<math::TwoJet<double>>(logging::TRUTH_POSE, {"pose"});
+    log.initStream<math::TwoJet<double>, math::DQuat<double>, Vec2>(logging::TRUTH_POSE,
+                                                                    {"pose", "T_e2g", "clk"});
     log.initStream<mc::meas::ImuSample>(logging::IMU_SAMPLE, {"imu"});
     log.initStream<mc::meas::GnssObservation>(logging::GNSS_OBS, {"obs"});
     log.amends(sim.logPath());
@@ -107,7 +108,7 @@ int main(int argc, char** argv)
     while (!stop && sim.t() < t_end)
     {
         sim.step(dt);
-        log.log(logging::LogKey::TRUTH_POSE, sim.t(), sim.x());
+        log.log(logging::LogKey::TRUTH_POSE, sim.t(), sim.x(), sim.T_e2g(), sim.clk());
         const double rel_t = (sim.t() - t0).toSec();
         prog.print(++i, rel_t);
     }

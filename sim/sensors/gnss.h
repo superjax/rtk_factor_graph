@@ -56,6 +56,7 @@ class GnssSim
 
     void load();
 
+    math::DQuat<double> T_e2g_;
     std::string log_path_;
     UTCTime prev_t_;
     Options options_;

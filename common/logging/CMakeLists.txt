@@ -36,6 +36,7 @@ target_link_libraries(log_writer_test log_writer)
 library(log_reader log_reader.cxx)
 target_link_libraries(
     log_reader
+    progress_bar
     yaml
     serialize
     print

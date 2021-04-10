@@ -79,8 +79,8 @@ TEST_F(KeplerSatState, CheckSatPositionVelClockAgainstRTKLIB)
     MATRIX_CLOSE(truth_pos, sat_state.pos, 1e-5);
     MATRIX_CLOSE(truth_vel, sat_state.vel, 1e-5);
 
-    EXPECT_NEAR(sat_state.clk(0) / 1e9, oracle_clock, 1e-12);
-    EXPECT_NEAR(sat_state.clk(1) / 1e9, oracle_clk_rate, 1e-12);
+    EXPECT_NEAR(sat_state.clk(0), oracle_clock, 1e-12);
+    EXPECT_NEAR(sat_state.clk(1), oracle_clk_rate, 1e-12);
 }
 
 TEST_F(KeplerSatState, StaleEphemeris)
@@ -156,8 +156,8 @@ TEST_F(GlonassSatState, VsRTKLIB)
     EXPECT_OK(result);
     MATRIX_CLOSE(sat_state.pos, oracle_pos, 1e-8);
     MATRIX_CLOSE(sat_state.vel, oracle_vel, 3e-4);
-    EXPECT_NEAR(sat_state.clk(0) / 1e9, oracle_clk, 1e-16);
-    EXPECT_NEAR(sat_state.clk(1) / 1e9, oracle_clk_rate, 1e-16);
+    EXPECT_NEAR(sat_state.clk(0), oracle_clk, 1e-16);
+    EXPECT_NEAR(sat_state.clk(1), oracle_clk_rate, 1e-16);
 }
 
 }  // namespace satellite

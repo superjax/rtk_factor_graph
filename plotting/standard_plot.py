@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from common.logging import log_reader
 from common.logging.log_reader import load
+from scipy.interpolate import interp1d
 
 
 def extract(field, key):
@@ -33,10 +34,13 @@ def bottom_field(data, keys):
     return field
 
 
-def standard_plot(data, y_key, x_key="t", title=None, fig=None, label=None, **kwargs):
+def standard_plot(data, y_key, x_key="t", **kwargs):
     xfield = bottom_field(data, x_key)
     yfield = bottom_field(data, y_key)
+    return raw_plot(xfield, yfield, **kwargs)
 
+
+def raw_plot(xfield, yfield, title=None, fig=None, label=None, **kwargs):
     # Re-use existing figure if set
     if fig is None:
         fig = plt.figure()
@@ -62,3 +66,16 @@ def standard_plot(data, y_key, x_key="t", title=None, fig=None, label=None, **kw
             plt.legend()
 
     return fig
+
+
+def difference_signals(data1, data1_key, data2, data2_key):
+    t1 = data1['t']
+    d1 = bottom_field(data1, data1_key)
+    t2 = data2['t']
+    d2 = bottom_field(data2, data2_key)
+
+    f = interp1d(t2, d2, axis=0)
+
+    d2_interp = f(t1)
+
+    return d1 - d2_interp

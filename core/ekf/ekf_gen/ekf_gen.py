@@ -240,7 +240,7 @@ def jac_types(cfg):
 
 def meas_types(cfg):
     def make_jacobian(meas_cfg):
-        out_size = meas_cfg["size"]
+        out_size = meas_size(meas_cfg)
         lines = [f"    struct Jac : public Mat<{out_size}, ErrorState::SIZE> {{"]
         lines.append("    Jac() { setZero(); }")
 
@@ -264,13 +264,14 @@ def meas_types(cfg):
         meas_cfg = cfg["measurements"][key]
         lines = []
         lines.append(f"struct {make_camel(key)}Meas {{")
-        lines.append(f"    using Residual = Vec<{meas_cfg['size']}>;")
-        lines.append(f"    using Covariance = Eigen::DiagonalMatrix<double, {meas_cfg['size']}>;")
+        lines.append(f"    using Residual = Vec<{meas_size(meas_cfg)}>;")
+        lines.append(f"    using Covariance = DiagMat<{meas_size(meas_cfg)}>;")
         lines.append(f"    using ZType = {meas_cfg['type']};")
         lines.append(f"    static constexpr double MAX_MAHAL = {compute_max_mahal(cfg, key)};")
         lines.append(f"    static constexpr double MAX_PROB = {meas_cfg['gating_probability']};")
-        lines.append(f"    static constexpr int SIZE = {meas_cfg['size']};")
-        lines.append(f"    ZType z;")
+        lines.append(f"    static constexpr bool DISABLED = {disabled(cfg, key)};")
+        lines.append(f"    static constexpr int SIZE = {meas_size(meas_cfg)};")
+        lines.append("    ZType z;")
         if 'metadata' in meas_cfg.keys():
             for item in meas_cfg['metadata']:
                 lines.append(f"    {item[0]} {item[1]};")
@@ -299,11 +300,29 @@ def list_meas_types(cfg):
 def compute_max_mahal(cfg, key):
     meas_cfg = cfg["measurements"][key]
     max_prob = meas_cfg["gating_probability"]
-    meas_size = meas_cfg["size"]
-    x = np.arange(0, 1000, 0.01)
-    chi2_cdf = chi2.cdf(x, meas_size - 1)
-    idx = (np.abs(chi2_cdf - max_prob)).argmin()
-    return f"{x[idx]}"
+    if max_prob < 1.0:
+        meas_size = meas_cfg["size"]
+        x = np.arange(0, 1000, 0.01)
+        chi2_cdf = chi2.cdf(x, meas_size - 1)
+        idx = (np.abs(chi2_cdf - max_prob)).argmin()
+        return f"{x[idx]}"
+    else:
+        return "std::numeric_limits<double>::max()"
+
+
+def disabled(cfg, key):
+    meas_cfg = cfg["measurements"][key]
+    if "disabled" in meas_cfg and meas_cfg["disabled"]:
+        return "true"
+    else:
+        return "false"
+
+
+def meas_size(meas_cfg):
+    if "size" in meas_cfg:
+        return meas_cfg["size"]
+    else:
+        return get_size(meas_cfg["type"])[1]
 
 
 def state_header(cfg):

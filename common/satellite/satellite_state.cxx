@@ -98,8 +98,8 @@ Error eph2Sat(const UTCTime& t,
     // Correct for relativistic effects on the satellite clock
     dts -= 2.0 * sqrt(GM_EARTH * A) * eph.ecc * sek / (C_LIGHT * C_LIGHT);
 
-    sat_state->clk(0) = dts * 1e9;                           // satellite clock bias (nsec)
-    sat_state->clk(1) = (eph.af1 + eph.af2 * clk_dt) * 1e9;  // satellite drift rate (nsec/s)
+    sat_state->clk(0) = dts;                           // satellite clock bias (sec)
+    sat_state->clk(1) = (eph.af1 + eph.af2 * clk_dt);  // satellite drift rate (sec/s)
     sat_state->t = t;
 
     return Error::none();
@@ -114,8 +114,8 @@ Error eph2Sat(const UTCTime& t,
 
     double dt = (t - eph.toe).toSec();
     // Clock Biases
-    sat_state->clk(0) = (-eph.taun + eph.gamn * dt) * 1e9;
-    sat_state->clk(1) = (eph.gamn) * 1e9;
+    sat_state->clk(0) = (-eph.taun + eph.gamn * dt);
+    sat_state->clk(1) = (eph.gamn);
 
     // Position
     Vec6 x;

@@ -260,10 +260,12 @@ constexpr int {Input}::DOF;
 EKF_HEADER_TEMPLATE = """
 #pragma once
 
-#include "common/matrix_defs.h"
-#include "{DESTINATION_DIR}/state.h"
-#include "common/error.h"
 #include "common/check.h"
+#include "common/error.h"
+#include "common/error_result.h"
+#include "common/matrix_defs.h"
+
+#include "{DESTINATION_DIR}/state.h"
 
 {BEGIN_NAMESPACES}
 
@@ -330,10 +332,10 @@ class {EkfType} {{
     }}
 
     template<typename Meas, typename...Args>
-    Error update(Out<Snapshot> snap,
-                 const typename Meas::ZType& z,
-                 const typename Meas::Covariance& R,
-                 const Args&... args)
+    ErrorResult<typename Meas::Residual> update(Out<Snapshot> snap,
+                                                const typename Meas::ZType& z,
+                                                const typename Meas::Covariance& R,
+                                                const Args&... args)
     {{
         using mc::isFinite;
 
@@ -353,7 +355,7 @@ class {EkfType} {{
         check(mc::isFinite(innov), "numerical issues in innovation");
 
         const double mahal = res.transpose() * innov * res;
-        // Gating values with probability less than MAX_PROB (using χ² distribution with DOF = SIZE-1)
+        // Gating values with prob less than MAX_PROB (using χ² distribution with DOF = SIZE-1)
         if (mahal > Meas::MAX_MAHAL)
         {{
             return Error::create("Measurement Gated");
@@ -363,17 +365,23 @@ class {EkfType} {{
         const Mat<ErrorState::SIZE, Meas::SIZE> K = snap->cov * dzdx.transpose() * innov;
         check(mc::isFinite(K), "numerical issues in Kalman gain");
 
-        snap->x += K * res;
+        if constexpr (!Meas::DISABLED)
+        {{
+            snap->x += K * res;
+        }}
 
         // A = I - K ⋅ H
         // P = A ⋅ P ⋅ A.T + K ⋅ R ⋅ K.T
         const dxMat A = dxMat::Identity() - K * dzdx;
-        snap->cov = A * snap->cov * A.transpose() + K * R * K.transpose();
+        if constexpr (!Meas::DISABLED)
+        {{
+            snap->cov = A * snap->cov * A.transpose() + K * R * K.transpose();
+        }}
 
         check(isFinite(snap->x), "numerical issues in state post-update");
         check(mc::isFinite(snap->cov), "numerical issues in covariance post-update");
 
-        return Error::none();
+        return res;
     }}
 }};
 

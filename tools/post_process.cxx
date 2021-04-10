@@ -61,13 +61,17 @@ std::pair<State, Input> getState(utils::Config& cfg, logging::LogReader& log)
 
     if (use_init_sim_state)
     {
-        const auto& entry = log.getNext<math::TwoJet<double>>(logging::TRUTH_POSE);
+        const auto& entry =
+            log.getNext<math::TwoJet<double>, math::DQuat<double>>(logging::TRUTH_POSE);
         x.t = entry.t;
-        const math::TwoJet<double>& data = std::get<0>(entry.data);
-        x.pose = data.x;
-        x.vel = data.dx.linear();
-        u.accel = data.d2x.linear() - Vec3(0, 0, 9.80665);
-        u.gyro = data.dx.angular();
+        const math::TwoJet<double>& two_jet = std::get<0>(entry.data);
+        const math::DQuat<double>& T_e2g = std::get<1>(entry.data);
+        x.pose = two_jet.x;
+        x.vel = two_jet.dx.linear();
+        u.accel = two_jet.d2x.linear() - Vec3(0, 0, 9.80665);
+        u.gyro = two_jet.dx.angular();
+
+        x.T_I2e = T_e2g.inverse();
     }
     else
     {
@@ -75,26 +79,70 @@ std::pair<State, Input> getState(utils::Config& cfg, logging::LogReader& log)
         cfg.get("translation0", make_out(translation), true);
         cfg.get("rotation0", make_out(q.arr_), true);
         cfg.get("vel0", make_out(x.vel), true);
-        cfg.get("p_b2g0", make_out(x.p_b2g), true);
+        x.pose = math::DQuat<double>(q, translation);
         cfg.get("lla0_deg", make_out(lla_deg), true);
         cfg.get("heading0_deg", make_out(heading_deg), true);
-    }
+        const Vec3 lla_rad(deg2Rad(lla_deg(0)), deg2Rad(lla_deg(1)), lla_deg(2));
+        const double heading_rad = deg2Rad(heading_deg);
+        math::Quatd q_hdg = math::Quatd::from_euler(0, 0, heading_rad);
 
-    x.pose = math::DQuat<double>(q, translation);
+        x.T_I2e = utils::WGS84::dq_ecef2ned(utils::WGS84::lla2ecef(lla_rad)).inverse();
+        x.T_I2e.real() = q_hdg * x.T_I2e.real();
+    }
+    cfg.get("p_b2g0", make_out(x.p_b2g), true);
+
     x.gps_clk.setZero();
     x.gal_clk.setZero();
     x.glo_clk.setZero();
     x.acc_bias.setZero();
     x.gyro_bias.setZero();
 
-    const Vec3 lla_rad(deg2Rad(lla_deg(0)), deg2Rad(lla_deg(1)), lla_deg(2));
-    const double heading_rad = deg2Rad(heading_deg);
-    math::Quatd q_hdg = math::Quatd::from_euler(0, 0, heading_rad);
-
-    x.T_I2e = utils::WGS84::dq_ecef2ned(utils::WGS84::lla2ecef(lla_rad)).inverse();
-    x.T_I2e.real() = q_hdg * x.T_I2e.real();
-
     return std::make_pair(x, u);
+}
+
+void loadEphemeris(const std::string& log_dir, ekf::RtkEkfEstimator& ekf)
+{
+    logging::LogReader log_reader(log_dir);
+
+    log_reader.setCallback(logging::LogKey::GPS_EPH, [&](const UTCTime& t, int key, auto& reader) {
+        ephemeris::GPSEphemeris eph;
+        reader.get(eph);
+        const double dt = (t - eph.toe).toSec();
+        if (std::abs(dt) > 7200)
+        {
+            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
+            return;
+        }
+        ekf.ephCb(eph);
+        info("gps_eph, {}", mc::fmt(t));
+    });
+
+    log_reader.setCallback(logging::LogKey::GAL_EPH, [&](const UTCTime& t, int key, auto& reader) {
+        ephemeris::GalileoEphemeris eph;
+        reader.get(eph);
+        const double dt = (t - eph.toe).toSec();
+        if (std::abs(dt) > 7200)
+        {
+            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
+            return;
+        }
+        ekf.ephCb(eph);
+        info("gal_eph, {}", mc::fmt(t));
+    });
+
+    log_reader.setCallback(logging::LogKey::GLO_EPH, [&](const UTCTime& t, int key, auto& reader) {
+        ephemeris::GlonassEphemeris eph;
+        reader.get(eph);
+        const double dt = (t - eph.toe).toSec();
+        if (std::abs(dt) > 7200)
+        {
+            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
+            return;
+        }
+        ekf.ephCb(eph);
+        info("glo_eph, {}", mc::fmt(t));
+    });
+    log_reader.read();
 }
 
 template <typename T>
@@ -129,6 +177,8 @@ int main(int argc, char** argv)
     logging::LogReader log_reader(log_dir);
     ekf::RtkEkfEstimator ekf;
 
+    loadEphemeris(log_dir, ekf);
+
     const auto x_and_u = getState(cfg, log_reader);
     State x0 = x_and_u.first;
     Input u = x_and_u.second;
@@ -145,23 +195,24 @@ int main(int argc, char** argv)
     double fix_and_hold_cov;
     cfg.get("fix_and_hold_stdev", make_out(fix_and_hold_cov), true);
 
-    ekf.init(x0.t, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
-             imu_cov, process_cov);
-
-    ekf.u() = u;
-
     logging::Logger log_writer(x0.t, "../logs/post_process");
-    log_writer.initStream<math::DQuat<double>, Vec3, Vec3, Vec3, dxMat>(
-        10, {"pose", "vel", "omg", "acc", "cov"});
+    log_writer.initStream<math::DQuat<double>, Vec3, Vec3, Vec3, Vec3, Vec2, Vec2, Vec2, dxMat>(
+        logging::ESTIMATE,
+        {"pose", "vel", "omg", "acc", "p_ecef", "gps_clk", "gal_clk", "glo_clk", "cov "});
     log_writer.amends(log_reader.logPath());
+
+    ekf.init(x0.t, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
+             imu_cov, process_cov, &log_writer);
+    ekf.u() = u;
 
     log_reader.setMaintenanceCallback(0.01, [&](const UTCTime& t) {
         if ((t - x0.t).toSec() > 45.0)
         {
             return Error::create("exit early");
         }
-        log_writer.log(10, ekf.t(), ekf.x().pose, ekf.x().vel, ekf.u().gyro, ekf.u().accel,
-                       ekf.cov());
+        log_writer.log(logging::ESTIMATE, ekf.t(), ekf.x().pose, ekf.x().vel, ekf.u().gyro,
+                       ekf.u().accel, ekf.p_ecef(), ekf.x().gps_clk, ekf.x().gal_clk,
+                       ekf.x().glo_clk, ekf.cov());
 
         return Error::none();
     });
@@ -205,45 +256,6 @@ int main(int argc, char** argv)
             break;
         }
         }
-    });
-
-    log_reader.setCallback(logging::LogKey::GPS_EPH, [&](const UTCTime& t, int key, auto& reader) {
-        ephemeris::GPSEphemeris eph;
-        reader.get(eph);
-        const double dt = (t - eph.toe).toSec();
-        if (std::abs(dt) > 7200)
-        {
-            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
-            return;
-        }
-        ekf.ephCb(eph);
-        info("gps_eph, {}", mc::fmt(t));
-    });
-
-    log_reader.setCallback(logging::LogKey::GAL_EPH, [&](const UTCTime& t, int key, auto& reader) {
-        ephemeris::GalileoEphemeris eph;
-        reader.get(eph);
-        const double dt = (t - eph.toe).toSec();
-        if (std::abs(dt) > 7200)
-        {
-            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
-            return;
-        }
-        ekf.ephCb(eph);
-        info("gal_eph, {}", mc::fmt(t));
-    });
-
-    log_reader.setCallback(logging::LogKey::GLO_EPH, [&](const UTCTime& t, int key, auto& reader) {
-        ephemeris::GlonassEphemeris eph;
-        reader.get(eph);
-        const double dt = (t - eph.toe).toSec();
-        if (std::abs(dt) > 7200)
-        {
-            info("Stale ephemeris: dt = {}.  eph.toe = {}, t = {}", mc::fmt(dt, eph.toe, t));
-            return;
-        }
-        ekf.ephCb(eph);
-        info("glo_eph, {}", mc::fmt(t));
     });
 
     log_reader.read();

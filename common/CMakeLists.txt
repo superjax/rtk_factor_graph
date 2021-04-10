@@ -4,6 +4,9 @@ add_subdirectory(logging)
 add_subdirectory(ephemeris)
 
 add_gtest(test_error test_error.cxx)
+add_gtest(test_error_result test_error_result.cxx)
+target_link_libraries(test_error_result check)
+
 add_gtest(test_out test_out.cxx)
 target_link_libraries(test_out check)
 

@@ -55,6 +55,8 @@ class Sim
     inline const UTCTime& t() const { return dynamics_.t(); }
     inline const math::TwoJet<double>& x() const { return dynamics_.x; }
     inline const std::string& logPath() const { return gnss_.log_path_; }
+    inline const math::DQuat<double>& T_e2g() const { return gnss_.T_e2g_; }
+    inline const Vec2& clk() const { return gnss_.clock_bias_; }
 
  private:
     Options options_;

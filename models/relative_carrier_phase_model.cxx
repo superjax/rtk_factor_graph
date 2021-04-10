@@ -1,4 +1,5 @@
 #include "models/relative_carrier_phase_model.h"
+
 #include "common/check.h"
 #include "common/defs.h"
 #include "common/print.h"
@@ -107,8 +108,8 @@ bool RelativeCarrierPhase::Evaluate(const double* const* parameters,
     const double range2 = los2_norm + computeSagnac(sat2_, p_e2b2);
 
     // estimated carrier-phase measurement at t1 and t2 in meters
-    const double est1 = range1 + (C_LIGHT / 1e9) * (clk1(0) - sat1_.clk(0));
-    const double est2 = range2 + (C_LIGHT / 1e9) * (clk2(0) - sat2_.clk(0));
+    const double est1 = range1 + C_LIGHT * (clk1(0) / 1e9 - sat1_.clk(0));
+    const double est2 = range2 + C_LIGHT * (clk2(0) / 1e9 - sat2_.clk(0));
 
     // estimated change in carrier phase assuming no loss of lock between t1 and t2 (in cycles)
     const double dPhi_hat = lambda_ * (est2 - est1);

@@ -145,7 +145,7 @@ static void update_no_args(benchmark::State& state)
 
     for (auto _ : state)
     {
-        const Error res = ekf.update<MeasType>(make_out(snap), z, R, u);
+        const auto res = ekf.update<MeasType>(make_out(snap), z, R, u);
         if (!res.ok())
         {
             error("UH Oh");
@@ -174,7 +174,7 @@ static void update_sat_cache(benchmark::State& state)
 
     for (auto _ : state)
     {
-        const Error res = ekf.update<MeasType>(make_out(snap), z, R, u, sat_cache);
+        const auto res = ekf.update<MeasType>(make_out(snap), z, R, u, sat_cache);
         if (!res.ok())
         {
             error("UH Oh");

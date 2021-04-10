@@ -56,25 +56,40 @@ class EkfEstimator
 
     void init(const UTCTime& t0,
               const State& x0,
-              const Vec<60>& P0,
+              const Vec<ErrorState::SIZE>& P0,
               const Vec6& point_pos_cov,
               const Vec2& gps_obs_cov,
               const Vec2& gal_obs_cov,
               const Vec2& glo_obs_cov,
               const double& fix_and_hold_cov,
               const Input& imu_cov,
-              const Vec<60>& process_cov,
+              const Vec<ErrorState::SIZE>& process_cov,
               logging::Logger* log = nullptr)
     {
         point_pos_cov_ = point_pos_cov.asDiagonal();
         gps_obs_cov_ = gps_obs_cov.asDiagonal();
         gal_obs_cov_ = gal_obs_cov.asDiagonal();
         glo_obs_cov_ = glo_obs_cov.asDiagonal();
-        fix_and_hold_cov_ = Vec30::Constant(fix_and_hold_cov).asDiagonal();
+        fix_and_hold_cov_ = Vec<fixAndHoldMeas::SIZE>::Constant(fix_and_hold_cov).asDiagonal();
         imu_cov_ = imu_cov.asDiagonal();
         process_cov_ = process_cov.asDiagonal();
 
         log_ = log;
+
+        if (log_)
+        {
+            log_->initStream<int, gpsObsMeas::Residual, gpsObsMeas::ZType, gpsObsMeas::ZType>(
+                logging::GPS_OBS_RESIDUAL, {"sat_id", "res", "z", "zhat"});
+            log_->initStream<int, galObsMeas::Residual, galObsMeas::ZType, galObsMeas::ZType>(
+                logging::GAL_OBS_RESIDUAL, {"sat_id", "res", "z", "zhat"});
+            log_->initStream<int, gloObsMeas::Residual, gloObsMeas::ZType, gloObsMeas::ZType>(
+                logging::GLO_OBS_RESIDUAL, {"sat_id", "res", "z", "zhat"});
+            log_->initStream<pointPosMeas::Residual, pointPosMeas::ZType, pointPosMeas::ZType>(
+                logging::POINT_POS_RESIDUAL, {"res", "z", "zhat"});
+            log_->initStream<fixAndHoldMeas::Residual, fixAndHoldMeas::ZType,
+                             fixAndHoldMeas::ZType>(logging::FIX_AND_HOLD_RESIDUAL,
+                                                    {"res", "z", "zhat"});
+        }
 
         Input u0;
         u0.accel = -GRAVITY;
@@ -178,11 +193,11 @@ class EkfEstimator
     void handleImu(const UTCTime& meas_time, const ImuMeas& z) { handleImu(meas_time, z.z); }
     void handleImu(const UTCTime& meas_time, const Input& z)
     {
-        Snapshot& snap = states_.back();
-        states_.emplace_back();
-        Snapshot& new_snap = states_.back();
         if (meas_time > t())
         {
+            Snapshot& snap = states_.back();
+            states_.emplace_back();
+            Snapshot& new_snap = states_.back();
             ekf_.predict(snap, meas_time, z, process_cov_, imu_cov_, make_out(new_snap));
         }
     }
@@ -193,7 +208,13 @@ class EkfEstimator
         {
             handleImu(meas_time, u());
         }
-        ekf_.template update<pointPosMeas>(make_out(snap()), z.z, point_pos_cov_, u());
+        const auto res =
+            ekf_.template update<pointPosMeas>(make_out(snap()), z.z, point_pos_cov_, u());
+        if (res.ok() && log_)
+        {
+            const pointPosMeas::ZType zhat = z.z - res.res();
+            log_->log(logging::POINT_POS_RESIDUAL, meas_time, res.res(), z.z, zhat);
+        }
     }
 
     void handleFixAndHold(const UTCTime& meas_time, const fixAndHoldMeas& z)
@@ -202,7 +223,13 @@ class EkfEstimator
         {
             handleImu(meas_time, u());
         }
-        ekf_.template update<fixAndHoldMeas>(make_out(snap()), z.z, fix_and_hold_cov_);
+        const auto res =
+            ekf_.template update<fixAndHoldMeas>(make_out(snap()), z.z, fix_and_hold_cov_);
+        if (res.ok() && log_)
+        {
+            const fixAndHoldMeas::ZType zhat = z.z - res.res();
+            log_->log(logging::FIX_AND_HOLD_RESIDUAL, meas_time, res.res(), z.z, zhat);
+        }
     }
 
     void handleGpsObsMeas(const UTCTime& meas_time, const gpsObsMeas& z)
@@ -212,7 +239,13 @@ class EkfEstimator
             handleImu(meas_time, u());
         }
         const auto& cache = getCache(meas_time, GnssID::GPS, z.sat_id);
-        ekf_.template update<gpsObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        const auto res =
+            ekf_.template update<gpsObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        if (res.ok() && log_)
+        {
+            const gpsObsMeas::ZType zhat = z.z - res.res();
+            log_->log(logging::GPS_OBS_RESIDUAL, meas_time, z.sat_id, res.res(), z.z, zhat);
+        }
     }
 
     void handleGalObsMeas(const UTCTime& meas_time, const galObsMeas& z)
@@ -222,7 +255,13 @@ class EkfEstimator
             handleImu(meas_time, u());
         }
         const auto& cache = getCache(meas_time, GnssID::Galileo, z.sat_id);
-        ekf_.template update<galObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        const auto res =
+            ekf_.template update<galObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        if (res.ok() && log_)
+        {
+            const galObsMeas::ZType zhat = z.z - res.res();
+            log_->log(logging::GAL_OBS_RESIDUAL, meas_time, z.sat_id, res.res(), z.z, zhat);
+        }
     }
 
     void handleGloObsMeas(const UTCTime& meas_time, const gloObsMeas& z)
@@ -232,7 +271,13 @@ class EkfEstimator
             handleImu(meas_time, u());
         }
         const auto& cache = getCache(meas_time, GnssID::Glonass, z.sat_id);
-        ekf_.template update<gloObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        const auto res =
+            ekf_.template update<gloObsMeas>(make_out(snap()), z.z, gps_obs_cov_, u(), cache);
+        if (res.ok() && log_)
+        {
+            const gloObsMeas::ZType zhat = z.z - res.res();
+            log_->log(logging::GLO_OBS_RESIDUAL, meas_time, z.sat_id, res.res(), z.z, zhat);
+        }
     }
 
     void handleMeas(const Meas& meas)
@@ -275,15 +320,17 @@ class EkfEstimator
     const dxMat& cov() const { return states_.back().cov; }
     dxMat& cov() { return states_.back().cov; }
 
+    Vec3 p_ecef() const { return ekf_.p_e_g2e(states_.back().x); }
+
     std::multiset<Meas> measurements_;
 
     DiagMat6 point_pos_cov_;
     DiagMat2 gps_obs_cov_;
     DiagMat2 gal_obs_cov_;
     DiagMat2 glo_obs_cov_;
-    DiagMat30 fix_and_hold_cov_;
-    DiagMat6 imu_cov_;
-    Eigen::DiagonalMatrix<double, 60> process_cov_;
+    DiagMat<fixAndHoldMeas::SIZE> fix_and_hold_cov_;
+    DiagMat<Input::SIZE> imu_cov_;
+    DiagMat<ErrorState::SIZE> process_cov_;
 
     CircularBuffer<Snapshot> states_;
     int state_idx_ = 0;

@@ -29,6 +29,12 @@ GnssSim::GnssSim(const Options& options, const UTCTime& t0) : options_(options)
     {
         offset = rand() % 1000 - 500;
     }
+
+    const Vec3 p_I2g_I = options_.p_b2g;
+    const Vec3 p_ecef = options_.T_e2n.transforma(p_I2g_I);
+    const math::Quat<double> q_b2e = (options_.T_e2n.inverse().rotation());
+
+    T_e2g_ = math::DQuat<double>(q_b2e.inverse(), p_ecef);
 }
 
 template <typename T>
@@ -92,6 +98,15 @@ bool GnssSim::sample(const UTCTime& t,
                      const math::TwoJet<double>& x,
                      Out<std::vector<meas::GnssObservation>> obs)
 {
+    // Compute position and velocity of the GPS recevier
+    const Vec3 p_I2g_I = x.x.transforma(options_.p_b2g);
+    const Vec3 p_ecef = options_.T_e2n.transforma(p_I2g_I);
+    const Vec3 v_I2g_b = x.dx.angular().cross(options_.p_b2g) + x.dx.linear();
+    const math::Quat<double> q_b2e =
+        (x.x.rotation().inverse() * options_.T_e2n.inverse().rotation());
+    const Vec3 vel_ecef = q_b2e.rotp(v_I2g_b);
+    T_e2g_ = math::DQuat<double>(q_b2e.inverse(), p_ecef);
+
     const double dt = (t - prev_t_).toSec();
     if (dt >= 1.0 / options_.update_rate_hz_)
     {
@@ -102,10 +117,6 @@ bool GnssSim::sample(const UTCTime& t,
         clock_bias_(1) += options_.clock_walk_stdev_ * randomNormal<Vec1>()(0) * dt;
         const double avg_rate = (prev_rate + clock_bias_(1)) / 2.0;
         clock_bias_(0) += avg_rate * dt;
-
-        // Compute position and velocity of the GPS recevier
-        Vec3 vel_ecef = options_.T_e2n.rota(x.dx.linear() + x.dx.angular().cross(x.dx.linear()));
-        const Vec3 p_ecef = options_.T_e2n.transforma(x.x.translation() + x.x.rota(options_.p_b2g));
 
         obs->clear();
         int i = 0;

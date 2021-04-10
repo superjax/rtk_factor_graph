@@ -30,3 +30,31 @@ def plot_obs(pw, obs):
                 ax.grid()
         if f is not None:
             pw.addPlot(GNSS_ID_TO_NAME[g], f)
+
+
+def plot_obs_residual(obs):
+    f = plt.figure()
+
+    sat_ids = np.unique(obs['sat_id'])
+
+    assert len(sat_ids) < 30
+    print(sat_ids)
+    for i, sat in enumerate(sat_ids):
+        plt.subplot(len(sat_ids), 2, i * 2 + 1)
+        residuals = obs[obs['sat_id'] == sat]
+        # plt.plot(residuals['t'], residuals['z'][:, 0], label="z")
+        # plt.plot(residuals['t'], residuals['zhat'][:, 0], 'x', label="zhat")
+        plt.plot(residuals['t'], residuals['res'][:, 0], label="residual")
+        if i == 0:
+            plt.suptitle('prange')
+            plt.legend()
+
+        plt.subplot(len(sat_ids), 2, i * 2 + 2)
+        # plt.plot(residuals['t'], residuals['z'][:, 1], label="z")
+        # plt.plot(residuals['t'], residuals['zhat'][:, 1], 'x', label="zhat")
+        plt.plot(residuals['t'], residuals['res'][:, 1], label="residual")
+        if i == 0:
+            plt.suptitle('doppler')
+            plt.legend()
+
+    return f

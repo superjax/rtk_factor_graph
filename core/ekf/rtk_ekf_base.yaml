@@ -19,13 +19,12 @@ state_composition:
   glo_clk: Vec2
   p_b2g: Vec3
   T_I2e: DQuat
-  sd: Vec30
+  sd: Vec2
 
 measurements:
   pointPos:
     type: Vec6
-    size: 6
-    gating_probability: 0.95
+    gating_probability: 1.0
     states:
       - pose
       - T_I2e
@@ -33,50 +32,49 @@ measurements:
       - vel
   gps_obs:
     type: Vec2
-    size: 2
-    gating_probability: 0.95
+    gating_probability: 1.0
     states:
       - pose
       - T_I2e
       - p_b2g
       - gps_clk
       - vel
+    disabled: True
     metadata:
       - [int, sat_id]
     constants:
       - [int, ID, GnssID::GPS]
   gal_obs:
     type: Vec2
-    size: 2
-    gating_probability: 0.95
+    gating_probability: 1.0
     states:
       - pose
       - T_I2e
       - p_b2g
       - gal_clk
       - vel
+    disabled: True
     metadata:
       - [int, sat_id]
     constants:
       - [int, ID, GnssID::Galileo]
   glo_obs:
     type: Vec2
-    size: 2
-    gating_probability: 0.95
+    gating_probability: 1.0
     states:
       - pose
       - T_I2e
       - p_b2g
       - glo_clk
       - vel
+    disabled: True
     metadata:
       - [int, sat_id]
     constants:
       - [int, ID, GnssID::Glonass]
   fix_and_hold:
-    type: Vec30
-    size: 30
-    gating_probability: 0.90
+    type: Vec2
+    gating_probability: 1.0
     states:
       - sd
 

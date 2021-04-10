@@ -6,6 +6,8 @@
 
 namespace mc {
 
+template <int SIZE>
+using Vec = Eigen::Matrix<double, SIZE, 1>;
 using Vec1 = Eigen::Matrix<double, 1, 1>;
 using Vec2 = Eigen::Matrix<double, 2, 1>;
 using Vec3 = Eigen::Matrix<double, 3, 1>;
@@ -18,7 +20,6 @@ using Vec9 = Eigen::Matrix<double, 9, 1>;
 using Vec10 = Eigen::Matrix<double, 10, 1>;
 using Vec11 = Eigen::Matrix<double, 11, 1>;
 using Vec12 = Eigen::Matrix<double, 12, 1>;
-using Vec30 = Eigen::Matrix<double, 30, 1>;
 
 using Vec1f = Eigen::Matrix<float, 1, 1>;
 using Vec2f = Eigen::Matrix<float, 2, 1>;
@@ -32,8 +33,9 @@ using Vec9f = Eigen::Matrix<float, 9, 1>;
 using Vec10f = Eigen::Matrix<float, 10, 1>;
 using Vec11f = Eigen::Matrix<float, 11, 1>;
 using Vec12f = Eigen::Matrix<float, 12, 1>;
-using Vec30f = Eigen::Matrix<float, 30, 1>;
 
+template <int Rows, int Cols = Rows>
+using Mat = Eigen::Matrix<double, Rows, Cols>;
 using Mat1 = Eigen::Matrix<double, 1, 1>;
 using Mat2 = Eigen::Matrix<double, 2, 2>;
 using Mat3 = Eigen::Matrix<double, 3, 3>;
@@ -46,7 +48,6 @@ using Mat9 = Eigen::Matrix<double, 9, 9>;
 using Mat10 = Eigen::Matrix<double, 10, 10>;
 using Mat11 = Eigen::Matrix<double, 11, 11>;
 using Mat12 = Eigen::Matrix<double, 12, 12>;
-using Mat30 = Eigen::Matrix<double, 30, 30>;
 
 using Mat36 = Eigen::Matrix<double, 3, 6>;
 using Mat38 = Eigen::Matrix<double, 3, 8>;
@@ -74,6 +75,8 @@ using Mat8f = Eigen::Matrix<float, 8, 8>;
 using Mat9f = Eigen::Matrix<float, 9, 9>;
 using Mat10f = Eigen::Matrix<float, 10, 10>;
 
+template <int SIZE>
+using DiagMat = Eigen::DiagonalMatrix<double, SIZE>;
 using DiagMat1 = Eigen::DiagonalMatrix<double, 1>;
 using DiagMat2 = Eigen::DiagonalMatrix<double, 2>;
 using DiagMat3 = Eigen::DiagonalMatrix<double, 3>;
@@ -84,7 +87,6 @@ using DiagMat7 = Eigen::DiagonalMatrix<double, 7>;
 using DiagMat8 = Eigen::DiagonalMatrix<double, 8>;
 using DiagMat9 = Eigen::DiagonalMatrix<double, 9>;
 using DiagMat10 = Eigen::DiagonalMatrix<double, 10>;
-using DiagMat30 = Eigen::DiagonalMatrix<double, 30>;
 
 static const Eigen::Vector3d e_x(1.0, 0, 0);
 static const Eigen::Vector3d e_y(0, 1.0, 0);

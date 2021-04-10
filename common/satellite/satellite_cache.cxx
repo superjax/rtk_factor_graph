@@ -6,8 +6,8 @@ namespace satellite {
 namespace {
 
 // maximum difference in time before recomputing constants
-static constexpr double MAX_CACHE_DT = 1.0;
-static constexpr double MAX_REC_POSITION_DELTA = 1.0;
+// static constexpr double MAX_CACHE_DT = 0.0001;
+// static constexpr double MAX_REC_POSITION_DELTA = 0.01;
 
 inline double computeSagnac(const Vec3 sat_pos, const Vec3& rec_pos_ecef)
 {
@@ -28,15 +28,15 @@ void SatelliteCache::update(const UTCTime& t, const Vec3 rec_pos_ecef, const Sat
     check(t != INVALID_TIME);
     check(rec_pos_ecef.norm() > 1);
 
-    if (std::abs((t - state.t).toSec()) <= MAX_CACHE_DT)
-    {
-        return;
-    }
+    // if (std::abs((t - state.t).toSec()) <= MAX_CACHE_DT)
+    // {
+    //     return;
+    // }
 
-    if (std::abs((rec_pos_ecef - cache_rec_pos).norm()) <= MAX_REC_POSITION_DELTA)
-    {
-        return;
-    }
+    // if (std::abs((rec_pos_ecef - cache_rec_pos).norm()) <= MAX_REC_POSITION_DELTA)
+    // {
+    //     return;
+    // }
 
     check(sat.almanacSize() > 0, "Cannot update satellite cache without almanac");
 

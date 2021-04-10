@@ -88,7 +88,7 @@ class RtkEkfEstimatorTest : public ::testing::Test
         Vec2 glo_obs_cov = Vec2::Ones();
         double fix_and_hold_cov = 1.0;
         Vec6 imu_cov = Vec6::Ones();
-        Vec<60> process_cov = Vec<60>::Ones();
+        Vec<ErrorState::SIZE> process_cov = Vec<ErrorState::SIZE>::Ones();
 
         est.init(t0, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
                  imu_cov, process_cov);

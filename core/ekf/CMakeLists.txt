@@ -16,6 +16,8 @@ target_link_libraries(
     utctime
     satellite_cache
     gtest
+    yaml
+    log_writer
 )
 
 add_gtest(rtk_ekf_estimator_test rtk_ekf_estimator_test.cxx)

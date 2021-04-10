@@ -59,18 +59,18 @@ gpsObsMeas::Residual RtkEkf::h<gpsObsMeas>(const Vec2& z,
     const double los_norm = los_to_sat.stableNorm();
     const double range = los_norm + sat.sagnac;
 
-    const double dclock = x.gps_clk(0) - sat.state.clk(0);
-    const double dclock_rate = x.gps_clk(1) - sat.state.clk(1);
+    const double dclock = x.gps_clk(0) / 1e9 - sat.state.clk(0);
+    const double dclock_rate = x.gps_clk(1) / 1e9 - sat.state.clk(1);
     const Vec3 e = los_to_sat / los_norm;
 
-    const double est_prange = range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m +
-                              (C_LIGHT / 1e9) * dclock;
+    const double est_prange =
+        range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m + C_LIGHT * dclock;
     const double est_doppler =
         (sat.state.vel - v_I2g_e).dot(e) +
         OMEGA_EARTH / C_LIGHT *
             (sat.state.vel.y() * p_e2g_e.x() + sat.state.pos.y() * v_I2g_e.x() -
              sat.state.vel.x() * p_e2g_e.y() - sat.state.pos.x() * v_I2g_e.y()) +
-        (C_LIGHT / 1e9) * dclock_rate;
+        C_LIGHT * dclock_rate;
 
     const Vec2 zhat = {est_prange, est_doppler};
 
@@ -116,18 +116,18 @@ galObsMeas::Residual RtkEkf::h<galObsMeas>(const Vec2& z,
     const double los_norm = los_to_sat.stableNorm();
     const double range = los_norm + sat.sagnac;
 
-    const double dclock = x.gal_clk(0) - sat.state.clk(0);
-    const double dclock_rate = x.gal_clk(1) - sat.state.clk(1);
+    const double dclock = x.gal_clk(0) / 1e9 - sat.state.clk(0);
+    const double dclock_rate = x.gal_clk(1) / 1e9 - sat.state.clk(1);
     const Vec3 e = los_to_sat / los_norm;
 
-    const double est_prange = range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m +
-                              (C_LIGHT / 1e9) * dclock;
+    const double est_prange =
+        range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m + C_LIGHT * dclock;
     const double est_doppler =
         (sat.state.vel - v_I2g_e).dot(e) +
         OMEGA_EARTH / C_LIGHT *
             (sat.state.vel.y() * p_e2g_e.x() + sat.state.pos.y() * v_I2g_e.x() -
              sat.state.vel.x() * p_e2g_e.y() - sat.state.pos.x() * v_I2g_e.y()) +
-        (C_LIGHT / 1e9) * dclock_rate;
+        C_LIGHT * dclock_rate;
 
     const Vec2 zhat = {est_prange, est_doppler};
 
@@ -173,18 +173,18 @@ gloObsMeas::Residual RtkEkf::h<gloObsMeas>(const Vec2& z,
     const double los_norm = los_to_sat.stableNorm();
     const double range = los_norm + sat.sagnac;
 
-    const double dclock = x.glo_clk(0) - sat.state.clk(0);
-    const double dclock_rate = x.glo_clk(1) - sat.state.clk(1);
+    const double dclock = x.glo_clk(0) / 1e9 - sat.state.clk(0);
+    const double dclock_rate = x.glo_clk(1) / 1e9 - sat.state.clk(1);
     const Vec3 e = los_to_sat / los_norm;
 
-    const double est_prange = range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m +
-                              (C_LIGHT / 1e9) * dclock;
+    const double est_prange =
+        range + sat.atm.ionospheric_delay_m + sat.atm.tropospheric_delay_m + C_LIGHT * dclock;
     const double est_doppler =
         (sat.state.vel - v_I2g_e).dot(e) +
         OMEGA_EARTH / C_LIGHT *
             (sat.state.vel.y() * p_e2g_e.x() + sat.state.pos.y() * v_I2g_e.x() -
              sat.state.vel.x() * p_e2g_e.y() - sat.state.pos.x() * v_I2g_e.y()) +
-        (C_LIGHT / 1e9) * dclock_rate;
+        C_LIGHT * dclock_rate;
 
     const Vec2 zhat = {est_prange, est_doppler};
 
@@ -212,7 +212,7 @@ gloObsMeas::Residual RtkEkf::h<gloObsMeas>(const Vec2& z,
 }
 
 template <>
-fixAndHoldMeas::Residual RtkEkf::h<fixAndHoldMeas>(const Vec30& z,
+fixAndHoldMeas::Residual RtkEkf::h<fixAndHoldMeas>(const fixAndHoldMeas::Residual& z,
                                                    const State& x,
                                                    fixAndHoldMeas::Jac* jac) const
 {
