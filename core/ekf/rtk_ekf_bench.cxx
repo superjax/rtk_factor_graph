@@ -1,6 +1,7 @@
 #include <benchmark/benchmark.h>
 
 #include "common/print.h"
+#include "common/satellite/satellite_cache.h"
 #include "core/ekf/rtk_ekf.h"
 #include "core/sat_manager.h"
 #include "utils/wgs84.h"
@@ -10,15 +11,14 @@ namespace ekf {
 
 static void dynamics(benchmark::State& state)
 {
-    RtkEkf ekf;
     const State x = State::Random();
     const Input u = Input::Random();
-    RtkEkf::StateJac dxdx;
-    RtkEkf::InputJac dxdu;
+    StateJac dxdx;
+    InputJac dxdu;
 
     for (auto _ : state)
     {
-        const ErrorState dx = ekf.dynamics(x, u, &dxdx, &dxdu);
+        const ErrorState dx = dynamics(x, u, &dxdx, &dxdu);
         benchmark::DoNotOptimize(dx);
     }
 }
@@ -27,7 +27,6 @@ BENCHMARK(dynamics);
 template <typename MeasType>
 static void h_no_args(benchmark::State& state)
 {
-    RtkEkf ekf;
     State x = State::Random();
     const typename MeasType::ZType z = MeasType::ZType::Random();
     typename MeasType::Jac jac;
@@ -35,7 +34,7 @@ static void h_no_args(benchmark::State& state)
 
     for (auto _ : state)
     {
-        const auto residual = ekf.h<MeasType>(z, x, &jac, u);
+        const auto residual = h<MeasType>(z, x, &jac, u);
         benchmark::DoNotOptimize(residual);
     }
 }
@@ -88,7 +87,6 @@ satellite::SatelliteCache makeCache()
 template <typename MeasType>
 static void h_sat_cache(benchmark::State& state)
 {
-    RtkEkf ekf;
     const auto sat_cache = makeCache();
     State x = State::Random();
     const typename MeasType::ZType z = MeasType::ZType::Random();
@@ -97,7 +95,7 @@ static void h_sat_cache(benchmark::State& state)
 
     for (auto _ : state)
     {
-        const auto residual = ekf.h<MeasType>(z, x, &jac, u, sat_cache);
+        const auto residual = h<MeasType>(z, x, &jac, u, sat_cache);
         benchmark::DoNotOptimize(residual);
     }
 }
@@ -107,22 +105,21 @@ BENCHMARK_TEMPLATE(h_sat_cache, gloObsMeas);
 
 static void predict(benchmark::State& state)
 {
-    RtkEkf ekf;
     Snapshot snap;
     snap.x = State::Identity();
     snap.x.t = UTCTime(0);
     snap.cov.setIdentity();
     Snapshot out;
-    const Input u = 1e-5 * Input::Random();
-    RtkEkf::ProcessCov Qx;
+    const Input u = Input::Random() * 1e-5;
+    ProcessCovariance Qx;
     Qx.setIdentity();
-    RtkEkf::InputCov Qu;
-    Qu.setIdentity();
+    InputCovariance Qu;
+    Qu.setZero();
     UTCTime t_new(0.01);
 
     for (auto _ : state)
     {
-        ekf.predict(snap, t_new, u, Qx, Qu, make_out(snap));
+        predict(snap, t_new, u, Qx, Qu, make_out(snap));
         t_new += 0.01;
     }
 }
@@ -131,21 +128,19 @@ BENCHMARK(predict);
 template <typename MeasType>
 static void update_no_args(benchmark::State& state)
 {
-    RtkEkf ekf;
-
     Snapshot snap;
     snap.x = State::Random();
     snap.x.t = UTCTime(0);
     snap.cov.setIdentity();
     const Input u = Input::Zero();
 
-    const typename MeasType::ZType z = ekf.h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u);
+    const typename MeasType::ZType z = h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u);
     typename MeasType::Covariance R;
     R.setIdentity();
 
     for (auto _ : state)
     {
-        const auto res = ekf.update<MeasType>(make_out(snap), z, R, u);
+        const auto res = update<MeasType>(make_out(snap), z, R, u);
         if (!res.ok())
         {
             error("UH Oh");
@@ -159,7 +154,6 @@ BENCHMARK_TEMPLATE(update_no_args, pointPosMeas);
 template <typename MeasType>
 static void update_sat_cache(benchmark::State& state)
 {
-    RtkEkf ekf;
     Snapshot snap;
     snap.x = State::Random();
     snap.x.t = UTCTime(0);
@@ -168,13 +162,13 @@ static void update_sat_cache(benchmark::State& state)
 
     const auto sat_cache = makeCache();
     const typename MeasType::ZType z =
-        ekf.h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u, sat_cache);
+        h<MeasType>(MeasType::ZType::Zero(), snap.x, nullptr, u, sat_cache);
     typename MeasType::Covariance R;
     R.setIdentity();
 
     for (auto _ : state)
     {
-        const auto res = ekf.update<MeasType>(make_out(snap), z, R, u, sat_cache);
+        const auto res = update<MeasType>(make_out(snap), z, R, u, sat_cache);
         if (!res.ok())
         {
             error("UH Oh");

@@ -26,6 +26,7 @@ class SO3
     SO3(const Quat<T>& q) : rot_(q.R()) {}
 
     static SO3 identity() { return SO3(Mat3::Identity()); }
+    static SO3 Identity() { return SO3(Mat3::Identity()); }
 
     operator Eigen::Matrix<T, 3, 3>() const { return rot_; }
     operator Eigen::MatrixXd() const { return rot_; }
@@ -293,4 +294,11 @@ struct is_lie_group<math::SO3<T>>
 };
 
 }  // namespace detail
+
+template <typename T>
+bool isFinite(const math::SO3<T> x)
+{
+    return isFinite(x.matrix());
+}
+
 }  // namespace mc

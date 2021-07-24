@@ -37,6 +37,8 @@ struct ImuState
     Vec3 beta;
     math::Quat<double> gamma;
 
+    using Scalar = double;
+
     static constexpr int DOF = 9;
     ImuState() = default;
     ImuState(const ImuState& other);

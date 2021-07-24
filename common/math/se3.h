@@ -34,6 +34,7 @@ class SE3
     SE3(const Mat3& rot, const Vec3& t) : r_(rot), t_(t) {}
 
     static SE3 identity() { return SE3(SO3<T>::identity(), Vec3::Zero()); }
+    static SE3 Identity() { return SE3(SO3<T>::identity(), Vec3::Zero()); }
 
     SO3<T>& rotation() { return r_; }
     const SO3<T>& rotation() const { return r_; }
@@ -225,6 +226,11 @@ class SE3
     }
 
     static SE3 Random() { return SE3(SO3<T>::Random(), Vec3::Random()); }
+    void setRandom()
+    {
+        r_ = SO3<T>::Random();
+        t_ = Vec3::Random();
+    }
 
     Mat6 Ad() const
     {
@@ -250,4 +256,11 @@ struct is_lie_group<math::SE3<T>>
 };
 
 }  // namespace detail
+
+template <typename T>
+bool isFinite(const math::SE3<T> x)
+{
+    return isFinite(x.r_) && isFinite(x.t_);
+}
+
 }  // namespace mc

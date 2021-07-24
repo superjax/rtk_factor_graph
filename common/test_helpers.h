@@ -2,8 +2,10 @@
 
 #include <Eigen/Core>
 #include <cmath>
+#include <iomanip>
 
 #include "common/math/dquat.h"
+#include "gtest/gtest.h"
 
 namespace mc {
 
@@ -70,7 +72,9 @@ std::string print_side_by_side(const Derived1& a, const Derived2& b, const doubl
             }
         };
         print_row_side_by_side(a.row(row));
-        ss << "    ";
+        ss << "\033[1;36m"
+           << "  |  "
+           << "\033[0m";
         print_row_side_by_side(b.row(row));
         ss << "\n";
     }
@@ -108,7 +112,16 @@ std::string print_after_one_another(const Derived1& a, const Derived2& b, const 
         }
     };
     print_matrix(a);
-    ss << "\n\n";
+    ss << "\n\033[1;36m";
+    for (const int w : widths)
+    {
+        for (int i = 0; i < w; ++i)
+        {
+            ss << "-";
+        }
+        ss << "--";
+    }
+    ss << "\033[0m\n";
     print_matrix(b);
     return ss.str();
 }
@@ -203,7 +216,7 @@ template <typename Derived1, typename Derived2>
     return ::testing::AssertionSuccess();
 }
 
-#define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, (m1), (m2), tol);
+#define MATRIX_CLOSE(m1, m2, tol) EXPECT_PRED_FORMAT3(matrixClose, m1, m2, tol);
 #define MAT_EQ(v1, v2) MATRIX_CLOSE((v1), (v2), 1e-8)
 
 #define QUAT_CLOSE(q1, q2, tol) EXPECT_PRED_FORMAT3(quatClose, (q1), (q2), (tol))

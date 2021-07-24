@@ -129,7 +129,11 @@ class Quat
 
     bool operator==(const Quat& other) const { return (arr_ == other.arr_); }
 
-    void setRandom() { arr_.setRandom(); }
+    void setRandom()
+    {
+        arr_.setRandom();
+        normalize();
+    }
 
     Quat& operator=(const Quat& q)
     {
@@ -584,4 +588,11 @@ struct is_lie_group<math::Quat<T>>
 };
 
 }  // namespace detail
+
+template <typename T>
+bool isFinite(const math::Quat<T> x)
+{
+    return isFinite(x.arr_);
+}
+
 }  // namespace mc

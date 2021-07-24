@@ -4,6 +4,7 @@ namespaces:
 
 includes:
   - common/defs.h
+  - common/math/dquat.h
 
 state_name: State
 error_state_name: ErrorState
@@ -16,13 +17,13 @@ state_composition:
   gyro_bias: Vec3
   gps_clk: Vec2
   gal_clk: Vec2
+  sd: Var<Vec1, 30>
   glo_clk: Vec2
   p_b2g: Vec3
   T_I2e: DQuat
-  sd: Vec2
 
 measurements:
-  pointPos:
+  point_pos:
     type: Vec6
     gating_probability: 1.0
     states:
@@ -73,7 +74,7 @@ measurements:
     constants:
       - [int, ID, GnssID::Glonass]
   fix_and_hold:
-    type: Vec2
+    type: Var<Vec1, 30>
     gating_probability: 1.0
     states:
       - sd

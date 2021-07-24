@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "common/error_result.h"
+#include "common/test_helpers.h"
 
 namespace mc {
 
@@ -17,7 +18,8 @@ TEST(Error, OnlyCreateFromConstexprCharArr)
 TEST(Error, CreateFromNoError)
 {
     const auto fn = []() -> ErrorResult<double> { return Error::none(); };
-    EXPECT_DEATH(fn(), "");
+    (void)fn;  // Necessary during release builds, since `EXPECT_DIE` is a stub in Release
+    EXPECT_DIE(fn(), "");
 }
 
 TEST(Error, CreateErrorResultFromFnReturn)

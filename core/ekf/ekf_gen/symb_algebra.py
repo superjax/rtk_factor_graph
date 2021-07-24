@@ -70,7 +70,7 @@ def factor_scalars(expr):
 def factor_first_term(expr):
     def strip_first_term(expr):
         if len(expr) == 1:
-            return expr, ConstBlock("I", expr.cols, expr.cols)
+            return expr, ConstBlock("I", expr.cols, expr.cols, expr.max_cols, expr.max_cols)
         elif isinstance(expr, Mult):
             if len(expr) == 2:
                 return expr[0], expr[1]

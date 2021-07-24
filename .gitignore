@@ -1,4 +1,5 @@
 build/
+build_gcc/
 data/
 .vscode/
 gmon.out

@@ -24,6 +24,24 @@ class SymBlockMatrix:
                 if block.cols != num_cols:
                     raise RuntimeWarning("Mismatched cols in block matrix")
 
+    def shape(self):
+        return (self.rows, self.cols)
+
+    def full_shape(self):
+        def accumulate_expr(expr, dim):
+            if isinstance(dim, str):
+                return f"{expr} + {dim}"
+            else:
+                return expr + dim
+
+        row_expr = 0
+        for r in self._block_list:
+            row_expr = accumulate_expr(row_expr, r[0].rows)
+        col_expr = 0
+        for c in self._block_list[0]:
+            col_expr = accumulate_expr(col_expr, c.cols)
+        return (row_expr, col_expr)
+
     def row(self, r):
         return self._block_list[r]
 
@@ -94,7 +112,10 @@ class SymBlockMatrix:
                 self_row = self.row(r)
                 other_col = other.col(c)
 
-                accum = ConstBlock("0", self_row[0].rows, other_col[0].cols)
+                accum = ConstBlock(
+                    "0", self_row[0].rows, other_col[0].cols, self_row[0].max_rows,
+                    other_col[0].max_cols
+                )
                 for i, j in zip(self_row, other_col):
                     accum = accum + (i * j)
                 new_row.append(accum)

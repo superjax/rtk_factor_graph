@@ -5,6 +5,7 @@
 #include "common/math/two_jet.h"
 #include "common/measurements/gnss_observation.h"
 #include "common/measurements/imu.h"
+#include "core/ekf/rtk_ekf.h"
 #include "core/ekf/rtk_ekf_estimator.h"
 #include "third_party/argparse/argparse.hpp"
 #include "utils/config.h"
@@ -14,28 +15,37 @@ using namespace mc;
 using namespace ekf;
 using namespace third_party::argparse;
 
-ErrorState getStateCovariance(const std::string& key, utils::Config& cfg)
+ProcessCovariance getStateCovariance(const std::string& key, utils::Config& cfg)
 {
-    ErrorState stdev;
+    ProcessCovariance stdev;
     // Vec3 trans, rot, vel, acc_bias, gyro_bias, p_b2g, rot_I2e, trans_I2e;
     // Vec2 gps_clk, gal_clk, glo_clk;
     // double sd;
     cfg.get(key + "/rotation", make_out(stdev.pose.head<3>()), true);
     cfg.get(key + "/translation", make_out(stdev.pose.tail<3>()), true);
     cfg.get(key + "/vel", make_out(stdev.vel), true);
-    cfg.get(key + "/acc_bias", make_out(stdev.acc_bias), true);
-    cfg.get(key + "/gyro_bias", make_out(stdev.gyro_bias), true);
-    cfg.get(key + "/gps_clk", make_out(stdev.gps_clk), true);
-    cfg.get(key + "/gal_clk", make_out(stdev.gal_clk), true);
-    cfg.get(key + "/glo_clk", make_out(stdev.glo_clk), true);
-    cfg.get(key + "/p_b2g", make_out(stdev.p_b2g), true);
-    cfg.get(key + "/T_I2e", make_out(stdev.T_I2e), true);
-    double sd_stdev;
-    cfg.get(key + "/sd", make_out(sd_stdev), true);
-    stdev.sd.setConstant(sd_stdev);
+    cfg.get(key + "/acc_bias", make_out(stdev.accBias), true);
+    cfg.get(key + "/gyro_bias", make_out(stdev.gyroBias), true);
+    cfg.get(key + "/gps_clk", make_out(stdev.gpsClk), true);
+    cfg.get(key + "/gal_clk", make_out(stdev.galClk), true);
+    cfg.get(key + "/glo_clk", make_out(stdev.gloClk), true);
+    cfg.get(key + "/p_b2g", make_out(stdev.pB2g), true);
+    cfg.get(key + "/T_I2e", make_out(stdev.TI2e), true);
+    cfg.get(key + "/sd", make_out(stdev.sd), true);
 
-    ErrorState cov_diag = stdev.cwiseProduct(stdev);
-    return cov_diag;
+    ProcessCovariance cov;
+    cov.pose = stdev.pose.cwiseProduct(stdev.pose);
+    cov.vel = stdev.vel.cwiseProduct(stdev.vel);
+    cov.accBias = stdev.accBias.cwiseProduct(stdev.accBias);
+    cov.gyroBias = stdev.gyroBias.cwiseProduct(stdev.gyroBias);
+    cov.gpsClk = stdev.gpsClk.cwiseProduct(stdev.gpsClk);
+    cov.galClk = stdev.galClk.cwiseProduct(stdev.galClk);
+    cov.gloClk = stdev.gloClk.cwiseProduct(stdev.gloClk);
+    cov.pB2g = stdev.pB2g.cwiseProduct(stdev.pB2g);
+    cov.TI2e = stdev.TI2e.cwiseProduct(stdev.TI2e);
+    cov.sd = stdev.sd.cwiseProduct(stdev.sd);
+
+    return cov;
 }
 
 Input getInput(utils::Config& cfg)
@@ -50,6 +60,7 @@ std::pair<State, Input> getState(utils::Config& cfg, logging::LogReader& log)
 {
     State x;
     Input u;
+    UTCTime t;
 
     Vec3 translation = Vec3::Zero();
     math::Quat<double> q = math::Quat<double>::Identity();
@@ -63,7 +74,7 @@ std::pair<State, Input> getState(utils::Config& cfg, logging::LogReader& log)
     {
         const auto& entry =
             log.getNext<math::TwoJet<double>, math::DQuat<double>>(logging::TRUTH_POSE);
-        x.t = entry.t;
+        t = entry.t;
         const math::TwoJet<double>& two_jet = std::get<0>(entry.data);
         const math::DQuat<double>& T_e2g = std::get<1>(entry.data);
         x.pose = two_jet.x;
@@ -75,7 +86,7 @@ std::pair<State, Input> getState(utils::Config& cfg, logging::LogReader& log)
     }
     else
     {
-        x.t = log.startTime();
+        t = log.startTime();
         cfg.get("translation0", make_out(translation), true);
         cfg.get("rotation0", make_out(q.arr_), true);
         cfg.get("vel0", make_out(x.vel), true);
@@ -182,23 +193,24 @@ int main(int argc, char** argv)
     const auto x_and_u = getState(cfg, log_reader);
     State x0 = x_and_u.first;
     Input u = x_and_u.second;
-    dxVec P0 = getStateCovariance("P0_stdev", cfg);
-    dxVec process_cov = getStateCovariance("process_stdev", cfg);
+    Covariance P0 = getStateCovariance("P0_stdev", cfg);
+    ProcessCovariance process_cov = getStateCovariance("process_stdev", cfg);
 
     Vec6 point_pos_cov = getMeasurementCovariance<Vec6>("point_pos_stdev", cfg);
     Vec2 gps_obs_cov = getMeasurementCovariance<Vec2>("gps_obs_stdev", cfg);
     Vec2 gal_obs_cov = getMeasurementCovariance<Vec2>("gal_obs_stdev", cfg);
     Vec2 glo_obs_cov = getMeasurementCovariance<Vec2>("glo_obs_stdev", cfg);
-    Input imu_cov;
+    InputCovariance imu_cov;
     imu_cov.accel = getMeasurementCovariance<Vec3>("imu_stdev/accel", cfg);
     imu_cov.gyro = getMeasurementCovariance<Vec3>("imu_stdev/gyro", cfg);
-    double fix_and_hold_cov;
-    cfg.get("fix_and_hold_stdev", make_out(fix_and_hold_cov), true);
+    double fix_and_hold_stdev;
+    cfg.get("fix_and_hold_stdev", make_out(fix_and_hold_stdev), true);
+    Vec1 fix_and_hold_cov(fix_and_hold_stdev * fix_and_hold_stdev);
 
     logging::Logger log_writer(x0.t, "../logs/post_process");
-    log_writer.initStream<math::DQuat<double>, Vec3, Vec3, Vec3, Vec3, Vec2, Vec2, Vec2, dxMat>(
+    log_writer.initStream<math::DQuat<double>, Vec3, Vec3, Vec3, Vec3, Vec2, Vec2, Vec2>(
         logging::ESTIMATE,
-        {"pose", "vel", "omg", "acc", "p_ecef", "gps_clk", "gal_clk", "glo_clk", "cov "});
+        {"pose", "vel", "omg", "acc", "p_ecef", "gps_clk", "gal_clk", "glo_clk"});
     log_writer.amends(log_reader.logPath());
 
     ekf.init(x0.t, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
@@ -222,7 +234,8 @@ int main(int argc, char** argv)
                                meas::ImuSample imu;
                                reader.get(imu);
                                ImuMeas meas;
-                               meas.z << imu.accel, imu.gyro;
+                               meas.z.accel = imu.accel;
+                               meas.z.gyro = imu.gyro;
                                ekf.addMeasurement(t, meas);
                            });
 

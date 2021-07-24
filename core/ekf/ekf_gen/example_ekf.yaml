@@ -1,0 +1,68 @@
+namespaces:
+  - mc
+  - ekf
+  - test
+
+includes:
+  - common/defs.h
+  - common/math/dquat.h
+  - common/math/so3.h
+  - common/math/se3.h
+  - common/math/quat.h
+
+state_name: TestState
+error_state_name: TestErrorState
+input_name: TestInput
+
+state_composition:
+  pose: DQuat
+  pose_se3: SE3
+  vec3: Vec3
+  vec5: Vec5
+  variable_quat: Var<Quat, 5>
+  variable_vec3: Var<Vec3, 5>
+
+input:
+  vector_input: Vec5
+  rotation_input: Vec3
+
+dynamics:
+  # States: pose, pose_se3, vec3, vec5, variable_quat, variable_vec3
+  # Inputs: vector_input, rotation_input
+  pose: [["pose", "pose_se3", "variable_vec3"], ["vector_input"]]
+  pose_se3: [[], []]
+  vec3: [["vec3"], ["vector_input", "rotation_input"]]
+  vec5: [["vec5"], []]
+  variable_quat: [["variable_quat"], []]
+  variable_vec3: [["variable_vec3"], ["vector_input"]]
+
+measurements:
+  vector:
+    type: Vec3
+    gating_probability: 0.5
+    states:
+      - pose
+      - pose_se3
+      - vec3
+      - vec5
+  var_state:
+    type: Vec4
+    gating_probability: 0.99
+    states:
+      - vec5
+      - vec3
+      - pose
+      - variable_quat
+      - variable_vec3
+    metadata:
+      - [int, integer_metadata]
+    constants:
+      - [int, integer_constant, 10]
+  variable:
+    type: Var<Quat, 5>
+    gating_probability: 0.95
+    states:
+      - variable_quat
+      - variable_vec3
+      - pose
+    disabled: True

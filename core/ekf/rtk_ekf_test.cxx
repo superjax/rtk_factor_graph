@@ -6,13 +6,57 @@
 #include "common/matrix_defs.h"
 #include "common/numerical_jacobian.h"
 #include "common/random.h"
+#include "common/satellite/satellite_cache.h"
 #include "common/test_helpers.h"
 #include "core/sat_manager.h"
 #include "utils/wgs84.h"
 
 namespace mc {
-namespace ekf {
 
+using ErrVec = Eigen::Matrix<double, ekf::State::DOF, 1>;
+
+template <>
+struct PerturbHelper<JacobianSide::LEFT, ekf::State, ErrVec>
+{
+    static ekf::State perturb(const ekf::State& x, const ErrVec& _dx)
+    {
+        ekf::ErrorState dx = ekf::ErrorState::fromDense(_dx);
+        ekf::State out = x + dx;
+        return out;
+    }
+};
+
+template <>
+struct PerturbHelper<JacobianSide::LEFT, ekf::Input, Vec6>
+{
+    static ekf::Input perturb(const ekf::Input& x, const Vec6& _dx)
+    {
+        ekf::Input dx = ekf::Input::fromDense(_dx);
+        ekf::Input out = x + dx;
+        return out;
+    }
+};
+
+template <>
+struct PerturbHelper<JacobianSide::LEFT, ekf::ErrorState, ErrVec>
+{
+    static ekf::ErrorState perturb(const ekf::ErrorState& x, const ErrVec& _dx)
+    {
+        ekf::ErrorState dx = ekf::ErrorState::fromDense(_dx);
+        return x + dx;
+    }
+};
+
+template <>
+struct DiffHelper<JacobianSide::LEFT, ekf::ErrorState, ekf::ErrorState>
+{
+    static ErrVec difference(const ekf::ErrorState& x2, const ekf::ErrorState& x1)
+    {
+        return (x2 - x1).dense(ekf::State::MAX_SD);
+    }
+};
+
+namespace ekf {
 #define STATE_EQ(x1, x2)                                    \
     {                                                       \
         DQUAT_EQ((x1).pose, (x2).pose);                     \
@@ -24,7 +68,11 @@ namespace ekf {
         MATRIX_CLOSE((x1).glo_clk, (x2).glo_clk, 1e-8);     \
         MATRIX_CLOSE((x1).p_b2g, (x2).p_b2g, 1e-8);         \
         DQUAT_EQ((x1).T_I2e, (x2).T_I2e);                   \
-        MATRIX_CLOSE((x1).sd, (x2).sd, 1e-8);               \
+        EXPECT_EQ(x1.num_sd, x2.num_sd);                    \
+        for (int i = 0; i < x1.num_sd; ++i)                 \
+        {                                                   \
+            MATRIX_CLOSE((x1).sd[i], (x2).sd[i], 1e-8);     \
+        }                                                   \
     }
 
 #define STATE_CLOSE(x1, x2, tol)                           \
@@ -38,7 +86,11 @@ namespace ekf {
         MATRIX_CLOSE((x1).glo_clk, (x2).glo_clk, tol);     \
         MATRIX_CLOSE((x1).p_b2g, (x2).p_b2g, tol);         \
         DQUAT_CLOSE((x1).T_I2e, (x2).T_I2e, tol);          \
-        MATRIX_CLOSE((x1).sd, (x2).sd, tol);               \
+        EXPECT_EQ(x1.num_sd, x2.num_sd);                   \
+        for (size_t i = 0; i < x1.num_sd; ++i)             \
+        {                                                  \
+            MATRIX_CLOSE((x1).sd[i], (x2).sd[i], tol);     \
+        }                                                  \
     }
 
 const Vec3 provo_lla{deg2Rad(40.246184), deg2Rad(-111.647769), 1387.997511};
@@ -90,37 +142,45 @@ TEST(MeasJacTest, pointPosMeasJacobianTest)
 {
     pointPosMeas::ZType z0;
     z0.setRandom();
-    const State x0 = State::Random();
-
-    RtkEkf ekf;
+    State x0 = State::Random();
     const Input u = Input::Random();
+    const auto fun = [&](const State& x) { return h<pointPosMeas>(z0, x, nullptr, u); };
 
-    const auto fun = [&](const State& x) { return ekf.h<pointPosMeas>(z0, x, nullptr, u); };
+    for (int num_sd : {0, 1, 15, 30})
+    {
+        x0.num_sd = num_sd;
 
-    const auto fd = compute_jac(x0, fun, 1e-6);
+        const Eigen::MatrixXd fd = compute_jac(x0, fun, 1e-6).leftCols(x0.size());
 
-    pointPosMeas::Jac analytical;
-    ekf.h<pointPosMeas>(z0, x0, &analytical, u);
+        pointPosMeas::Jac analytical;
+        h<pointPosMeas>(z0, x0, &analytical, u);
 
-    MATRIX_CLOSE(analytical, fd, 1e-8);
+        MATRIX_CLOSE(analytical.dense(x0.num_sd), fd, 1e-8);
+    }
 }
 
 TEST(MeasJacTest, fixAndHoldMeasJacobianTest)
 {
-    fixAndHoldMeas::ZType z0;
-    z0.setRandom();
-    const State x0 = State::Random();
+    State x0 = State::Random();
 
-    RtkEkf ekf;
+    for (int num_sd : {0, 1, 15, 30})
+    {
+        fixAndHoldMeas::ZType z0(num_sd);
+        for (auto& z : z0)
+        {
+            z << ((double)rand() / (double)RAND_MAX);
+        }
+        x0.num_sd = num_sd;
 
-    const auto fun = [&](const State& x) { return ekf.h<fixAndHoldMeas>(z0, x, nullptr); };
+        const auto fun = [&](const State& x) { return h<fixAndHoldMeas>(z0, x, nullptr); };
 
-    const auto fd = compute_jac(x0, fun, 1e-6);
+        const Eigen::MatrixXd fd = compute_jac(x0, fun, 1e-6).topLeftCorner(num_sd, x0.size());
 
-    fixAndHoldMeas::Jac analytical;
-    ekf.h<fixAndHoldMeas>(z0, x0, &analytical);
+        fixAndHoldMeas::Jac analytical;
+        h<fixAndHoldMeas>(z0, x0, &analytical);
 
-    MATRIX_CLOSE(analytical, fd, 1e-8);
+        MATRIX_CLOSE(analytical.dense(x0.num_sd, num_sd), fd, 1e-8);
+    }
 }
 
 template <typename T>
@@ -137,31 +197,22 @@ TYPED_TEST(ObsMeasJacTest, JacobianTest)
     typename TypeParam::ZType z0;
     z0.setRandom();
     State x0 = State::Random();
+    for (int num_sd : {0, 1, 15, 30})
+    {
+        x0.num_sd = num_sd;
 
-    RtkEkf ekf;
-    const auto sat_cache = makeCache();
-    const Input u = Input::Random();
+        const auto sat_cache = makeCache();
+        const Input u = Input::Random();
 
-    const auto fun = [&](const State& x) { return ekf.h<TypeParam>(z0, x, nullptr, u, sat_cache); };
+        const auto fun = [&](const State& x) { return h<TypeParam>(z0, x, nullptr, u, sat_cache); };
 
-    const auto fd = compute_jac(x0, fun, 1e-4);
+        const Eigen::MatrixXd fd = compute_jac(x0, fun, 1e-4).leftCols(x0.size());
 
-    typename TypeParam::Jac analytical;
-    ekf.h<TypeParam>(z0, x0, &analytical, u, sat_cache);
+        typename TypeParam::Jac analytical;
+        h<TypeParam>(z0, x0, &analytical, u, sat_cache);
 
-    MATRIX_CLOSE(analytical, fd, 1e-3);
-}
-
-TEST(State, BoxplusRules)
-{
-    const State x = State::Random();
-    const State x2 = State::Random();
-    const ErrorState zeros = ErrorState::Zero();
-    const ErrorState delta1 = ErrorState::Random();
-
-    STATE_EQ(x + zeros, x);
-    STATE_EQ(x + (x2 - x), x2);
-    MATRIX_CLOSE((x + delta1) - x, delta1, 1e-8);
+        MATRIX_CLOSE(analytical.dense(x0.num_sd), fd, 1e-3);
+    }
 }
 
 TEST(DynamicsTest, ErrorStateDynamics)
@@ -179,10 +230,10 @@ TEST(DynamicsTest, ErrorStateDynamics)
     Input u = Input::Zero();
     for (double t = 0; t < MAX_ITERS * dt; t += dt)
     {
-        u += dt * randomNormal<Input>();
-        const ErrorState dxdot = RtkEkf::errorStateDynamics(dx, x, u, eta);
-        const ErrorState dxdt = RtkEkf::dynamics(x, u, nullptr, nullptr);
-        const ErrorState dxhatdt = RtkEkf::dynamics(xhat, u, nullptr, nullptr);
+        u += randomNormal<Input>() * dt;
+        const ErrorState dxdot = errorStateDynamics(dx, x, u, eta);
+        const ErrorState dxdt = dynamics(x, u, nullptr, nullptr);
+        const ErrorState dxhatdt = dynamics(xhat, u, nullptr, nullptr);
 
         // integrate the error-state
         dx += dxdot * dt;
@@ -206,14 +257,14 @@ TEST(DynamicsTest, StateJacobianTest)
     const Input eta = Input::Random() * 1e-8;
 
     const auto fun = [&](const ErrorState& dx) -> ErrorState {
-        return RtkEkf::errorStateDynamics(dx, x0, u, eta);
+        return errorStateDynamics(dx, x0, u, eta);
     };
 
-    const auto fd = compute_jac(dx0, fun, 1e-8);
-    RtkEkf::StateJac A;
-    RtkEkf::dynamics(x0, u, &A, nullptr);
+    const Eigen::MatrixXd fd = compute_jac(dx0, fun, 1e-8).topLeftCorner(x0.size(), x0.size());
+    StateJac A;
+    dynamics(x0, u, &A, nullptr);
 
-    MATRIX_CLOSE(A, fd, 1e-8);
+    MATRIX_CLOSE(A.dense(x0.num_sd), fd, 1e-8);
 }
 
 TEST(DynamicsTest, InputJacobianTest)
@@ -221,16 +272,14 @@ TEST(DynamicsTest, InputJacobianTest)
     const State x = State::Random();
     const Input u0 = Input::Random();
 
-    const auto fun = [&](const Input& u) -> ErrorState {
-        return RtkEkf::dynamics(x, u, nullptr, nullptr);
-    };
+    const auto fun = [&](const Input& u) -> ErrorState { return dynamics(x, u, nullptr, nullptr); };
 
-    const auto fd = compute_jac(u0, fun, 1e-8);
-    RtkEkf::InputJac B;
-    RtkEkf::dynamics(x, u0, nullptr, &B);
+    const Eigen::MatrixXd fd = compute_jac(u0, fun, 1e-8).topRows(x.size());
+    InputJac B;
+    dynamics(x, u0, nullptr, &B);
 
-    MATRIX_CLOSE(B, fd, 1e-7);
+    MATRIX_CLOSE(B.dense(x.num_sd), fd, 1e-7);
 }
 
-}  // end namespace ekf
+}  // namespace ekf
 }  // end namespace mc

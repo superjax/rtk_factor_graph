@@ -123,6 +123,19 @@ inline Eigen::MatrixXd vstack(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b
     return out;
 }
 
+inline Eigen::MatrixXd tile(const Eigen::MatrixXd& a, size_t vcopies, size_t hcopies)
+{
+    Eigen::MatrixXd out(a.rows() * vcopies, a.cols() * hcopies);
+    for (size_t i = 0; i < vcopies; ++i)
+    {
+        for (size_t j = 0; j < hcopies; ++j)
+        {
+            out.block(i * a.rows(), j * a.cols(), a.rows(), a.cols());
+        }
+    }
+    return out;
+}
+
 template <typename Derived>
 bool isNan(const Eigen::MatrixBase<Derived>& m)
 {

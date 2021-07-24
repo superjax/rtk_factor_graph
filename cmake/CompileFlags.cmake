@@ -4,27 +4,25 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --std=c++17")
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache) # Less useful to do it for linking, see
-                                                          # edit2
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache) # Less useful to do it for linking
 endif(CCACHE_FOUND)
 
 # C++ strict compilation
 set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} -Wall -Wstrict-aliasing -Wformat=2 -Winit-self  -Wmissing-include-dirs \
- -Wunreachable-code -Wcast-align -Wcast-qual -Wdisabled-optimization -Woverloaded-virtual \
- -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=1 -Wno-unknown-pragmas"
+    -Wunreachable-code -Wcast-align -Wcast-qual -Wdisabled-optimization -Woverloaded-virtual \
+    -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=1 -Wno-unknown-pragmas"
 )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using Clang
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Wnoexcept -Wstrict-null-sentinel -Wlogical-op -Wno-unknown-pragmas"
+        "${CMAKE_CXX_FLAGS} -Wnoexcept -Wstrict-null-sentinel -Wlogical-op -Wno-maybe-uninitialized \
+        -Wno-unknown-pragmas"
     )
 else()
     message(WARNING "Unknown Compiler ${CMAKE_CXX_COMPILER_ID}")
 endif()
-# if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # using Clang elseif(CMAKE_CXX_COMPILER_ID STREQUAL
-# "GNU") # using GCC  else() message(WARNING) endif()
 
 if(CMAKE_BUILD_TYPE EQUAL "RELEASE")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")

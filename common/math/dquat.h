@@ -161,6 +161,12 @@ class DQuat
 
     DQuat inverse() const { return DQuat(real().inverse(), dual().inverse()); }
 
+    void setRandom()
+    {
+        r_.setRandom();
+        d_ = (T)0.5 * (Quat<T>::make_pure(Vec3::Random()) * r_);
+    }
+
     static DQuat exp(const Vec6& wv)
     {
         const auto w = wv.template head<3>();
@@ -434,4 +440,11 @@ struct is_lie_group<math::DQuat<T>>
 };
 
 }  // namespace detail
+
+template <typename T>
+bool isFinite(const math::DQuat<T> x)
+{
+    return isFinite(x.arr_);
+}
+
 }  // namespace mc

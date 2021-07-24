@@ -30,6 +30,7 @@ target_link_libraries(
     config
     log_reader
     rtk_ekf_estimator
+    rtk_ekf_impl
     log_writer
 )
 
