@@ -1,13 +1,15 @@
-from core.ekf.ekf_gen.ekf_gen_test import gen_test
 import os
 import re
-from numpy.lib.arraysetops import isin
+import subprocess
 import yaml
 
 from argparse import ArgumentParser
+from collections import OrderedDict
 from scipy.stats import chi2
 import numpy as np
+from numpy.lib.arraysetops import isin
 
+from core.ekf.ekf_gen.ekf_gen_test import gen_test
 from core.ekf.ekf_gen.ekf_gen_utils import (
     accumulate_expr, make_camel, make_snake, State, includes, begin_namespaces, end_namespaces,
     get_matching_elements, jac_member_name
@@ -62,7 +64,11 @@ def make_jacobian(name, matrix, row_states, col_states):
             return f"Mat<{num_rows}, {num_cols}>"
 
     def dense_args():
-        args = {f"int {s.counter_var}" for s in row_states + col_states if s.variable}
+        args = tuple(
+            OrderedDict.fromkeys(
+                f"int {s.counter_var}" for s in row_states + col_states if s.variable
+            )
+        )
         return ", ".join(args)
 
     def make_getters(matrix):
@@ -71,15 +77,28 @@ def make_jacobian(name, matrix, row_states, col_states):
             for sr, sc in row:
                 if not sr.variable and not sc.variable:
                     out.append(f"Mat<{sr.dx}, {sc.dx}> {jac_member_name(sr, sc)};")
+                if sr.variable and sr.name == None:
+                    # Per-observation block accessor
+                    args = {f"int idx"}
+                    if sc.variable:
+                        args.add(f"int {sc.counter_var}")
+                    start_idx = f"idx * {sr.base_dx}"
+                    block = f"{buffer_name(sr,sc)}.block({start_idx}, 0, {sr.base_dx}, {dim(sc)})"
+                    decl = f"inline auto {jac_member_name(sr, sc)}({', '.join(args)})"
+                    impl = f"{{ return {block}; }}"
+                    out.append(f"{decl} {impl}")
+                    out.append(f"{decl} const {impl}")
+
                 if sr.variable or sc.variable:
                     args = {f"int {s.counter_var}" for s in [sr, sc] if s.variable}
                     block = f"{buffer_name(sr, sc)}.block(0, 0, {dim(sr)}, {dim(sc)})"
-                    out.append(
-                        f"inline auto {jac_member_name(sr, sc)}({', '.join(args)}){{ return {block}; }}"
-                    )
-                    out.append(
-                        f"inline auto {jac_member_name(sr, sc)}({', '.join(args)}) const {{ return {block}; }}"
-                    )
+                    fname = f"inline auto {jac_member_name(sr, sc)}"
+                    if sr.variable and sr.name == None:
+                        fname += "_all"
+                    decl = f"{fname}({', '.join(args)})"
+                    impl = f"{{ return {block}; }}"
+                    out.append(f"{decl} {impl}")
+                    out.append(f"{decl} const {impl}")
         return "\n    ".join(out)
 
     return JACOBIAN_TEMPLATE.format(
@@ -151,7 +170,11 @@ def make_jacobian_dense_impl(matrix, name, row_states, col_states):
             return f"Mat<{num_rows}, {num_cols}>"
 
     def dense_args():
-        args = {f"int {s.counter_var}" for s in row_states + col_states if s.variable}
+        args = tuple(
+            OrderedDict.fromkeys(
+                f"int {s.counter_var}" for s in row_states + col_states if s.variable
+            )
+        )
         return ", ".join(args)
 
     def dim(s):
@@ -175,7 +198,10 @@ def make_jacobian_dense_impl(matrix, name, row_states, col_states):
             if rs.variable or cs.variable:
                 args = {f"{s.counter_var}" for s in (rs, cs) if s.variable}
                 assigner = f"out.block({row_expr}, {col_expr}, {dim(rs)}, {dim(cs)})"
-                getter = f"{jac_member_name(rs, cs)}({', '.join(args)})"
+                fname = f"{jac_member_name(rs, cs)}"
+                if rs.variable and rs.name == None:
+                    fname += "_all"
+                getter = f"{fname}({', '.join(args)})"
             else:
                 assigner = f"out.block<{dim(rs)}, {dim(cs)}>({row_expr}, {col_expr})"
                 getter = f"{jac_member_name(rs, cs)}"
@@ -317,7 +343,7 @@ def meas_types(cfg):
     static constexpr int MAX_SIZE = {MAX_SIZE};
     using Residual = {RESIDUAL_TYPE};
     using Covariance = {COVARIANCE_TYPE};
-    using ZType = {Z_TYPE};
+    {Z_TYPE}
 
     {CONSTANTS}
 
@@ -328,7 +354,6 @@ def meas_types(cfg):
     {JACOBIAN}
 
     ZType z;
-    {METADATA}
 }};"""
 
     def make_meas(cfg, key):
@@ -345,24 +370,26 @@ def meas_types(cfg):
                 return f"Vec<{meas_state.dx}>"
 
         def z_type():
+            out = []
+            meas_type = meas_state.type
+            if 'metadata' in meas_cfg:
+                out.append("struct Data {")
+                out.append(f"    {meas_state.type} z;")
+                for m in meas_cfg['metadata']:
+                    out.append(f"    {m[0]} {m[1]};")
+                out.append("};")
+                meas_type = "Data"
             if meas_state.variable:
-                return f"std::vector<{meas_state.type}>"
+                out.append(f"using ZType = std::vector<{meas_type}>;")
             else:
-                return f"{meas_state.type}"
+                out.append(f"using ZType = {meas_type};")
+            return "\n    ".join(out)
 
         def disabled():
             if "disabled" in meas_cfg and meas_cfg["disabled"]:
                 return "true"
             else:
                 return "false"
-
-        def metadata():
-            if 'metadata' not in meas_cfg.keys():
-                return "// no metadata"
-            out = []
-            for kind, name in meas_cfg['metadata']:
-                out.append(f"{kind} {name};")
-            return "\n        ".join(out)
 
         def constants():
             if 'constants' not in meas_cfg.keys():
@@ -390,7 +417,6 @@ def meas_types(cfg):
             MAX_PROB=meas_cfg['gating_probability'],
             MAX_SIZE=meas_state.dx,
             DISABLED=disabled(),
-            METADATA=metadata(),
             JACOBIAN=meas_jacobian(cfg, key),
             CONSTANTS=constants()
         )
@@ -409,7 +435,10 @@ def meas_is_finite(cfg, key):
         out = f"bool isFinite(const {namespaces}::{make_camel(key)}Meas::ZType& z) {{\n"
         out += "    bool is_finite = true;\n"
         out += "    for (size_t i = 0; i < z.size(); ++i) {\n"
-        out += "        is_finite &= isFinite(z[i]);\n"
+        if 'metadata' in meas_cfg:
+            out += "        is_finite &= isFinite(z[i].z);\n"
+        else:
+            out += "        is_finite &= isFinite(z[i]);\n"
         out += "    }\n"
         out += "    return is_finite;\n"
         out += "}"
@@ -588,7 +617,7 @@ def ekf_impl(cfg):
 
 
 def meas_to_state(cfg, meas_key):
-    return State(meas_key, cfg["measurements"][meas_key]["type"])
+    return State(None, cfg["measurements"][meas_key]["type"])
 
 
 def organize_states(state_dictionary):
@@ -622,23 +651,36 @@ if __name__ == "__main__":
 
     ekf_filename_base = make_snake(cfg["kalman_filter_class"])
     cfg["ekf_filename_base"] = ekf_filename_base
+
+    generated_files = []
     with open(os.path.join(cfg["destination"], ekf_filename_base + "_state.h"), 'w') as f:
         f.write(state_header(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + "_state.cxx"), 'w') as f:
         f.write(state_impl(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + "_types.h"), 'w') as f:
         f.write(types_header(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + "_types.cxx"), 'w') as f:
         f.write(types_impl(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + ".h"), 'w') as f:
         f.write(ekf_header(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + ".cxx"), 'w') as f:
         f.write(ekf_impl(cfg))
+        generated_files.append(f.name)
 
     with open(os.path.join(cfg["destination"], ekf_filename_base + "_sparse_test.cxx"), 'w') as f:
         f.write(gen_test(cfg))
+        generated_files.append(f.name)
+
+    for f in generated_files:
+        cmd = ['clang-format', '-i', f]
+        subprocess.call(cmd)

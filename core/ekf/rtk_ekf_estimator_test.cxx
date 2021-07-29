@@ -22,9 +22,7 @@ class MockCallbacks
     MockCallbacks() = default;
 
     MOCK_CONST_METHOD1(pointPosCb, void(const UTCTime& t));
-    MOCK_CONST_METHOD1(gpsObsCb, void(const UTCTime& t));
-    MOCK_CONST_METHOD1(galObsCb, void(const UTCTime& t));
-    MOCK_CONST_METHOD1(gloObsCb, void(const UTCTime& t));
+    MOCK_CONST_METHOD1(obsCb, void(const UTCTime& t));
     MOCK_CONST_METHOD1(fixAndHoldCb, void(const UTCTime& t));
 
     MOCK_CONST_METHOD0(errorStateDynCb, void());
@@ -35,6 +33,8 @@ MockCallbacks* cb;
 
 ErrorState dynamics(const State& x, const Input& u, StateJac* dxdx, InputJac* dxdu)
 {
+    dxdx->setZero();
+    dxdu->setZero();
     cb->dynamicsCb(x.t);
     return ErrorState::Zero();
 }
@@ -54,41 +54,20 @@ pointPosMeas::Residual h<pointPosMeas>(const pointPosMeas::ZType& z,
                                        pointPosMeas::Jac* jac,
                                        const Input& u)
 {
+    jac->setZero();
     cb->pointPosCb(x.t);
     return Vec6::Zero();
 }
 
 template <>
-gpsObsMeas::Residual h<gpsObsMeas>(const Vec2& z,
-                                   const State& x,
-                                   gpsObsMeas::Jac* jac,
-                                   const Input& u,
-                                   const satellite::SatelliteCache& sat)
+obsMeas::Residual h<obsMeas>(const obsMeas::ZType& z,
+                             const State& x,
+                             obsMeas::Jac* jac,
+                             const Input& u)
 {
-    cb->gpsObsCb(x.t);
-    return Vec2::Zero();
-}
-
-template <>
-galObsMeas::Residual h<galObsMeas>(const Vec2& z,
-                                   const State& x,
-                                   galObsMeas::Jac* jac,
-                                   const Input& u,
-                                   const satellite::SatelliteCache& sat)
-{
-    cb->galObsCb(x.t);
-    return Vec2::Zero();
-}
-
-template <>
-gloObsMeas::Residual h<gloObsMeas>(const Vec2& z,
-                                   const State& x,
-                                   gloObsMeas::Jac* jac,
-                                   const Input& u,
-                                   const satellite::SatelliteCache& sat)
-{
-    cb->gloObsCb(x.t);
-    return Vec2::Zero();
+    jac->setZero();
+    cb->obsCb(x.t);
+    return obsMeas::Residual::Zero();
 }
 
 template <>
@@ -96,11 +75,12 @@ fixAndHoldMeas::Residual h<fixAndHoldMeas>(const fixAndHoldMeas::ZType& z,
                                            const State& x,
                                            fixAndHoldMeas::Jac* jac)
 {
+    jac->setZero();
     const int num_sd = x.num_sd;
     const int num_fix_and_hold = z.size();
 
     check(num_sd == num_fix_and_hold,
-          "Number of fix-and-hold measurements must equal the side of the single-differences "
+          "Number of fix-and-hold measurements must equal the size of the single-differences "
           "estimate.  num_sd = {}, num_fix_and_hold = {}",
           fmt(num_sd, num_fix_and_hold));
 
@@ -108,8 +88,6 @@ fixAndHoldMeas::Residual h<fixAndHoldMeas>(const fixAndHoldMeas::ZType& z,
     fixAndHoldMeas::Residual res;
     return res;
 }
-
-// using MockEstimator = EkfEstimator<MockEkf>;
 
 class RtkEkfEstimatorTest : public ::testing::Test
 {
@@ -120,17 +98,14 @@ class RtkEkfEstimatorTest : public ::testing::Test
         State x0 = State::Identity();
         Covariance P0 = Covariance::Identity();
         Vec6 point_pos_cov = Vec6::Ones();
-        Vec2 gps_obs_cov = Vec2::Ones();
-        Vec2 gal_obs_cov = Vec2::Ones();
-        Vec2 glo_obs_cov = Vec2::Ones();
+        Vec2 obs_cov = Vec2::Ones();
         Vec1 fix_and_hold_cov = Vec1::Ones();
         InputCovariance imu_cov = InputCovariance::Zero();
         ProcessCovariance process_cov = ProcessCovariance::Identity();
 
         cb = &cb_;
 
-        est.init(t0, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
-                 imu_cov, process_cov);
+        est.init(t0, x0, P0, point_pos_cov, obs_cov, fix_and_hold_cov, imu_cov, process_cov);
     }
     RtkEkfEstimator est;
     MockCallbacks cb_;

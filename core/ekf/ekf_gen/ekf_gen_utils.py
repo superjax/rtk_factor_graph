@@ -135,7 +135,7 @@ class State:
             self.counter_var = f"num_{make_snake(name)}"
             self.MAX = f"MAX_{name.upper()}"
         else:
-            self.counter_var = "num"
+            self.counter_var = "num_obs"
         self.name = name
         if is_var(kind):
             state_type = bundle_var(kind)

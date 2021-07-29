@@ -5,6 +5,8 @@ namespaces:
 includes:
   - common/defs.h
   - common/math/dquat.h
+  - common/utctime.h
+  - common/satellite/satellite_cache.h
 
 state_name: State
 error_state_name: ErrorState
@@ -17,8 +19,8 @@ state_composition:
   gyro_bias: Vec3
   gps_clk: Vec2
   gal_clk: Vec2
-  sd: Var<Vec1, 30>
   glo_clk: Vec2
+  sd: Var<Vec1, 30>
   p_b2g: Vec3
   T_I2e: DQuat
 
@@ -31,48 +33,21 @@ measurements:
       - T_I2e
       - p_b2g
       - vel
-  gps_obs:
-    type: Vec2
+  obs:
+    type: Var<Vec2, 30>
+    metadata:
+      - [const satellite::SatelliteCache&, sat]
+      - [const int, gnss_id]
     gating_probability: 1.0
     states:
       - pose
-      - T_I2e
+      - vel
       - p_b2g
+      - T_I2e
       - gps_clk
-      - vel
-    disabled: True
-    metadata:
-      - [int, sat_id]
-    constants:
-      - [int, ID, GnssID::GPS]
-  gal_obs:
-    type: Vec2
-    gating_probability: 1.0
-    states:
-      - pose
-      - T_I2e
-      - p_b2g
       - gal_clk
-      - vel
-    disabled: True
-    metadata:
-      - [int, sat_id]
-    constants:
-      - [int, ID, GnssID::Galileo]
-  glo_obs:
-    type: Vec2
-    gating_probability: 1.0
-    states:
-      - pose
-      - T_I2e
-      - p_b2g
       - glo_clk
-      - vel
     disabled: True
-    metadata:
-      - [int, sat_id]
-    constants:
-      - [int, ID, GnssID::Glonass]
   fix_and_hold:
     type: Var<Vec1, 30>
     gating_probability: 1.0
@@ -84,7 +59,7 @@ input:
   gyro: Vec3
 
 dynamics:
-  #  pose, vel, angular_vel, acc_bias, gyro_bias, gps_clk, gal_clk, glo_clk, p_b2g, T_I2e, sd,
+  #  pose, vel, acc_bias, gyro_bias, gps_clk, gal_clk, glo_clk, p_b2g, T_I2e, sd,
   pose: [[pose, vel, gyro_bias], [gyro]]
   vel: [[pose, acc_bias], [accel]]
   acc_bias: [[], []]

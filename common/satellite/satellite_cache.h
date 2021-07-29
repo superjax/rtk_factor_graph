@@ -16,7 +16,7 @@ namespace satellite {
 class SatelliteCache
 {
  public:
-    SatelliteCache();
+    // SatelliteCache();
     Vec3 cache_rec_pos;  // reference position that this cache was computed
     SatelliteState state;
     double sagnac;

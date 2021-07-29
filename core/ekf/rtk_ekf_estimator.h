@@ -4,8 +4,10 @@
 
 #include <set>
 #include <variant>
+#include <vector>
 
 #include "common/logging/log_writer.h"
+#include "common/measurements/gnss_observation.h"
 #include "common/satellite/satellite_cache.h"
 #include "common/utctime.h"
 #include "core/ekf/rtk_ekf.h"
@@ -66,7 +68,7 @@ class RtkEkfEstimator
     struct Meas
     {
         UTCTime t;
-        std::variant<ImuMeas, pointPosMeas, gpsObsMeas, galObsMeas, gloObsMeas, fixAndHoldMeas> z;
+        std::variant<ImuMeas, std::vector<meas::GnssObservation>, pointPosMeas, fixAndHoldMeas> z;
 
         inline bool operator<(const Meas& other) const
         {
@@ -86,9 +88,7 @@ class RtkEkfEstimator
               const State& x0,
               const Covariance& P0,
               const pointPosMeas::Covariance& point_pos_cov,
-              const gpsObsMeas::Covariance& gps_obs_cov,
-              const galObsMeas::Covariance& gal_obs_cov,
-              const gloObsMeas::Covariance& glo_obs_cov,
+              const obsMeas::Covariance& gps_obs_cov,
               const fixAndHoldMeas::Covariance& fix_and_hold_cov,
               const InputCovariance& imu_cov,
               const ProcessCovariance& process_cov,
@@ -104,28 +104,15 @@ class RtkEkfEstimator
             return Error::create("cannot handle stale measurement");
         }
 
-        if constexpr (std::is_same_v<T, gpsObsMeas>)
+        if constexpr (std::is_same_v<T, std::vector<meas::GnssObservation>>)
         {
-            if (!hasCache(GnssID::GPS, z.sat_id))
+            for (const auto& obs : z)
             {
-                warn("Unknown GPS Satellite {}", fmt(z.sat_id));
-                return Error::create("Unknown satellite");
-            }
-        }
-        else if constexpr (std::is_same_v<T, galObsMeas>)
-        {
-            if (!hasCache(GnssID::Galileo, z.sat_id))
-            {
-                warn("Unknown Galileo Satellite {}", fmt(z.sat_id));
-                return Error::create("Unknown satellite");
-            }
-        }
-        else if constexpr (std::is_same_v<T, gloObsMeas>)
-        {
-            if (!hasCache(GnssID::Glonass, z.sat_id))
-            {
-                warn("Unknown Glonass Satellite {}", fmt(z.sat_id));
-                return Error::create("Unknown satellite");
+                if (!hasCache(obs.gnss_id, obs.sat_num))
+                {
+                    warn("Unknown {} Satellite {}", fmt(obs.gnss_id, obs.sat_num));
+                    return Error::create("Unknown satellite");
+                }
             }
         }
 
@@ -161,9 +148,7 @@ class RtkEkfEstimator
 
     void handlePointPos(const UTCTime& meas_time, const pointPosMeas& z);
     void handleFixAndHold(const UTCTime& meas_time, const fixAndHoldMeas& z);
-    void handleGpsObsMeas(const UTCTime& meas_time, const gpsObsMeas& z);
-    void handleGalObsMeas(const UTCTime& meas_time, const galObsMeas& z);
-    void handleGloObsMeas(const UTCTime& meas_time, const gloObsMeas& z);
+    void handleObsMeas(const UTCTime& meas_time, const std::vector<meas::GnssObservation>& z);
 
     void handleMeas(const Meas& meas);
 
@@ -190,9 +175,7 @@ class RtkEkfEstimator
     mutable std::unordered_map<int, satellite::SatelliteCache> sat_cache_;
 
     pointPosMeas::Covariance point_pos_cov_;
-    gpsObsMeas::Covariance gps_obs_cov_;
-    galObsMeas::Covariance gal_obs_cov_;
-    gloObsMeas::Covariance glo_obs_cov_;
+    obsMeas::Covariance obs_cov_;
     fixAndHoldMeas::Covariance fix_and_hold_cov_;
     InputCovariance imu_cov_;
     ProcessCovariance process_cov_;

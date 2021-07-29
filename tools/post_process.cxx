@@ -197,9 +197,7 @@ int main(int argc, char** argv)
     ProcessCovariance process_cov = getStateCovariance("process_stdev", cfg);
 
     Vec6 point_pos_cov = getMeasurementCovariance<Vec6>("point_pos_stdev", cfg);
-    Vec2 gps_obs_cov = getMeasurementCovariance<Vec2>("gps_obs_stdev", cfg);
-    Vec2 gal_obs_cov = getMeasurementCovariance<Vec2>("gal_obs_stdev", cfg);
-    Vec2 glo_obs_cov = getMeasurementCovariance<Vec2>("glo_obs_stdev", cfg);
+    Vec2 obs_cov = getMeasurementCovariance<Vec2>("obs_stdev", cfg);
     InputCovariance imu_cov;
     imu_cov.accel = getMeasurementCovariance<Vec3>("imu_stdev/accel", cfg);
     imu_cov.gyro = getMeasurementCovariance<Vec3>("imu_stdev/gyro", cfg);
@@ -213,8 +211,8 @@ int main(int argc, char** argv)
         {"pose", "vel", "omg", "acc", "p_ecef", "gps_clk", "gal_clk", "glo_clk"});
     log_writer.amends(log_reader.logPath());
 
-    ekf.init(x0.t, x0, P0, point_pos_cov, gps_obs_cov, gal_obs_cov, glo_obs_cov, fix_and_hold_cov,
-             imu_cov, process_cov, &log_writer);
+    ekf.init(x0.t, x0, P0, point_pos_cov, obs_cov, fix_and_hold_cov, imu_cov, process_cov,
+             &log_writer);
     ekf.u() = u;
 
     log_reader.setMaintenanceCallback(0.01, [&](const UTCTime& t) {
@@ -239,35 +237,19 @@ int main(int argc, char** argv)
                                ekf.addMeasurement(t, meas);
                            });
 
+    std::vector<meas::GnssObservation> obs_bundle;
     log_reader.setCallback(logging::LogKey::GNSS_OBS, [&](const UTCTime& t, int key, auto& reader) {
         meas::GnssObservation obs;
         reader.get(obs);
-        switch (obs.gnss_id)
+        if (obs_bundle.empty() || obs_bundle.front().t == obs.t)
         {
-        case GnssID::GPS: {
-            gpsObsMeas meas;
-            meas.z << obs.pseudorange, obs.doppler;
-            meas.sat_id = obs.sat_num;
-            ekf.addMeasurement(t, meas);
-            info("gps_obs, {}", mc::fmt(t));
-            break;
+            obs_bundle.push_back(obs);
         }
-        case GnssID::Galileo: {
-            galObsMeas meas;
-            meas.z << obs.pseudorange, obs.doppler;
-            meas.sat_id = obs.sat_num;
-            info("gal_obs, {}", mc::fmt(t));
-            ekf.addMeasurement(t, meas);
-            break;
-        }
-        case GnssID::Glonass: {
-            gloObsMeas meas;
-            meas.z << obs.pseudorange, obs.doppler;
-            meas.sat_id = obs.sat_num;
-            info("glo_obs, {}", mc::fmt(t));
-            ekf.addMeasurement(t, meas);
-            break;
-        }
+
+        if ((reader.nextStamp() - t).toSec() > 0.01)
+        {
+            ekf.addMeasurement(t, obs_bundle);
+            obs_bundle.clear();
         }
     });
 

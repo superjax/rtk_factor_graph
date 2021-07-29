@@ -60,11 +60,14 @@ coverage:
   allow_failure: true
   <<: *prepare_build
   script:
-    - ../script/run_coverage.sh
+    - CC=gcc CXX=g++ cmake .. -DTEST_COVERAGE=ON
+    - make -j12 -l12
+    - gcovr -r .. --config ../script/gcovr.cfg --xml-pretty --output coverage.xml
   artifacts:
-    paths:
-      - build/coverage
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     expire_in: 1000 yrs
+    reports:
+      cobertura: build/coverage.xml
 
 benchmarks:
   stage: test

@@ -20,6 +20,7 @@ using Vec9 = Eigen::Matrix<double, 9, 1>;
 using Vec10 = Eigen::Matrix<double, 10, 1>;
 using Vec11 = Eigen::Matrix<double, 11, 1>;
 using Vec12 = Eigen::Matrix<double, 12, 1>;
+using VecX = Eigen::VectorXd;
 
 using Vec1f = Eigen::Matrix<float, 1, 1>;
 using Vec2f = Eigen::Matrix<float, 2, 1>;
@@ -48,6 +49,7 @@ using Mat9 = Eigen::Matrix<double, 9, 9>;
 using Mat10 = Eigen::Matrix<double, 10, 10>;
 using Mat11 = Eigen::Matrix<double, 11, 11>;
 using Mat12 = Eigen::Matrix<double, 12, 12>;
+using MatX = Eigen::MatrixXd;
 
 using Mat36 = Eigen::Matrix<double, 3, 6>;
 using Mat38 = Eigen::Matrix<double, 3, 8>;

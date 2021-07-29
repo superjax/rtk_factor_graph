@@ -1,3 +1,5 @@
+import copy
+
 from core.ekf.ekf_gen.symb_matrix import BaseBlock, ConstBlock, Add, Mult
 from core.ekf.ekf_gen.symb_algebra import reduce
 
@@ -177,3 +179,30 @@ class SymBlockMatrix:
             total_cols += self[0, c].cols
 
         return total_rows, total_cols
+
+
+def vstack(*args):
+    if len(args) == 0:
+        raise RuntimeError("Must supply arguments")
+
+    for i, arg in enumerate(args):
+        if i == 0:
+            out = copy.deepcopy(arg._block_list)
+        else:
+            out.extend(arg._block_list)
+
+    return SymBlockMatrix(out)
+
+
+def hstack(args):
+    if len(args) == 0:
+        raise RuntimeError("Must supply arguments")
+
+    for i, arg in enumerate(args):
+        if i == 0:
+            out = copy.deepcopy(arg._block_list)
+        else:
+            for r, _ in enumerate(out):
+                out[r].extend(arg._block_list[r])
+
+    return SymBlockMatrix(out)

@@ -97,6 +97,7 @@ class ConstBlock(BaseBlock):
         super().__init__(rows, cols, max_rows, max_cols)
         self._name = name
         self.is_identity = (name == "I")
+
         self.is_zero = (name == "0")
         if self.is_identity and rows != cols:
             raise ValueError("Identity Matrices must be square")
@@ -125,6 +126,10 @@ class ConstBlock(BaseBlock):
 
     def __len__(self):
         return 1
+
+    def set_zero(self):
+        self.is_zero = True
+        self._name = '0'
 
 
 class Transpose(BaseBlock):

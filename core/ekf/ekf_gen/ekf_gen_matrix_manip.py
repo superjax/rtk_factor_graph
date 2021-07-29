@@ -1,19 +1,15 @@
 import re
 
-from itertools import accumulate
-
 from core.ekf.ekf_gen.symb_algebra import reduce
 from core.ekf.ekf_gen.symb_matrix import ConstBlock
 from core.ekf.ekf_gen.symb_block_matrix import SymBlockMatrix
-from core.ekf.ekf_gen.ekf_gen_utils import State, make_camel, make_snake, jac_member_name, accumulate_expr
+from core.ekf.ekf_gen.ekf_gen_utils import State, make_camel, jac_member_name, accumulate_expr
 
 symbol_varname = {"transpose": "transpose"}
 
 
 def dim(state):
     if state.variable:
-        # return f"{state.counter_var} * {state.base_dx}"
-        # return state.counter_var
         return re.sub("num_", "size_", state.counter_var)
     else:
         return state.dx
@@ -348,7 +344,8 @@ def create_symbolic_measurement_jacobian(cfg, key):
             dzdx.append(ConstBlock(name, dim(meas_state), dim(sc), sr.dx, sc.dx))
             if meas_state.variable or sc.variable:
                 args = {s.counter_var for s in (meas_state, sc) if s.variable}
-                symbol_varname[name] = f"dzdx.{name}({','.join(args)})"
+                symbol_varname[
+                    name] = f"dzdx.{name}{'_all' if meas_state.variable else ''}({','.join(args)})"
             else:
                 symbol_varname[name] = f"dzdx.{name}"
         else:
@@ -396,12 +393,17 @@ def sparse_meas_update(cfg, key):
     HPHT_impl, HPHT = commit_mat(H * PHT, "HPHT", dense=True, const=False)
     S_impl, _ = commit_mat_inplace_modify(R, HPHT, '+', symmetric=True)
     HPHT_impl += S_impl
+
     if not Sinv[0, 0].is_variable():
-        HPHT_impl.append(f"const {make_type(Sinv[0,0])} Sinv = HPHT.inverse();")
+        inverse = f"llt().solve(Mat<{Sinv.full_shape()[0]}, {Sinv.full_shape()[1]}>::Identity())"
+        inverse = "inverse()"
+        HPHT_impl.append(f"const {make_type(Sinv[0,0])} Sinv = HPHT.{inverse};")
     else:
+        inverse = f"llt().solve(MatX::Identity(size_{meas_state.name}, size_{meas_state.name}))"
+        inverse = "inverse()"
         HPHT_impl.append(f"{make_type(Sinv[0,0])} Sinv;")
-        block_args = f"0,0,{meas_state.counter_var}*{meas_state.base_dx},{meas_state.counter_var}*{meas_state.base_dx}"
-        HPHT_impl.append(f"Sinv.block({block_args}) = HPHT.block({block_args}).inverse();")
+        block_args = f"0,0,size_{meas_state.name},size_{meas_state.name}"
+        HPHT_impl.append(f"Sinv.block({block_args}) = HPHT.block({block_args}).{inverse};")
     tmp = "\n    ".join(HPHT_impl)
     SPARSE_INNOVATION = tmp.format(**symbol_varname)
 

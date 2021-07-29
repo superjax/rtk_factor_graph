@@ -8,7 +8,7 @@ namespace solver {
 
 // solves
 // z˜ = argmin_z (z-a)Q(z-a)ᵀ
-// template <int N>
+// z ∈ ℤᴺ
 void lambda(const Eigen::VectorXd& a,
             const Eigen::MatrixXd& Q,
             Eigen::Ref<Eigen::VectorXd> a_fixed,

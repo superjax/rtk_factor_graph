@@ -17,11 +17,11 @@ inline double computeSagnac(const Vec3 sat_pos, const Vec3& rec_pos_ecef)
 
 }  // namespace
 
-SatelliteCache::SatelliteCache()
-{
-    cache_rec_pos = Vec3::Zero();
-    state.t = INVALID_TIME;
-}
+// SatelliteCache::SatelliteCache()
+// {
+//     cache_rec_pos = Vec3::Zero();
+//     state.t = INVALID_TIME;
+// }
 
 void SatelliteCache::update(const UTCTime& t, const Vec3 rec_pos_ecef, const SatelliteBase& sat)
 {
